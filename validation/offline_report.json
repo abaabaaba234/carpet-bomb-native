@@ -1,0 +1,30 @@
+{
+  "version": "0.4.0",
+  "game_build": 25480438,
+  "tests_passed": [
+    "default carrying, repaired payload, original Eagle rows preserved and disable restoration",
+    "independent charges/cooldown, preserved native identity and configuration validation",
+    "unsupported build, existing carrier link and executable pages refused",
+    "partial write rollback",
+    "competing writer preservation and restoration",
+    "stale carrier identity refused",
+    "payload alias refusal, read-only protection restoration and competing table writer",
+    "late game datalibrary initialization retries without configuration edits",
+    "independent rearm setting, vanilla restoration, zero/max values and disable restoration",
+    "default rearm non-interference, competing rearm writer and stale rearm record refusal",
+    "partial rearm write rolls back native grant transaction",
+    "manager archives and 32 presets with 1170 selectable combinations"
+  ],
+  "preset_combinations": 1170,
+  "preset_modules_checked": 32,
+  "in_game_loader_verified": false,
+  "default_carry_verified": false,
+  "in_game_bombing_verified": false,
+  "multiplayer_verified": false,
+  "status": "OFFLINE_PASSED",
+  "previous_version": {
+    "version": "0.1.0",
+    "default_carry_verified": true,
+    "battlefield_test": "CRASHED: missing EagleComponent for native payload; removed"
+  }
+}
