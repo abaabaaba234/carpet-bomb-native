@@ -1,6 +1,6 @@
 """Run the shipped Lua against sanitized real StratagemInfo records in LuaJIT."""
 from pathlib import Path
-import json,struct,tempfile,re,zipfile,sys
+import json,struct,tempfile,re,zipfile,sys,os,hashlib
 from lupa import luajit21
 ROOT=Path(__file__).resolve().parents[1];SOURCE=(ROOT/'src/core.lua').read_bytes();BASE=0x180000000
 Q=lambda x:struct.pack('<Q',x);U=lambda x:struct.pack('<I',x);F=lambda x:struct.pack('<f',x)
@@ -52,9 +52,10 @@ class Memory:
         if self.fail_flush_once:self.fail_flush_once=False;return 0
         return 1
 class Scenario:
-    def __init__(self,options=None,bad_build=False,carrier_conflict=False):
+    def __init__(self,options=None,bad_build=False,carrier_conflict=False,cfg=None):
         self.temp=tempfile.TemporaryDirectory(prefix='.run-',dir=ROOT/'tests');self.local=Path(self.temp.name)
         self.logs=self.local/'CowboyBingus/Helldivers2/Logs';self.logs.mkdir(parents=True)
+        if cfg is not None:(self.logs/'CarpetBombNative.cfg').write_text(cfg,encoding='utf-8')
         self.mem=Memory();self.lua=luajit21.LuaRuntime(encoding=None);self.address={};self.originals={}
         dos=bytearray(0x1000);dos[:2]=b'MZ';struct.pack_into('<I',dos,60,0x100);dos[0x100:0x104]=b'PE\0\0'
         struct.pack_into('<I',dos,0x108,0 if bad_build else 0x6ab3b43f);struct.pack_into('<I',dos,0x150,0x4744000)
@@ -401,8 +402,14 @@ for name,fn in [('default carrying, repaired payload, original Eagle rows preser
     ('forward shift guards, other Eagles, firing/outgoing states, invalid vectors and partial-write restoration',forward_shift_guards),
     ('manager archives and 41 presets with 17550 selectable combinations',package)]:
     fn();passed.append(name);print('PASS',name)
+from menu_checks import run as run_menu_checks
+passed.extend(run_menu_checks(Scenario,SOURCE,ROOT))
 result_path=ROOT/'validation/offline_report.json'
-result_path.write_text(json.dumps({'version':'0.5.1','game_build':25480438,'tests_passed':passed,
+result_path.write_text(json.dumps({'version':'0.5.1-menu','game_build':25480438,'tests_passed':passed,
+  'test_group_count':len(passed),
+  'menu_api_verification':{'provider':'external version2 source' if os.environ.get('HD2_MOD_OPTIONS_MENU_SOURCE') else 'API contract fixture',
+    'provider_sha256':hashlib.sha256(Path(os.environ['HD2_MOD_OPTIONS_MENU_SOURCE']).read_bytes()).hexdigest() if os.environ.get('HD2_MOD_OPTIONS_MENU_SOURCE') else None,
+    'registered_rows':11,'first_row':'Language','native_ui_hook_executed':False},
   'preset_combinations':17550,'preset_modules_checked':41,'in_game_loader_verified':False,'default_carry_verified':False,
-  'in_game_bombing_verified':False,'multiplayer_verified':False,'status':'OFFLINE_PASSED',
+  'in_game_bombing_verified':False,'in_game_menu_verified':False,'multiplayer_verified':False,'status':'OFFLINE_PASSED',
   'previous_version':{'version':'0.1.0','default_carry_verified':True,'battlefield_test':'CRASHED: missing EagleComponent for native payload; removed'}},indent=2),encoding='utf-8',newline='\n')

@@ -1,14 +1,16 @@
-# 地毯式轰炸默认携带 v0.5.1
+# 地毯式轰炸默认携带 v0.5.1-menu
+
+此包为 v0.5.1 的 MODS 菜单适配版，使用方法见 [MODS 菜单说明](README_MODS菜单.md)。菜单适配仅完成离线验证；以下 v0.5.1 实测记录属于原版。安装此包应导入 `NativeCarpetBomb_v0.5.1-menu.zip`。
 
 v0.5.1 移除旧的数量代码修改，增加“投弹目标前移”。数量倍率尚未完成，暂固定原版 **1x（每架 20 枚）**。16 组离线检查通过；本版冷启动和 200 kg /1x/前移 80 米实测通过，用户确认信标两侧均有爆炸、覆盖更均匀。500 kg /1x/前移 0 米也已获用户确认正常投弹。
 
 进入新任务时，通过必带的“补给”附带原生 `CarpetBomb` 战备，不占四个自选槽位。输入为 **↑ → ↑ → ↑ →**。需要 **Bingus Shared Loader v18**，支持 Steam build **25480438** / EXE **1.8.46015.0**。
 
-v0.5.2 已因用户报告问题而撤回。本版恢复此前实测的 v0.5.1 核心，运行代码未作新修改。
+v0.5.2 已因用户报告问题而撤回。此适配版基于此前实测的 v0.5.1，新增菜单与配置保存代码，原有游戏内存操作及轰炸处理函数保持一致。
 
 ## 安装与设置
 
-1. 关闭游戏，在 Arsenal / HD2MM 导入 `NativeCarpetBomb_v0.5.1.zip` 替换旧版。
+1. 关闭游戏，在 Arsenal / HD2MM 导入 `NativeCarpetBomb_v0.5.1-menu.zip` 替换旧版。
 2. 启用“核心”，选择次数、每次使用之间的调用冷却、飞鹰返航装填冷却、炸弹类型和目标前移距离。
 3. 按加载器文档设置启动脚本优先级，先 Purge（清除旧部署），再 Deploy（部署当前选择），然后重启游戏，进入新任务。
 
@@ -34,6 +36,7 @@ v0.5.2 已因用户报告问题而撤回。本版恢复此前实测的 v0.5.1 �
 位置：`%LOCALAPPDATA%\CowboyBingus\Helldivers2\Logs\CarpetBombNative.log` / `CarpetBombNative.cfg`。
 
 ```ini
+language=zh
 enabled=1
 uses=manager
 cooldown=manager

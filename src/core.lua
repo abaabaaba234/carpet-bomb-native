@@ -2,7 +2,7 @@
 -- Native CarpetBomb grant and missing payload reconstruction.
 local previous=rawget(_G,'CarpetBombNative')
 if previous then return previous end
-local S={version='0.5.1',phase='waiting',elapsed=0,owned={},writes=0,allocations={}}
+local S={version='0.5.1-menu',phase='waiting',elapsed=0,owned={},writes=0,allocations={}}
 rawset(_G,'CarpetBombNative',S)
 local ffi=require('ffi')
 local ROOT=(os.getenv('LOCALAPPDATA') or '')..'\\CowboyBingus\\Helldivers2\\Logs\\'
@@ -19,13 +19,15 @@ local function preset(axis,default)
     return ok and type(t)=='table' and t.value or default
 end
 log('Loading v'..S.version..' manager presets')
-local defaults={enabled=1,uses=preset('uses',2),cooldown=preset('cooldown',15),rearm=preset('rearm',-1),
+local defaults={language='zh',enabled=1,uses=preset('uses',2),cooldown=preset('cooldown',15),rearm=preset('rearm',-1),
     bomb=preset('bomb',170),bomb_count=20,forward=preset('forward',80)}
 log('Manager presets: uses='..defaults.uses..' call_interval='..defaults.cooldown..' rearm='..defaults.rearm
     ..' projectile='..defaults.bomb..' bombs_per_aircraft='..defaults.bomb_count)
 local config={};for k,v in pairs(defaults) do config[k]=v end
 S.config=config
 local last_text
+local config_values={}
+local config_keys={'language','enabled','uses','cooldown','rearm','bomb','bomb_count','forward'}
 local function read_config()
     local f=io.open(CFG,'rb')
     if not f then
@@ -35,14 +37,21 @@ local function read_config()
           '# rearm=-1 keeps the existing game setting.\n',
           '# bomb=170 (Airstrike), 192 (200 kg), 239 (Eagle 500 kg).\n',
           '# bomb_count is fixed at20; forward=0..300 metres along incoming flight direction.\n',
-          'enabled=1\nuses=manager\ncooldown=manager\nrearm=manager\nbomb=manager\nbomb_count=manager\nforward=manager\n');f:close();f=io.open(CFG,'rb') end
+          'language=zh\nenabled=1\nuses=manager\ncooldown=manager\nrearm=manager\nbomb=manager\nbomb_count=manager\nforward=manager\n');f:close();f=io.open(CFG,'rb') end
     end
     local text=f and f:read('*a') or '';if f then f:close() end
     if text==last_text then return false end
     local next_config={};for k,v in pairs(defaults) do next_config[k]=v end
+    local next_values={language='zh',enabled=1,uses='manager',cooldown='manager',rearm='manager',
+        bomb='manager',bomb_count='manager',forward='manager'}
     for line in text:gmatch('[^\r\n]+') do
         local key,value=line:match('^%s*([%w_]+)%s*=%s*([%w_%-%.]+)')
-        if key=='bomb_count' then
+        if key=='language' then
+            if value~='zh' and value~='en' then
+                last_text=text;log('Config rejected: '..key..'='..value);return false
+            end
+            next_config.language=value;next_values.language=value
+        elseif key=='bomb_count' then
             if value~='manager' and value~='20' then log('Quantity override ignored: fixed20; executable patch withdrawn') end
             next_config.bomb_count=20
         elseif defaults[key]~=nil and value~='manager' then
@@ -56,9 +65,158 @@ local function read_config()
                 last_text=text;log('Config rejected: '..key..'='..value);return false
             end
             next_config[key]=n
+            next_values[key]=n
         end
     end
-    for k,v in pairs(next_config) do config[k]=v end;last_text=text;return true
+    for k,v in pairs(next_config) do config[k]=v end
+    config_values=next_values;last_text=text;return true
+end
+local function save_config()
+    -- Retain comments and unknown keys; persist each axis's manager/custom source.
+    local seen={};local lines={}
+    for line in (last_text or ''):gmatch('[^\r\n]+') do
+        local prefix,key,tail=line:match('^(%s*([%w_]+)%s*=%s*)[%w_%-%.]+(.*)$')
+        if key and config_values[key]~=nil then
+            line=prefix..tostring(config_values[key])..tail;seen[key]=true
+        end
+        lines[#lines+1]=line
+    end
+    for _,key in ipairs(config_keys) do
+        if not seen[key] then lines[#lines+1]=key..'='..tostring(config_values[key]) end
+    end
+    local text=table.concat(lines,'\n')..'\n'
+    local f,reason=io.open(CFG,'wb')
+    if not f then log('Menu config save failed: '..tostring(reason));return false end
+    local written,write_reason=f:write(text);local closed,close_reason=f:close()
+    if not written or not closed then
+        log('Menu config save failed: '..tostring(write_reason or close_reason));return false
+    end
+    last_text=text;return true
+end
+local MENU_TEXT={
+    zh={title='原生地毯轰炸',language_description='选择本模组语言；应用后关闭并重新打开 Esc 菜单刷新文字。',
+        enabled='启用',enabled_description='默认携带地毯轰炸。关闭后沿用原版恢复逻辑，停止调整后续飞机。',
+        manager='跟随管理器',custom='自定义',limited='有限次数',unlimited='无限',vanilla='保持原版',
+        uses_mode='使用次数来源',uses_mode_description='跟随部署预设，或指定有限次数 / 无限。已有次数可能需要新任务更新。',
+        uses='使用次数',uses_description='1–100 次；应用此滑块会切换为有限次数。已有次数可能需要新任务更新。',
+        cooldown_source='调用冷却来源',cooldown_source_description='跟随部署预设，或使用自定义调用间隔。',
+        cooldown='调用冷却（秒）',cooldown_description='0–1800 秒；应用此滑块会切换为自定义。已在进行的计时可能需要新任务更新。',
+        rearm_mode='飞鹰装填来源',rearm_mode_description='跟随部署预设、保持原版，或自定义。全部携带的飞鹰战备共用；舰船升级仍由游戏计算。',
+        rearm='飞鹰装填冷却（秒）',rearm_description='0–1800 秒；应用此滑块会切换为自定义。影响全部携带的飞鹰战备。',
+        bomb='炸弹类型',bomb_description='跟随预设或选择弹体。更换后需重启并进入新任务载入资源；数量固定为每架 20 枚。',
+        airstrike='原版飞鹰空袭炸弹',native_bomb='地毯轰炸 200 kg',heavy_bomb='飞鹰 500 kg',
+        forward_source='目标前移来源',forward_source_description='跟随部署预设，或自定义沿飞鹰进场方向的前移距离。',
+        forward='投弹目标前移（米）',forward_description='0–300 米；应用此滑块会切换为自定义。仅影响后续新出动飞机，0 米保留原落点。'},
+    en={title='Native CarpetBomb',language_description='Select this mod\'s language. Apply, then close and reopen the Esc menu.',
+        enabled='Enable',enabled_description='Carry CarpetBomb automatically. Disable restores owned settings and stops adjusting future aircraft.',
+        manager='Manager preset',custom='Custom',limited='Limited charges',unlimited='Unlimited',vanilla='Vanilla',
+        uses_mode='Charges source',uses_mode_description='Use the deployed preset, limited charges, or unlimited charges. Existing charges may require a new mission.',
+        uses='Charges',uses_description='1–100 charges. Applying this slider selects limited charges. Existing charges may require a new mission.',
+        cooldown_source='Call interval source',cooldown_source_description='Use the deployed preset or a custom interval between calls.',
+        cooldown='Call interval (seconds)',cooldown_description='0–1800 seconds. Applying this slider selects Custom. Running timers may require a new mission.',
+        rearm_mode='Eagle rearm source',rearm_mode_description='Use the deployed preset, Vanilla, or Custom. Shared by all carried Eagles; ship upgrades still apply.',
+        rearm='Eagle rearm (seconds)',rearm_description='0–1800 seconds. Applying this slider selects Custom. Affects all carried Eagles.',
+        bomb='Bomb type',bomb_description='Use the preset or select a projectile. Restart and enter a new mission to load its resources. Fixed at 20 bombs per aircraft.',
+        airstrike='Airstrike bomb',native_bomb='CarpetBomb 200 kg',heavy_bomb='Eagle 500 kg',
+        forward_source='Forward offset source',forward_source_description='Use the deployed preset or a custom offset along the incoming flight direction.',
+        forward='Strike forward offset (metres)',forward_description='0–300 metres. Applying this slider selects Custom. Only future aircraft change; 0 retains the original target.'},
+}
+local menu_api,menu_blocked
+local function menu_text(key)
+    return function()return MENU_TEXT[config.language=='en' and 'en' or 'zh'][key]end
+end
+local menu_title=menu_text('title')
+local function finite_uses()return config.uses>0 and config.uses or (defaults.uses>0 and defaults.uses or 2)end
+local function finite_rearm()return config.rearm>=0 and config.rearm or (defaults.rearm>=0 and defaults.rearm or 150)end
+local function menu_values()
+    return {language=config.language=='en' and 2 or 1,enabled=config.enabled==1,
+        uses_mode=config_values.uses=='manager' and 1 or config.uses==-1 and 3 or 2,uses=finite_uses(),
+        cooldown_source=config_values.cooldown=='manager' and 1 or 2,cooldown=config.cooldown,
+        rearm_mode=config_values.rearm=='manager' and 1 or config.rearm==-1 and 2 or 3,rearm=finite_rearm(),
+        bomb=config_values.bomb=='manager' and 1 or config.bomb==170 and 2 or config.bomb==192 and 3 or 4,
+        forward_source=config_values.forward=='manager' and 1 or 2,forward=config.forward}
+end
+local function menu_checked(ok,reason)
+    if ok~=true then error(tostring(reason or 'Menu operation failed'),0)end
+end
+local function menu_sync()
+    for key,value in pairs(menu_values()) do
+        local id='carpet_bomb_native_'..key
+        if menu_api.get(id)~=value then menu_checked(menu_api.set(id,value))end
+    end
+end
+local function menu_change(key,value)
+    local axis=key:gsub('_mode$',''):gsub('_source$','')
+    local wanted
+    if key=='language' then
+        if value~=1 and value~=2 then return end;wanted=value==1 and 'zh' or 'en'
+    elseif key=='enabled' then
+        if type(value)~='boolean' then return end;wanted=value and 1 or 0
+    elseif key=='uses_mode' then
+        if value~=1 and value~=2 and value~=3 then return end
+        wanted=value==1 and 'manager' or value==3 and -1 or finite_uses()
+    elseif key=='rearm_mode' then
+        if value~=1 and value~=2 and value~=3 then return end
+        wanted=value==1 and 'manager' or value==2 and -1 or finite_rearm()
+    elseif key=='cooldown_source' or key=='forward_source' then
+        if value~=1 and value~=2 then return end
+        wanted=value==1 and 'manager' or config[axis]
+    elseif key=='bomb' then
+        wanted=({[1]='manager',[2]=170,[3]=192,[4]=239})[value]
+        if wanted==nil then return end
+    else
+        local maximum=key=='uses' and 100 or key=='forward' and 300 or 1800
+        local minimum=key=='uses' and 1 or 0
+        if type(value)~='number' or value~=value or value%1~=0 or value<minimum or value>maximum then return end
+        wanted=value
+    end
+    if config_values[axis]==wanted then return end
+    local old_value,old_config=config_values[axis],config[axis]
+    config_values[axis]=wanted;config[axis]=wanted=='manager' and defaults[axis] or wanted
+    if not save_config() then config_values[axis]=old_value;config[axis]=old_config;return end
+    if axis~='language' then S.menu_dirty=true;S.elapsed=1 end
+end
+local function menu_attach(menu)
+    if (tonumber(menu.version) or 1)<2 then error('Requires ModOptionsMenu version2',0)end
+    for _,method in ipairs{'register_option','on_change','get','set'}do
+        if type(menu[method])~='function' then error('Missing menu API '..method,0)end
+    end
+    local values=menu_values()
+    local rows={
+        {'language','choice',{'简体汉字','English'}}, {'enabled','toggle'},
+        {'uses_mode','choice',{'manager','limited','unlimited'}}, {'uses','slider',1,100},
+        {'cooldown_source','choice',{'manager','custom'}}, {'cooldown','slider',0,1800},
+        {'rearm_mode','choice',{'manager','vanilla','custom'}}, {'rearm','slider',0,1800},
+        {'bomb','choice',{'manager','airstrike','native_bomb','heavy_bomb'}},
+        {'forward_source','choice',{'manager','custom'}}, {'forward','slider',0,300},
+    }
+    for _,row in ipairs(rows)do
+        local key,kind=row[1],row[2]
+        local option={type=kind,mod=menu_title,label=key=='language' and 'Language' or menu_text(key),
+            default=values[key],description=menu_text(key=='language' and 'language_description' or key..'_description')}
+        if kind=='choice' then
+            option.choices={}
+            for _,choice in ipairs(row[3])do
+                option.choices[#option.choices+1]=key=='language' and choice or menu_text(choice)
+            end
+        elseif kind=='slider' then option.min=row[3];option.max=row[4];option.step=1 end
+        menu_checked(menu.register_option('carpet_bomb_native_'..key,option))
+    end
+    for _,row in ipairs(rows)do
+        local key=row[1]
+        menu_checked(menu.on_change('carpet_bomb_native_'..key,function(value)menu_change(key,value)end))
+    end
+    menu_api=menu;menu_sync();S.menu_registered=true
+    log('MODS menu registered (11 options; fixed vanilla quantity)')
+end
+local function menu_step()
+    if menu_blocked then return end
+    local ok,reason=pcall(function()
+        if menu_api then menu_sync();return end
+        local menu=rawget(_G,'ModOptionsMenu')
+        if type(menu)=='table' then menu_attach(menu)end
+    end)
+    if not ok then menu_blocked=tostring(reason);log('Optional MODS menu unavailable: '..menu_blocked)end
 end
 local kernel={}
 do
@@ -448,6 +606,8 @@ local function tick(dt)
     S.elapsed=S.elapsed+((type(dt)=='number' and dt>0 and dt<5) and dt or 1/60)
     if S.elapsed<1 then return end;S.elapsed=0
     local changed=read_config()
+    menu_step()
+    if S.menu_dirty then changed=true;S.menu_dirty=false end
     if not S.carrier then initialize();return end
     if changed or S.phase=='waiting' then apply();return end
     if not same_record(S.carrier) or not same_record(S.native) then stop('Record identity changed');return end
@@ -461,7 +621,7 @@ local function tick(dt)
     end
 end
 S.disable=function()config.enabled=0;if S.carrier then apply()end end
-read_config();log('Loaded v'..S.version..'; native grant experiment, Bingus Shared Loader v18 / API 1')
+read_config();menu_step();log('Loaded v'..S.version..'; native grant experiment, Bingus Shared Loader v18 / API 1')
 local old_update=rawget(_G,'update')
 if type(old_update)~='function' then S.phase='stopped';log('Global update callback unavailable');return S end
 function update(dt,...)

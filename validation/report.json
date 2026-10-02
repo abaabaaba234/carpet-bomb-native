@@ -1003,5 +1003,54 @@
     "offline_groups_passed": 16,
     "cold_start_after_rollback_verified": false,
     "updated_at": "2026-10-02T21:56:22+08:00"
+  },
+  "menu_adaptation": {
+    "version": "0.5.1-menu",
+    "game_build": 25480438,
+    "tests_passed": [
+      "default carrying, repaired payload, original Eagle rows preserved and disable restoration",
+      "independent charges/cooldown, preserved native identity and configuration validation",
+      "unsupported build, existing carrier link and executable pages refused",
+      "partial write rollback",
+      "competing writer preservation and restoration",
+      "stale carrier identity refused",
+      "payload alias refusal, read-only protection restoration and competing table writer",
+      "late game datalibrary initialization retries without configuration edits",
+      "independent rearm setting, vanilla restoration, zero/max values and disable restoration",
+      "default rearm non-interference, competing rearm writer and stale rearm record refusal",
+      "partial rearm write rolls back native grant transaction",
+      "all three bomb identities/resources, unchanged original Eagles/projectiles and disable restoration",
+      "bomb reload, fixed original quantity, ignored legacy ratios and no executable writes",
+      "forward shift in every direction, one adjustment per aircraft and future-flight reload",
+      "forward shift guards, other Eagles, firing/outgoing states, invalid vectors and partial-write restoration",
+      "manager archives and 41 presets with 17550 selectable combinations",
+      "real menu: order, language migration/refresh, cache authority, pending edits and restart",
+      "real menu: valid ranges, invalid callback rejection, manager restoration and disable restoration",
+      "real menu: sentinel sources and simultaneous language/parameter changes",
+      "optional menu version/registration/callback/sync failures and config save failure"
+    ],
+    "test_group_count": 20,
+    "menu_api_verification": {
+      "provider": "external version2 source",
+      "provider_sha256": "36c7ae97bd480613d7f7a994da1d385d8977d8e6d9f7d4a8842e8d8c83594530",
+      "registered_rows": 11,
+      "first_row": "Language",
+      "native_ui_hook_executed": false
+    },
+    "preset_combinations": 17550,
+    "preset_modules_checked": 41,
+    "in_game_loader_verified": false,
+    "default_carry_verified": false,
+    "in_game_bombing_verified": false,
+    "in_game_menu_verified": false,
+    "multiplayer_verified": false,
+    "status": "OFFLINE_PASSED",
+    "baseline": {
+      "version": "0.5.1",
+      "commit": "ac0811f53c6a3523d1bd6756fc3a30044f3569e0",
+      "package": "NativeCarpetBomb_v0.5.1.zip",
+      "sha256": "f744d694224ec5bfba453b5deb258974b2c1733f6116f45f7ca991bf02d4a597",
+      "game_memory_and_bombing_functions_unchanged": true
+    }
   }
 }

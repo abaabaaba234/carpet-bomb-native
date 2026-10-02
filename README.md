@@ -1,13 +1,13 @@
-# Native CarpetBomb
+# Native CarpetBomb v0.5.1-menu
 
-Native hidden CarpetBomb (↑ → ↑ → ↑ →), automatically carried alongside Resupply without occupying a chosen slot. Requires Bingus Shared Loader v18. Supported Steam build: 25480438 / EXE 1.8.46015.0.
+Native hidden CarpetBomb (↑ → ↑ → ↑ →), automatically carried alongside Resupply without occupying a chosen slot. This version adapts the field-tested v0.5.1 runtime to Bingus ModOptionsMenu API 1 / version 2. Requires Bingus Shared Loader v18; the in-game MODS menu is a separate dependency. Supported Steam build: 25480438 / EXE 1.8.46015.0.
 
-v0.5.1 offers independent charges, interval between uses, shared Eagle rearm cooldown, bomb selection (Airstrike / native 200 kg / Eagle 500 kg), and forward target offset (0 /40 /80 /120 /160 metres). Quantity is temporarily fixed at vanilla 1x, 20 bombs per aircraft. Requested quantity multipliers remain unfinished.
+The menu provides a per-mod Chinese/English language choice, an enable toggle, charges, interval between calls, shared Eagle rearm cooldown, bomb selection, and forward target offset. Each parameter can follow its deployed manager preset or use an independent override. Quantity remains fixed at 20 bombs per aircraft. Gameplay memory operations, payload repair, forward adjustment, and disable restoration retain their v0.5.1 implementation.
 
-The experimental quantity implementation was withdrawn after a GameGuard 1015 bridge report. The current source removes executable-code writes. The exact earlier trigger was not isolated. No external game-memory inspection is used for new live tests.
+Import `NativeCarpetBomb_v0.5.1-menu.zip` with Arsenal / HD2MM, replacing the older package. Deploy with the loader's documented priority. Apply menu changes to save them to `CarpetBombNative.cfg`. After changing the mod language, close and reopen the Esc menu. Bomb changes require a restart and a new mission to load the selected resources; charges and running timers may require a new mission. Forward changes affect future aircraft only.
 
-The earlier 200 kg/vanilla-quantity field test succeeded near the beacon. v0.5.1 cold start and 200 kg/1x/80-metre forward adjustment passed; the user observed more even coverage on both sides of the beacon. The 500 kg/1x/0-metre field test also passed, with the user confirming normal bomb drops. Sixteen offline groups and 41 preset modules pass. Multiplayer is unverified.
+Twenty offline test groups cover the existing runtime and menu integration. The adaptation has not been tested in the live game; earlier v0.5.1 field tests refer to the original version. Multiplayer remains unverified. v0.5.2 was withdrawn after a user-reported regression.
 
-Import `NativeCarpetBomb_v0.5.1.zip` with Arsenal/HD2MM and deploy with the loader's documented priority. The 200 kg/80-metre coverage and 500 kg/0-metre bomb drops have been field-tested. Other combinations remain unverified. See [Chinese instructions](README_中文.md), [validation](validation/report.json), and [credits](CREDITS.md). Download [v0.5.1](https://github.com/abaabaaba234/carpet-bomb-native/releases/tag/v0.5.1). v0.5.2 has been withdrawn after a user-reported regression; this release restores the earlier field-tested runtime unchanged.
+See [menu instructions](README_MODS菜单.md), [Chinese runtime instructions](README_中文.md), [validation](validation/report.json), and [credits](CREDITS.md).
 
-Build: `python tools/build.py`. Validate: `python tests/test_runtime.py`. Install development requirements from `requirements-dev.txt`.
+Build: `python tools/build.py` (output under `dist`, ignored by Git). Validate: `python tests/test_runtime.py`. Install development requirements from `requirements-dev.txt`. Tests use an API contract fixture by default; set `HD2_MOD_OPTIONS_MENU_SOURCE` to the external version2 provider's Lua source to run the same checks against its real API. No third-party menu source is distributed here, and tests do not install its native UI hook.

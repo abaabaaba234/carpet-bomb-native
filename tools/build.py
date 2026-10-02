@@ -3,7 +3,7 @@ from pathlib import Path
 import struct,json,hashlib,zipfile
 from preset_bytecode import encode as preset_bytecode
 ROOT=Path(__file__).resolve().parents[1]
-VERSION='0.5.1';MASK=(1<<64)-1
+VERSION='0.5.1-menu';MASK=(1<<64)-1
 def murmur64(data):
     m=0xc6a4a7935bd1e995;h=len(data)*m&MASK
     for i in range(0,len(data)//8*8,8):
@@ -50,11 +50,11 @@ def build():
             choices.append({'Name':label,'Description':description,'Include':[folder]})
         options.append({'Name':title,'Description':description+' 部署后重启并进入新任务。','SubOptions':choices})
     manifest={'Version':1,'Guid':'acffed9b-07c3-48f8-a936-19874038111b','Name':'原生地毯轰炸默认携带 / Native CarpetBomb v'+VERSION,
-      'Description':'原生地毯式轰炸自动携带，不占四个自选槽位。可分别设置使用次数、每次使用之间的冷却、飞鹰返航装填冷却、炸弹类型和投弹目标前移。数量暂固定原版 1x。需要 Bingus Shared Loader v18；支持 Steam build 25480438。', 'Options':options}
+      'Description':'基于 v0.5.1 的 MODS 菜单适配，支持本模组中英语言、启用开关、次数、调用冷却、飞鹰装填、炸弹类型和目标前移。各参数可跟随管理器预设或自定义。数量固定原版 1x。需要 Bingus Shared Loader v18；游戏内菜单另需 Bingus ModOptionsMenu version2。支持 Steam build 25480438。', 'Options':options}
     # Arsenal's import can decode text with the Windows ANSI code page.
     # JSON escapes retain the Chinese labels under either text encoding.
     files['manifest.json']=json.dumps(manifest,ensure_ascii=True,indent=2).encode('ascii')
-    for name in ('README_中文.md','CREDITS.md'):files[name]=(ROOT/name).read_bytes()
+    for name in ('README_中文.md','README_MODS菜单.md','CREDITS.md'):files[name]=(ROOT/name).read_bytes()
     if (ROOT/'validation/report.json').exists():files['VALIDATION.json']=(ROOT/'validation/report.json').read_bytes()
     output=ROOT/'dist'/f'NativeCarpetBomb_v{VERSION}.zip';output.parent.mkdir(exist_ok=True)
     with zipfile.ZipFile(output,'w',zipfile.ZIP_DEFLATED) as archive:

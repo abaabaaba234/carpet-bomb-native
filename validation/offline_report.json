@@ -1,5 +1,5 @@
 {
-  "version": "0.5.1",
+  "version": "0.5.1-menu",
   "game_build": 25480438,
   "tests_passed": [
     "default carrying, repaired payload, original Eagle rows preserved and disable restoration",
@@ -17,13 +17,26 @@
     "bomb reload, fixed original quantity, ignored legacy ratios and no executable writes",
     "forward shift in every direction, one adjustment per aircraft and future-flight reload",
     "forward shift guards, other Eagles, firing/outgoing states, invalid vectors and partial-write restoration",
-    "manager archives and 41 presets with 17550 selectable combinations"
+    "manager archives and 41 presets with 17550 selectable combinations",
+    "real menu: order, language migration/refresh, cache authority, pending edits and restart",
+    "real menu: valid ranges, invalid callback rejection, manager restoration and disable restoration",
+    "real menu: sentinel sources and simultaneous language/parameter changes",
+    "optional menu version/registration/callback/sync failures and config save failure"
   ],
+  "test_group_count": 20,
+  "menu_api_verification": {
+    "provider": "external version2 source",
+    "provider_sha256": "36c7ae97bd480613d7f7a994da1d385d8977d8e6d9f7d4a8842e8d8c83594530",
+    "registered_rows": 11,
+    "first_row": "Language",
+    "native_ui_hook_executed": false
+  },
   "preset_combinations": 17550,
   "preset_modules_checked": 41,
   "in_game_loader_verified": false,
   "default_carry_verified": false,
   "in_game_bombing_verified": false,
+  "in_game_menu_verified": false,
   "multiplayer_verified": false,
   "status": "OFFLINE_PASSED",
   "previous_version": {
