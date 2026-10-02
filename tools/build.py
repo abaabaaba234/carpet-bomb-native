@@ -3,7 +3,7 @@ from pathlib import Path
 import struct,json,hashlib,zipfile
 from preset_bytecode import encode as preset_bytecode
 ROOT=Path(__file__).resolve().parents[1]
-VERSION='0.4.0';MASK=(1<<64)-1
+VERSION='0.5.2';MASK=(1<<64)-1
 def murmur64(data):
     m=0xc6a4a7935bd1e995;h=len(data)*m&MASK
     for i in range(0,len(data)//8*8,8):
@@ -32,16 +32,22 @@ def build():
         ('cooldown','调用冷却（每次使用之间） / Call Interval',[15,900,0,5,10,30,60,120,300,600],'地毯式轰炸每次使用之间的基础冷却，默认 15 秒。'),
         ('rearm','飞鹰返航装填冷却 / Eagle Rearm',[-1,0,5,10,15,30,60,120,150,180,300,600,900],
          '次数耗尽后飞鹰返回装填的基础冷却，也适用于手动重新武装。所有携带的飞鹰战备共用，舰船升级仍按原版计算。默认保持原版。'),
+        ('bomb','炸弹类型 / Bomb Type',[170,192,239],
+         '选择地毯式轰炸投下的实际弹体和对应爆炸效果。默认保留原版飞鹰空袭炸弹；可选地毯轰炸专用 200 kg 或飞鹰 500 kg。'),
+        ('bomb_count','投弹数量（暂固定原版） / Bomb Quantity',[20],
+         '当前仅提供原版 1x：每架 20 枚。带数量倍率的测试在舰桥出现 GameGuard 1015，旧实现已移除。数量倍率尚未完成。'),
     ],1):
         choices=[]
         for n in values:
             folder=f'Options/{axis}/{"unlimited" if axis=="uses" and n==-1 else "vanilla" if n==-1 else n}'
             add(folder,index,'mods/carpet_bomb_native/'+axis,preset_bytecode(n))
-            label='无限 / Unlimited' if axis=='uses' and n==-1 else '保持原版 / Vanilla' if n==-1 else f'{n} 次' if axis=='uses' else f'{n} 秒'
+            if axis=='bomb':label={170:'原版飞鹰空袭炸弹 / Airstrike',192:'地毯式轰炸 200 kg',239:'飞鹰 500 kg'}[n]
+            elif axis=='bomb_count':label=f'{n/20:g}x（每架 {n} 枚）'
+            else:label='无限 / Unlimited' if axis=='uses' and n==-1 else '保持原版 / Vanilla' if n==-1 else f'{n} 次' if axis=='uses' else f'{n} 秒'
             choices.append({'Name':label,'Description':description,'Include':[folder]})
         options.append({'Name':title,'Description':description+' 部署后重启并进入新任务。','SubOptions':choices})
     manifest={'Version':1,'Guid':'acffed9b-07c3-48f8-a936-19874038111b','Name':'原生地毯轰炸默认携带 / Native CarpetBomb v'+VERSION,
-      'Description':'原生地毯式轰炸自动携带，不占四个自选槽位。可分别设置使用次数、每次使用之间的冷却，以及飞鹰返航装填冷却。需要 Bingus Shared Loader v18；支持 Steam build 25480438。', 'Options':options}
+      'Description':'原生地毯式轰炸自动携带，不占四个自选槽位。可分别设置使用次数、每次使用之间的冷却、飞鹰返航装填冷却和炸弹类型。数量暂固定原版 1x。需要 Bingus Shared Loader v18；支持 Steam build 25480438。', 'Options':options}
     # Arsenal's import can decode text with the Windows ANSI code page.
     # JSON escapes retain the Chinese labels under either text encoding.
     files['manifest.json']=json.dumps(manifest,ensure_ascii=True,indent=2).encode('ascii')

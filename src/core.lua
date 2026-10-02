@@ -2,7 +2,7 @@
 -- Native CarpetBomb grant and missing payload reconstruction.
 local previous=rawget(_G,'CarpetBombNative')
 if previous then return previous end
-local S={version='0.4.0',phase='waiting',elapsed=0,owned={},writes=0,allocations={}}
+local S={version='0.5.2',phase='waiting',elapsed=0,owned={},writes=0,allocations={}}
 rawset(_G,'CarpetBombNative',S)
 local ffi=require('ffi')
 local ROOT=(os.getenv('LOCALAPPDATA') or '')..'\\CowboyBingus\\Helldivers2\\Logs\\'
@@ -19,8 +19,10 @@ local function preset(axis,default)
     return ok and type(t)=='table' and t.value or default
 end
 log('Loading v'..S.version..' manager presets')
-local defaults={enabled=1,uses=preset('uses',2),cooldown=preset('cooldown',15),rearm=preset('rearm',-1)}
-log('Manager presets: uses='..defaults.uses..' call_interval='..defaults.cooldown..' rearm='..defaults.rearm)
+local defaults={enabled=1,uses=preset('uses',2),cooldown=preset('cooldown',15),rearm=preset('rearm',-1),
+    bomb=preset('bomb',170),bomb_count=20}
+log('Manager presets: uses='..defaults.uses..' call_interval='..defaults.cooldown..' rearm='..defaults.rearm
+    ..' projectile='..defaults.bomb..' bombs_per_aircraft='..defaults.bomb_count)
 local config={};for k,v in pairs(defaults) do config[k]=v end
 S.config=config
 local last_text
@@ -31,19 +33,25 @@ local function read_config()
         if f then f:write('# Native CarpetBomb. Save to reload. manager = deployed dropdown.\n',
           '# cooldown = interval between uses; rearm = return/reload cooldown for ALL carried Eagles.\n',
           '# rearm=-1 keeps the existing game setting.\n',
-          'enabled=1\nuses=manager\ncooldown=manager\nrearm=manager\n');f:close();f=io.open(CFG,'rb') end
+          '# bomb=170 (Airstrike), 192 (200 kg), 239 (Eagle 500 kg).\n',
+          '# bomb_count is fixed at20.\n',
+          'enabled=1\nuses=manager\ncooldown=manager\nrearm=manager\nbomb=manager\nbomb_count=manager\n');f:close();f=io.open(CFG,'rb') end
     end
     local text=f and f:read('*a') or '';if f then f:close() end
     if text==last_text then return false end
     local next_config={};for k,v in pairs(defaults) do next_config[k]=v end
     for line in text:gmatch('[^\r\n]+') do
         local key,value=line:match('^%s*([%w_]+)%s*=%s*([%w_%-%.]+)')
-        if defaults[key]~=nil and value~='manager' then
+        if key=='bomb_count' then
+            if value~='manager' and value~='20' then log('Quantity override ignored: fixed20; executable patch withdrawn') end
+            next_config.bomb_count=20
+        elseif defaults[key]~=nil and value~='manager' then
             local n=tonumber(value)
             if not n or n%1~=0 or (key=='enabled' and n~=0 and n~=1)
                 or (key=='uses' and n~=-1 and (n<1 or n>100))
                 or (key=='cooldown' and (n<0 or n>1800))
-                or (key=='rearm' and (n< -1 or n>1800)) then
+                or (key=='rearm' and (n< -1 or n>1800))
+                or (key=='bomb' and n~=170 and n~=192 and n~=239) then
                 last_text=text;log('Config rejected: '..key..'='..value);return false
             end
             next_config[key]=n
@@ -112,7 +120,29 @@ local ANCHORS={
     {0x5146bc,'4869c198000000480540010000'},
     {0x8a4806,'418b4618'},
     {0x8a4d88,'ffc383fb140f82adfdffff'},
+    {0x8a4b25,'f3440f1035ae2ab201'},
 }
+local PROJECTILES={
+    [170]={mass=100,impact=194,expire=0,label='Airstrike'},
+    [192]={mass=200,impact=182,expire=0,label='CarpetBomb 200 kg'},
+    [239]={mass=500,impact=193,expire=277,label='Eagle 500 kg'},
+}
+local function projectile(t)
+    local expected=PROJECTILES[t];local address=ptr(S.base+0x37c7670+t*8)
+    local bytes=address and read(address,272)
+    if not bytes then return nil end
+    if u32(bytes,0)~=t or bytes:sub(0x25,0x28)~=pack_float(expected.mass)
+        or bytes:sub(0x81,0x88)~=unhex('36b33606802fe571')
+        or u32(bytes,0x90)~=expected.impact or u32(bytes,0x9c)~=expected.expire then
+        error('Projectile identity differs: '..t)
+    end
+    return {type=t,addr=address}
+end
+local function projectile_intact(t)
+    local p=projectile(t);if not p then return false end
+    if not S.projectiles[t] then S.projectiles[t]=p end
+    return p.addr==S.projectiles[t].addr
+end
 local function check_build()
     local base=tonumber(ffi.cast('uintptr_t',kernel.GetModuleHandleA('game.dll')))
     if not base or base==0 then return nil end
@@ -248,11 +278,13 @@ local function repair_intact()
 end
 local function restore()
     local clean=true
-    for _,e in ipairs(S.owned) do
+    for i=#S.owned,1,-1 do
+        local e=S.owned[i]
         if same_record(e.record) then
             local now=read(e.address,#e.original)
             if now==e.last then if not write(e.address,e.original) then clean=false end
             elseif now~=e.original then clean=false end
+        else clean=false
         end
     end
     S.owned={};return clean
@@ -267,6 +299,8 @@ local function apply()
     if (custom_rearm or S.rearm_owned) and not same_record(S.rearm) then stop('Eagle rearm record changed');return end
     if active and not repair_payload() then return end
     if active and not repair_intact() then stop('Payload alias identity changed');return end
+    if active and not projectile_intact(config.bomb) then stop('Selected projectile record changed');return end
+    if active and config.bomb==239 and not same_record(S.heavy) then stop('Eagle 500 kg resource package changed');return end
     local plan={}
     local function add(r,offset,wanted)
         plan[#plan+1]={record=r,address=r.addr+offset,original=r.bytes:sub(offset+1,offset+#wanted),wanted=wanted}
@@ -275,9 +309,18 @@ local function apply()
     -- including the mandatory Resupply (33). CarpetBomb (103) stays its own native type.
     add(S.native,0x50,active and pack_u32(config.uses==-1 and 0xffffffff or config.uses) or S.native.bytes:sub(0x51,0x54))
     add(S.native,0x68,active and pack_float(config.cooldown) or S.native.bytes:sub(0x69,0x6c))
-    for _,field in ipairs({{0x70,4},{0x94,4},{0xa8,8},{0xc8,4},{0x104,4}}) do
+    for _,field in ipairs({{0x70,4},{0x94,4},{0xc8,4},{0x104,4}}) do
         local offset,n=field[1],field[2]
         add(S.native,offset,active and S.donor.bytes:sub(offset+1,offset+n) or S.native.bytes:sub(offset+1,offset+n))
+    end
+    -- 200 kg uses the same bomb unit and impact effect already in Airstrike's
+    -- package. 500 kg uses EagleBomb's package, including its delayed explosion.
+    local package=active and (config.bomb==239 and S.heavy or S.donor).bytes:sub(0xa9,0xb0)
+        or S.native.bytes:sub(0xa9,0xb0)
+    add(S.native,0xa8,package)
+    if S.repair then
+        plan[#plan+1]={record=S.native,address=S.repair.eagle.table+1992+0x18,
+            original=pack_u32(170),wanted=pack_u32(active and config.bomb or 170)}
     end
     -- Type 49 is shared by every carried Eagle. The vanilla choice neither
     -- writes nor monitors this field unless returning a value we previously owned.
@@ -307,13 +350,17 @@ local function apply()
     S.rearm_owned=custom_rearm
     if not custom_rearm then
         -- After restoring the rearm value, relinquish it so other mods can own it.
-        local watched={};for _,e in ipairs(plan) do if e.record~=S.rearm then watched[#watched+1]=e end end
+        local watched={};for _,e in ipairs(plan) do
+            if e.record~=S.rearm then watched[#watched+1]=e end
+        end
         S.plan=watched
     end
     S.phase=active and 'active' or 'disabled'
-    log(string.format('%s: Resupply (33) additional_stratagem=%d; native CarpetBomb (103), uses=%s, call_interval=%ds, rearm=%s; %d fields changed',
+    log(string.format('%s: Resupply (33) additional_stratagem=%d; native CarpetBomb (103), uses=%s, call_interval=%ds, rearm=%s; projectile=%d (%s), bombs_per_aircraft=%d (%.2fx); %d fields changed',
         S.phase,active and 103 or 0,config.uses==-1 and 'unlimited' or tostring(config.uses),config.cooldown,
-        custom_rearm and (config.rearm..'s (all carried Eagles)') or 'unchanged',#done))
+        custom_rearm and (config.rearm..'s (all carried Eagles)') or 'unchanged',
+        active and config.bomb or 170,PROJECTILES[active and config.bomb or 170].label,
+        active and config.bomb_count or 20,(active and config.bomb_count or 20)/20,#done))
 end
 local function initialize()
     S.base=check_build();if not S.base then return end
@@ -321,7 +368,11 @@ local function initialize()
     local native=record(103,'CarpetBomb','MISSIONS CLAN STATION. Carpet Bombing Run')
     local donor=record(18,'EagleAirstrike','EAGLE. AIRSTRIKE')
     local rearm=record(49,'EagleRearm','EAGLE. REARM')
-    if not carrier or not native or not donor or not rearm then return end
+    local heavy=record(3,'EagleBomb','EAGLE. 500KG BOMB')
+    if not carrier or not native or not donor or not rearm or not heavy then return end
+    local projectiles={}
+    projectiles[config.bomb]=projectile(config.bomb);if not projectiles[config.bomb] then return end
+    if heavy.bytes:sub(0xa9,0xb0)~=unhex('5abda258703bc39b') then error('Eagle 500 kg package differs') end
     if u32(rearm.bytes,0x3c)~=7 then error('Eagle rearm category differs') end
     if u32(carrier.bytes,0x3c)~=2 or u32(carrier.bytes,0xc8)~=0 or u32(native.bytes,0x3c)~=0
         or u32(native.bytes,0x70)~=2 or u32(native.bytes,0x94)~=2 or u32(native.bytes,0xcc)~=1
@@ -330,7 +381,7 @@ local function initialize()
     end
     if u32(donor.bytes,0x70)~=0 or u32(donor.bytes,0x94)~=0 or u32(donor.bytes,0xc8)~=49
         or donor.bytes:sub(0xa9,0xb0)~=unhex('f338ff0016cc331e') or u32(donor.bytes,0x104)~=0x1084 then error('Eagle transport settings differ') end
-    S.carrier=carrier;S.native=native;S.donor=donor;S.rearm=rearm;apply()
+    S.carrier=carrier;S.native=native;S.donor=donor;S.rearm=rearm;S.heavy=heavy;S.projectiles=projectiles;apply()
 end
 local function tick(dt)
     if S.phase=='stopped' then return end
@@ -343,7 +394,10 @@ local function tick(dt)
     if S.rearm_owned and not same_record(S.rearm) then stop('Eagle rearm record identity changed');return end
     if S.phase=='active' then
         if not repair_intact() then stop('Payload aliases changed');return end
-        for _,e in ipairs(S.plan) do if read(e.address,#e.wanted)~=e.wanted then stop('Another writer changed a configured field');return end end
+        if not projectile_intact(config.bomb) then stop('Projectile table changed');return end
+        for _,e in ipairs(S.plan) do
+            if read(e.address,#e.wanted)~=e.wanted then stop('Another writer changed a configured field');return end
+        end
     end
 end
 S.disable=function()config.enabled=0;if S.carrier then apply()end end

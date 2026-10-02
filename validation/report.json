@@ -1,7 +1,7 @@
 {
-  "version": "0.4.0",
+  "version": "0.5.2",
   "game_build": 25480438,
-  "status": "COLD_START_AND_REARM_CONFIGURATION_VERIFIED",
+  "status": "OFFLINE_PASSED_FORWARD_REMOVED_LIVE_TEST_PENDING",
   "tests_passed": [
     "default carrying, repaired payload, original Eagle rows preserved and disable restoration",
     "independent charges/cooldown, preserved native identity and configuration validation",
@@ -14,112 +14,1092 @@
     "independent rearm setting, vanilla restoration, zero/max values and disable restoration",
     "default rearm non-interference, competing rearm writer and stale rearm record refusal",
     "partial rearm write rolls back native grant transaction",
-    "manager archives and 32 presets with 1170 selectable combinations"
+    "all three bomb identities/resources, unchanged original Eagles/projectiles and disable restoration",
+    "bomb reload, fixed original quantity, ignored legacy ratios and no executable writes",
+    "original aircraft targets preserved and legacy forward options ignored",
+    "manager archives and 36 presets with 3510 selectable combinations"
   ],
-  "preset_combinations": 1170,
-  "preset_modules_checked": 32,
-  "in_game_loader_verified": true,
-  "cold_start_verified": true,
-  "manager_options_live_verified": true,
+  "preset_combinations": 3510,
+  "preset_modules_checked": 36,
+  "in_game_loader_verified": false,
+  "cold_start_verified": false,
   "in_game_bombing_verified": false,
   "multiplayer_verified": false,
-  "new_options": {
-    "call_interval": "Seconds between uses of CarpetBomb (103), default 15",
-    "rearm": "Shared EagleRearm (49) return/reload base cooldown; all carried Eagles; default -1 retains game setting",
-    "rearm_values": [
-      -1,
-      0,
-      5,
-      10,
-      15,
-      30,
-      60,
-      120,
-      150,
-      180,
-      300,
-      600,
-      900
-    ]
-  },
-  "native_default_carry": "Preserved from 0.3.1; Resupply (33) extra stratagem 103",
+  "native_default_carry": "Resupply 33 additional stratagem 103",
   "approach_height": 120,
   "archive_minimum_size": 4096,
-  "previous_release": {
-    "version": "0.3.1",
-    "cold_start_verified": true,
-    "full_package_cold_start": {
-      "status": "PASSED",
-      "pid": 44644,
-      "user_report": "已进入",
-      "loader": "loader-v18",
-      "uses": 2,
-      "cooldown": 120,
-      "approach_height": 120,
-      "component_aliases_verified": 18,
-      "native_rows_preserved": true,
-      "option_archive_bytes": 4096,
-      "log_time": "2026-10-01 23:16:44"
+  "new_options": {
+    "bomb": {
+      "default": 170,
+      "choices": {
+        "170": "Original Eagle Airstrike",
+        "192": "CarpetBomb 200 kg",
+        "239": "Eagle 500 kg"
+      }
+    },
+    "bomb_count": {
+      "default": 20,
+      "choices": [
+        20
+      ],
+      "multipliers": [
+        1
+      ],
+      "status": "FIXED_AT_VANILLA; requested ratios unfinished; legacy overrides ignored"
     }
   },
-  "prior_height_fix_bombing_verified": true,
-  "battlefield_test": {
-    "version": "0.3.0",
-    "method": "guarded private-row float change matching packaged Lua source",
+  "projectile_research": {
+    "source": "https://github.com/xypwn/filediver",
+    "commit": "7b52b323b1cd75326f63c5854c3a38b60a547e32",
+    "source_file": "datalibrary/generated_projectile_settings.dl_bin.gz",
+    "200kg": {
+      "projectile": 192,
+      "mass": 200,
+      "impact_explosion": 182,
+      "unit": "71e52f800636b336",
+      "impact_effect_shared_with_airstrike": true,
+      "live_identity_verified": true
+    },
+    "500kg": {
+      "projectile": 239,
+      "mass": 500,
+      "impact_explosion": 193,
+      "delayed_explosion": 277,
+      "native_stratagem": 3,
+      "package": "9bc33b7058a2bd5a",
+      "prior_live_record_matches": true,
+      "live_identity_verified": true
+    },
+    "airstrike": {
+      "projectile": 170,
+      "mass": 100,
+      "impact_explosion": 194,
+      "prior_live_record_matches": true,
+      "live_identity_verified": true
+    }
+  },
+  "executable_code_modified": false,
+  "external_memory_inspection_used_for_new_tests": false,
+  "quantity_requested_feature": {
+    "status": "WITHDRAWN_PENDING_DATA_ONLY_IMPLEMENTATION",
+    "requested_multipliers": [
+      0.5,
+      1,
+      2
+    ],
+    "reason": "Experimental v0.5.0 bridge run reported GameGuard1015; exact trigger not isolated. Both quantity code writes and external memory reads discontinued.",
+    "not_completed": true
+  },
+  "target_adjustment": {
+    "enabled": false,
+    "manager_option_removed": true,
+    "config_field_removed": true,
+    "legacy_config_and_presets": "ignored",
+    "aircraft_target_reader_and_writer_removed": true,
+    "reason": "User requests native targeting for comparison after questioning forward-offset effectiveness"
+  },
+  "previous_release": {
+    "version": "0.5.1",
+    "game_build": 25480438,
+    "status": "200KG_FORWARD80_AND_500KG_FORWARD0_BOMBING_VERIFIED_QUANTITY_UNFINISHED",
+    "tests_passed": [
+      "default carrying, repaired payload, original Eagle rows preserved and disable restoration",
+      "independent charges/cooldown, preserved native identity and configuration validation",
+      "unsupported build, existing carrier link and executable pages refused",
+      "partial write rollback",
+      "competing writer preservation and restoration",
+      "stale carrier identity refused",
+      "payload alias refusal, read-only protection restoration and competing table writer",
+      "late game datalibrary initialization retries without configuration edits",
+      "independent rearm setting, vanilla restoration, zero/max values and disable restoration",
+      "default rearm non-interference, competing rearm writer and stale rearm record refusal",
+      "partial rearm write rolls back native grant transaction",
+      "all three bomb identities/resources, unchanged original Eagles/projectiles and disable restoration",
+      "bomb reload, fixed original quantity, ignored legacy ratios and no executable writes",
+      "forward shift in every direction, one adjustment per aircraft and future-flight reload",
+      "forward shift guards, other Eagles, firing/outgoing states, invalid vectors and partial-write restoration",
+      "manager archives and 41 presets with 17550 selectable combinations"
+    ],
+    "preset_combinations": 17550,
+    "preset_modules_checked": 41,
+    "in_game_loader_verified": true,
+    "cold_start_verified": true,
+    "in_game_bombing_verified": true,
+    "multiplayer_verified": false,
+    "native_default_carry": "Resupply 33 additional stratagem 103",
     "approach_height": 120,
-    "result": "BOMBS_NEAR_BEACON_NO_CRASH",
-    "user_report": "这回正常了是投弹在信标附近",
-    "native_payload_mode": 6,
-    "projectile": 170,
-    "aircraft_per_observed_call": 3,
-    "bombs_per_observed_call": 60,
-    "calls_captured_with_height_fix": 2,
-    "pid": 13188,
-    "third_call_capture": "began shortly before sampling ended"
+    "archive_minimum_size": 4096,
+    "new_options": {
+      "bomb": {
+        "default": 170,
+        "choices": {
+          "170": "Original Eagle Airstrike",
+          "192": "CarpetBomb 200 kg",
+          "239": "Eagle 500 kg"
+        }
+      },
+      "bomb_count": {
+        "default": 20,
+        "choices": [
+          20
+        ],
+        "multipliers": [
+          1
+        ],
+        "status": "FIXED_AT_VANILLA; requested ratios unfinished; legacy overrides ignored"
+      },
+      "forward": {
+        "default": 80,
+        "choices": [
+          0,
+          40,
+          80,
+          120,
+          160
+        ],
+        "unit": "metres along incoming flight direction",
+        "custom_config_range": [
+          0,
+          300
+        ],
+        "implementation": "Updates only native CarpetBomb incoming-aircraft horizontal target before firing; keeps target altitude and other Eagle types unchanged",
+        "live_verified": true
+      }
+    },
+    "projectile_research": {
+      "source": "https://github.com/xypwn/filediver",
+      "commit": "7b52b323b1cd75326f63c5854c3a38b60a547e32",
+      "source_file": "datalibrary/generated_projectile_settings.dl_bin.gz",
+      "200kg": {
+        "projectile": 192,
+        "mass": 200,
+        "impact_explosion": 182,
+        "unit": "71e52f800636b336",
+        "impact_effect_shared_with_airstrike": true,
+        "live_identity_verified": true
+      },
+      "500kg": {
+        "projectile": 239,
+        "mass": 500,
+        "impact_explosion": 193,
+        "delayed_explosion": 277,
+        "native_stratagem": 3,
+        "package": "9bc33b7058a2bd5a",
+        "prior_live_record_matches": true,
+        "live_identity_verified": true
+      },
+      "airstrike": {
+        "projectile": 170,
+        "mass": 100,
+        "impact_explosion": 194,
+        "prior_live_record_matches": true,
+        "live_identity_verified": true
+      }
+    },
+    "executable_code_modified": false,
+    "external_memory_inspection_used_for_new_tests": false,
+    "quantity_requested_feature": {
+      "status": "WITHDRAWN_PENDING_DATA_ONLY_IMPLEMENTATION",
+      "requested_multipliers": [
+        0.5,
+        1,
+        2
+      ],
+      "reason": "Experimental v0.5.0 bridge run reported GameGuard1015; exact trigger not isolated. Both quantity code writes and external memory reads discontinued.",
+      "not_completed": true
+    },
+    "previous_experimental_release": {
+      "version": "0.5.0",
+      "game_build": 25480438,
+      "status": "200KG_1X_BOMBING_VERIFIED_QUANTITY_WITHDRAWN",
+      "tests_passed": [
+        "default carrying, repaired payload, original Eagle rows preserved and disable restoration",
+        "independent charges/cooldown, preserved native identity and configuration validation",
+        "unsupported build, existing carrier link and executable pages refused",
+        "partial write rollback",
+        "competing writer preservation and restoration",
+        "stale carrier identity refused",
+        "payload alias refusal, read-only protection restoration and competing table writer",
+        "late game datalibrary initialization retries without configuration edits",
+        "independent rearm setting, vanilla restoration, zero/max values and disable restoration",
+        "default rearm non-interference, competing rearm writer and stale rearm record refusal",
+        "partial rearm write rolls back native grant transaction",
+        "all 15 projectile/quantity combinations, centered spread, unchanged original Eagles and disable restoration",
+        "projectile/quantity reload, validation and default operand release",
+        "quantity partial-write/cache/protection rollback, conflicting opcode and projectile identity refusal",
+        "quantity allocation with crowded modules, lower free region, fragments, reservation races and bounded refusal",
+        "manager archives and 40 presets with 17550 selectable combinations"
+      ],
+      "preset_combinations": 17550,
+      "preset_modules_checked": 40,
+      "runtime_projectile_quantity_combinations_checked": 15,
+      "in_game_loader_verified": true,
+      "cold_start_verified": false,
+      "in_game_bombing_verified": true,
+      "multiplayer_verified": false,
+      "new_options": {
+        "bomb": {
+          "default": 170,
+          "choices": {
+            "170": "Original Eagle Airstrike",
+            "192": "CarpetBomb 200 kg",
+            "239": "Eagle 500 kg"
+          }
+        },
+        "bomb_count": {
+          "default": 20,
+          "choices": [
+            5,
+            10,
+            20,
+            30,
+            40
+          ],
+          "multipliers": [
+            0.25,
+            0.5,
+            1,
+            1.5,
+            2
+          ],
+          "unit": "per aircraft; total depends on actual aircraft count",
+          "spread": "private (count - 1) denominator preserves original longitudinal footprint"
+        }
+      },
+      "projectile_research": {
+        "source": "https://github.com/xypwn/filediver",
+        "commit": "7b52b323b1cd75326f63c5854c3a38b60a547e32",
+        "source_file": "datalibrary/generated_projectile_settings.dl_bin.gz",
+        "200kg": {
+          "projectile": 192,
+          "mass": 200,
+          "impact_explosion": 182,
+          "unit": "71e52f800636b336",
+          "impact_effect_shared_with_airstrike": true,
+          "live_identity_verified": true
+        },
+        "500kg": {
+          "projectile": 239,
+          "mass": 500,
+          "impact_explosion": 193,
+          "delayed_explosion": 277,
+          "native_stratagem": 3,
+          "package": "9bc33b7058a2bd5a",
+          "prior_live_record_matches": true,
+          "live_identity_verified": true
+        },
+        "airstrike": {
+          "projectile": 170,
+          "mass": 100,
+          "impact_explosion": 194,
+          "prior_live_record_matches": true,
+          "live_identity_verified": true
+        }
+      },
+      "quantity_implementation": {
+        "default_1x_changes_code": false,
+        "custom_loop_bound_rva": "0x8A4D8C",
+        "custom_loop_operand_bytes": 1,
+        "spread_reference_rva": "0x8A4B2A",
+        "spread_operand_bytes": 4,
+        "shared_float_constant_modified": false,
+        "guards": [
+          "module build and original opcode/branch signatures",
+          "only two allowed executable operand windows",
+          "selected projectile identity",
+          "competing writer preservation",
+          "page protection restoration and instruction cache flush",
+          "partial-write rollback and automatic grant published last"
+        ],
+        "allocation": "VirtualQuery walks committed/free regions above and below game.dll within signed 32-bit RIP reach; 64 KiB reservation alignment, bounded query/allocation attempts; original shared constant unchanged."
+      },
+      "native_default_carry": "Resupply 33 additional stratagem 103",
+      "approach_height": 120,
+      "archive_minimum_size": 4096,
+      "previous_release": {
+        "version": "0.4.0",
+        "game_build": 25480438,
+        "status": "COLD_START_AND_REARM_CONFIGURATION_VERIFIED",
+        "tests_passed": [
+          "default carrying, repaired payload, original Eagle rows preserved and disable restoration",
+          "independent charges/cooldown, preserved native identity and configuration validation",
+          "unsupported build, existing carrier link and executable pages refused",
+          "partial write rollback",
+          "competing writer preservation and restoration",
+          "stale carrier identity refused",
+          "payload alias refusal, read-only protection restoration and competing table writer",
+          "late game datalibrary initialization retries without configuration edits",
+          "independent rearm setting, vanilla restoration, zero/max values and disable restoration",
+          "default rearm non-interference, competing rearm writer and stale rearm record refusal",
+          "partial rearm write rolls back native grant transaction",
+          "manager archives and 32 presets with 1170 selectable combinations"
+        ],
+        "preset_combinations": 1170,
+        "preset_modules_checked": 32,
+        "in_game_loader_verified": true,
+        "cold_start_verified": true,
+        "manager_options_live_verified": true,
+        "in_game_bombing_verified": false,
+        "multiplayer_verified": false,
+        "new_options": {
+          "call_interval": "Seconds between uses of CarpetBomb (103), default 15",
+          "rearm": "Shared EagleRearm (49) return/reload base cooldown; all carried Eagles; default -1 retains game setting",
+          "rearm_values": [
+            -1,
+            0,
+            5,
+            10,
+            15,
+            30,
+            60,
+            120,
+            150,
+            180,
+            300,
+            600,
+            900
+          ]
+        },
+        "native_default_carry": "Preserved from 0.3.1; Resupply (33) extra stratagem 103",
+        "approach_height": 120,
+        "archive_minimum_size": 4096,
+        "previous_release": {
+          "version": "0.3.1",
+          "cold_start_verified": true,
+          "full_package_cold_start": {
+            "status": "PASSED",
+            "pid": 44644,
+            "user_report": "已进入",
+            "loader": "loader-v18",
+            "uses": 2,
+            "cooldown": 120,
+            "approach_height": 120,
+            "component_aliases_verified": 18,
+            "native_rows_preserved": true,
+            "option_archive_bytes": 4096,
+            "log_time": "2026-10-01 23:16:44"
+          }
+        },
+        "prior_height_fix_bombing_verified": true,
+        "battlefield_test": {
+          "version": "0.3.0",
+          "method": "guarded private-row float change matching packaged Lua source",
+          "approach_height": 120,
+          "result": "BOMBS_NEAR_BEACON_NO_CRASH",
+          "user_report": "这回正常了是投弹在信标附近",
+          "native_payload_mode": 6,
+          "projectile": 170,
+          "aircraft_per_observed_call": 3,
+          "bombs_per_observed_call": 60,
+          "calls_captured_with_height_fix": 2,
+          "pid": 13188,
+          "third_call_capture": "began shortly before sampling ended"
+        },
+        "offline_validation_file": "validation/offline_report.json",
+        "deployment": "v0.4.0 imported and deployed through Arsenal; current selections 2 charges / 15 s interval / vanilla rearm. Temporary 30 s runtime rearm test reverted and original config bytes restored.",
+        "rearm_configuration_live_verified": true,
+        "manager_rearm_custom_choice_cold_start_verified": false,
+        "rearm_full_cycle_stopwatch_verified": false,
+        "native_default_grant_live_verified": true,
+        "payload_repair_live_verified": true,
+        "vanilla_eagle_rows_preserved_live_verified": true,
+        "full_package_cold_start": {
+          "pid": 47756,
+          "status": "PASSED",
+          "user_report": "已进入",
+          "loader": "loader-v18",
+          "log_time": "2026-10-01 23:53:52",
+          "uses": 2,
+          "call_interval": 15,
+          "rearm_choice": "vanilla",
+          "original_rearm_base_seconds": 150,
+          "component_aliases_verified": 18,
+          "approach_height": 120
+        },
+        "rearm_runtime_test": {
+          "version": "0.4.0",
+          "pid": 47756,
+          "method": "addon config; external process handle read-only",
+          "tested_rearm": 30,
+          "config_restored": true,
+          "restoration_verified": true,
+          "original_rearm": 150.0,
+          "uses": 2,
+          "call_interval": 15.0,
+          "only_rearm_cooldown_changed": true,
+          "config_sha256": "ebade543df4225da9a90a98e0a4b475714319e5a455f0d557e9c7c873b3831f8",
+          "restored_rearm": 150.0,
+          "log_tail": [
+            "23:53:52 Loading v0.4.0 manager presets",
+            "23:53:52 Manager presets: uses=2 call_interval=15 rearm=-1",
+            "23:53:52 Loaded v0.4.0; native grant experiment, Bingus Shared Loader v18 / API 1",
+            "23:53:55 Missing native payload reconstructed: 17 component/entity aliases; private Eagle payload 6, approach height 120 m; vanilla Eagles preserved",
+            "23:53:55 active: Resupply (33) additional_stratagem=103; native CarpetBomb (103), uses=2, call_interval=15s, rearm=unchanged; 8 fields changed",
+            "00:01:23 active: Resupply (33) additional_stratagem=103; native CarpetBomb (103), uses=2, call_interval=15s, rearm=30s (all carried Eagles); 1 fields changed",
+            "00:01:24 active: Resupply (33) additional_stratagem=103; native CarpetBomb (103), uses=2, call_interval=15s, rearm=unchanged; 1 fields changed"
+          ]
+        },
+        "restart_persistence": "Complete v0.4.0 manager package with core and all three preset axes cold-started; custom rearm transaction checked through config in the same process."
+      },
+      "deployment": "Manager-deployed v0.5.0 with temporary original-count override20; bridge5min user report passed. Original config backup retained. Non-default quantities withdrawn; do not publish current experimental ZIP as stable.",
+      "current_build_read_only_verification": {
+        "pid": 16456,
+        "loaded_mod_version": "0.4.0",
+        "all_three_projectile_records_match_filediver": true,
+        "native_loop_count": 20,
+        "native_spread_denominator": 19,
+        "code_pages": {
+          "0x8a4d8c": {
+            "protect": "0x20",
+            "kind": "0x1000000"
+          },
+          "0x8a4b2a": {
+            "protect": "0x20",
+            "kind": "0x1000000"
+          }
+        },
+        "source": "research/live/v0.5_identity_check.json",
+        "does_not_verify_new_runtime_options": true
+      },
+      "new_options_startup_failure": {
+        "pid": 4952,
+        "log_time": "2026-10-02 14:52:25",
+        "reason": "Cannot allocate nearby quantity settings",
+        "old_window": "game.dll +0x5000000 through +0x5FF0000; occupied in observed ASLR layout",
+        "actual_first_free_above": "game.dll +0x9190000",
+        "grant_restored": true,
+        "native_fields_restored": true,
+        "user_report": "已进入舰桥",
+        "fix": "Scan actual free regions on both sides within relative-address range",
+        "offline_regression_passed": true,
+        "cold_start_retest_pending": false,
+        "source": "research/live/v0.5_4952_near_address_space.json",
+        "fix_live_verified_pid": 2912
+      },
+      "new_options_configuration_live_verified": true,
+      "native_default_grant_live_verified": true,
+      "payload_repair_live_verified": true,
+      "vanilla_eagle_rows_preserved_live_verified": true,
+      "full_package_cold_start": {
+        "version": "0.5.0",
+        "pid": 2912,
+        "status": "PARAMETERS_VERIFIED_THEN_BRIDGE_CRASH",
+        "user_report": "好了你再看下",
+        "loader": "loader-v18",
+        "log_time": "2026-10-02 15:07:33",
+        "uses": 5,
+        "call_interval": 5,
+        "rearm_choice": "vanilla",
+        "original_rearm_base_seconds": 150,
+        "projectile": 192,
+        "bombs_per_aircraft": 10,
+        "spread_denominator": 9,
+        "component_aliases_verified": 18,
+        "approach_height": 120,
+        "original_eagle_rows_preserved": true,
+        "code_page_protections_restored": true,
+        "shared_projectile_records_unchanged": true,
+        "quantity_free_region_fix_verified": true,
+        "source_sha256": "e66119c9c0b5c5e2c261e6a71559f585f2c32ae162b05afa289093f856d2de01",
+        "core_sha256": "060f1b56cd92289fc2085c5d0b5858c6981c3792a97840144afd2a51abeaab86",
+        "zip_sha256_at_test": "9cd4e44b445467f55b1aad56ef0eae4cfbc616d2db6fa035fe04bb776e7d56c0",
+        "selected_archives": [
+          {
+            "name": "9ba626afa44a3aa3.patch_0",
+            "bytes": 28784,
+            "sha256": "060f1b56cd92289fc2085c5d0b5858c6981c3792a97840144afd2a51abeaab86",
+            "matches_selected_zip_archive": true
+          },
+          {
+            "name": "9ba626afa44a3aa3.patch_1",
+            "bytes": 4096,
+            "sha256": "3f78a86894f7083dc559ac1e4bd626908c24d673799eb82af18c51f6daa83434",
+            "matches_selected_zip_archive": true
+          },
+          {
+            "name": "9ba626afa44a3aa3.patch_2",
+            "bytes": 4096,
+            "sha256": "f4b811244d89d5460692c9a84117ceb7000d460f2be596ff9036a36a6193e991",
+            "matches_selected_zip_archive": true
+          },
+          {
+            "name": "9ba626afa44a3aa3.patch_3",
+            "bytes": 4096,
+            "sha256": "498366ffef47a55f630c11811d836930a660019ee8409b3e3966c741dd1221cf",
+            "matches_selected_zip_archive": true
+          },
+          {
+            "name": "9ba626afa44a3aa3.patch_4",
+            "bytes": 4096,
+            "sha256": "89b90249d68c0afe86e14f556300a6872b67615293a5c145f99371ade856468b",
+            "matches_selected_zip_archive": true
+          },
+          {
+            "name": "9ba626afa44a3aa3.patch_5",
+            "bytes": 4096,
+            "sha256": "dababe696fc751890e7491dee53bbf1f8dfa770d94834a6f4df9d14c3ff63e33",
+            "matches_selected_zip_archive": true
+          }
+        ],
+        "later_user_report": "还在舰桥，未进入任务",
+        "stable_run_verified": false
+      },
+      "bridge_stability_verified": false,
+      "new_options_bridge_crash": {
+        "pid": 2912,
+        "reported_at": "2026-10-02T15:16:27.831706",
+        "phase": "bridge before entering mission",
+        "user_report": "先别急游戏崩溃了 / 还在舰桥，未进入任务",
+        "new_crash_dump_found": false,
+        "cause": "unconfirmed; executable-operand modification and external read-only inspection are candidates",
+        "diagnostic_next": "Temporary config bomb_count=20 (default 1x, no executable-operand writes), 200 kg selection retained",
+        "config_backup_sha256": "ebade543df4225da9a90a98e0a4b475714319e5a455f0d557e9c7c873b3831f8",
+        "error_code": 1015,
+        "error_source": "GameGuard",
+        "message": "Suspicious program detected",
+        "evidence": "user screenshot; research/live/v0.5_2912_GameGuard1015.png",
+        "quantity_code_path_disabled_by_config": true,
+        "external_memory_inspection_stopped": true,
+        "baseline_pending": false,
+        "causality": "Baseline removes both custom quantity code writes and external memory inspection; it does not isolate the exact trigger."
+      },
+      "baseline_1x_bridge": {
+        "recorded_at": "2026-10-02T15:25:32.488871",
+        "user_report": "舰桥停留 5 分钟正常",
+        "observation": "user-reported approximate 5 minutes; not externally timed",
+        "method": "Local config bomb_count=20; file log inspection only; no external game-memory reads",
+        "projectile": 192,
+        "bombs_per_aircraft": 20,
+        "uses": 5,
+        "call_interval": 5,
+        "rearm": "vanilla",
+        "active_log_time": "2026-10-02 15:21:02",
+        "executable_operand_writes": false,
+        "GameGuard1015_reported": false,
+        "actual_bombing_verified": true,
+        "battlefield_user_report": "信标附近正常投弹，未报错",
+        "battlefield_reported_at": "2026-10-02T15:32:37.605004"
+      },
+      "battlefield_test": {
+        "version": "0.5.0",
+        "projectile": 192,
+        "bombs_per_aircraft": 20,
+        "method": "Native addon, quantity fixed1x by config; file logs only; no external memory inspection",
+        "user_report": "信标附近正常投弹，未报错",
+        "GameGuard1015_reported": false,
+        "actual_bomb_count_measured": false
+      }
+    },
+    "previous_release": {
+      "version": "0.4.0",
+      "game_build": 25480438,
+      "status": "COLD_START_AND_REARM_CONFIGURATION_VERIFIED",
+      "tests_passed": [
+        "default carrying, repaired payload, original Eagle rows preserved and disable restoration",
+        "independent charges/cooldown, preserved native identity and configuration validation",
+        "unsupported build, existing carrier link and executable pages refused",
+        "partial write rollback",
+        "competing writer preservation and restoration",
+        "stale carrier identity refused",
+        "payload alias refusal, read-only protection restoration and competing table writer",
+        "late game datalibrary initialization retries without configuration edits",
+        "independent rearm setting, vanilla restoration, zero/max values and disable restoration",
+        "default rearm non-interference, competing rearm writer and stale rearm record refusal",
+        "partial rearm write rolls back native grant transaction",
+        "manager archives and 32 presets with 1170 selectable combinations"
+      ],
+      "preset_combinations": 1170,
+      "preset_modules_checked": 32,
+      "in_game_loader_verified": true,
+      "cold_start_verified": true,
+      "manager_options_live_verified": true,
+      "in_game_bombing_verified": false,
+      "multiplayer_verified": false,
+      "new_options": {
+        "call_interval": "Seconds between uses of CarpetBomb (103), default 15",
+        "rearm": "Shared EagleRearm (49) return/reload base cooldown; all carried Eagles; default -1 retains game setting",
+        "rearm_values": [
+          -1,
+          0,
+          5,
+          10,
+          15,
+          30,
+          60,
+          120,
+          150,
+          180,
+          300,
+          600,
+          900
+        ]
+      },
+      "native_default_carry": "Preserved from 0.3.1; Resupply (33) extra stratagem 103",
+      "approach_height": 120,
+      "archive_minimum_size": 4096,
+      "previous_release": {
+        "version": "0.3.1",
+        "cold_start_verified": true,
+        "full_package_cold_start": {
+          "status": "PASSED",
+          "pid": 44644,
+          "user_report": "已进入",
+          "loader": "loader-v18",
+          "uses": 2,
+          "cooldown": 120,
+          "approach_height": 120,
+          "component_aliases_verified": 18,
+          "native_rows_preserved": true,
+          "option_archive_bytes": 4096,
+          "log_time": "2026-10-01 23:16:44"
+        }
+      },
+      "prior_height_fix_bombing_verified": true,
+      "battlefield_test": {
+        "version": "0.3.0",
+        "method": "guarded private-row float change matching packaged Lua source",
+        "approach_height": 120,
+        "result": "BOMBS_NEAR_BEACON_NO_CRASH",
+        "user_report": "这回正常了是投弹在信标附近",
+        "native_payload_mode": 6,
+        "projectile": 170,
+        "aircraft_per_observed_call": 3,
+        "bombs_per_observed_call": 60,
+        "calls_captured_with_height_fix": 2,
+        "pid": 13188,
+        "third_call_capture": "began shortly before sampling ended"
+      },
+      "offline_validation_file": "validation/offline_report.json",
+      "deployment": "v0.4.0 imported and deployed through Arsenal; current selections 2 charges / 15 s interval / vanilla rearm. Temporary 30 s runtime rearm test reverted and original config bytes restored.",
+      "rearm_configuration_live_verified": true,
+      "manager_rearm_custom_choice_cold_start_verified": false,
+      "rearm_full_cycle_stopwatch_verified": false,
+      "native_default_grant_live_verified": true,
+      "payload_repair_live_verified": true,
+      "vanilla_eagle_rows_preserved_live_verified": true,
+      "full_package_cold_start": {
+        "pid": 47756,
+        "status": "PASSED",
+        "user_report": "已进入",
+        "loader": "loader-v18",
+        "log_time": "2026-10-01 23:53:52",
+        "uses": 2,
+        "call_interval": 15,
+        "rearm_choice": "vanilla",
+        "original_rearm_base_seconds": 150,
+        "component_aliases_verified": 18,
+        "approach_height": 120
+      },
+      "rearm_runtime_test": {
+        "version": "0.4.0",
+        "pid": 47756,
+        "method": "addon config; external process handle read-only",
+        "tested_rearm": 30,
+        "config_restored": true,
+        "restoration_verified": true,
+        "original_rearm": 150.0,
+        "uses": 2,
+        "call_interval": 15.0,
+        "only_rearm_cooldown_changed": true,
+        "config_sha256": "ebade543df4225da9a90a98e0a4b475714319e5a455f0d557e9c7c873b3831f8",
+        "restored_rearm": 150.0,
+        "log_tail": [
+          "23:53:52 Loading v0.4.0 manager presets",
+          "23:53:52 Manager presets: uses=2 call_interval=15 rearm=-1",
+          "23:53:52 Loaded v0.4.0; native grant experiment, Bingus Shared Loader v18 / API 1",
+          "23:53:55 Missing native payload reconstructed: 17 component/entity aliases; private Eagle payload 6, approach height 120 m; vanilla Eagles preserved",
+          "23:53:55 active: Resupply (33) additional_stratagem=103; native CarpetBomb (103), uses=2, call_interval=15s, rearm=unchanged; 8 fields changed",
+          "00:01:23 active: Resupply (33) additional_stratagem=103; native CarpetBomb (103), uses=2, call_interval=15s, rearm=30s (all carried Eagles); 1 fields changed",
+          "00:01:24 active: Resupply (33) additional_stratagem=103; native CarpetBomb (103), uses=2, call_interval=15s, rearm=unchanged; 1 fields changed"
+        ]
+      },
+      "restart_persistence": "Complete v0.4.0 manager package with core and all three preset axes cold-started; custom rearm transaction checked through config in the same process."
+    },
+    "prior_200kg_vanilla_quantity_field_test": {
+      "version": "0.5.0",
+      "projectile": 192,
+      "bombs_per_aircraft": 20,
+      "method": "Native addon, quantity fixed1x by config; file logs only; no external memory inspection",
+      "user_report": "信标附近正常投弹，未报错",
+      "GameGuard1015_reported": false,
+      "actual_bomb_count_measured": false
+    },
+    "forward_target_live_test_pending": false,
+    "500kg_live_bombing_verified": true,
+    "deployment": "Manager-deployed v0.5.1: 500 kg / fixed 1x / forward 0 m / 5 uses / 15 s interval / vanilla rearm. Startup verified from logs and selected archive equality; user confirmed normal bomb drops. Prior 200 kg / forward 80 m test confirmed more even coverage. Quantity ratios remain unfinished.",
+    "full_package_startup": {
+      "version": "0.5.1",
+      "status": "COLD_START_AND_200KG_FORWARD80_FIELD_TEST_PASSED",
+      "user_report": "已进入",
+      "method": "deployed archive hashes and loader log; no external process-memory inspection",
+      "log_time": "2026-10-02 15:56:01",
+      "uses": 5,
+      "call_interval": 15,
+      "rearm": "vanilla",
+      "projectile": 192,
+      "bombs_per_aircraft": 20,
+      "forward_metres": 80,
+      "source_sha256": "4193a1257056eb639ce87decf8f4c4a4938d57e91dbcfa27d769e8be8000f4d5",
+      "core_sha256": "b9d376bae79971b224aca99ff9d50f44bd4c13c40d47a22a6c9cf1d83a31eeeb",
+      "zip_sha256_at_test": "189f3f1f0a44be583d12b2e04b227ac5d6724c19e7757e61948d79a2218c4b74",
+      "selected_archives": [
+        {
+          "name": "9ba626afa44a3aa3.patch_0",
+          "bytes": 27104,
+          "sha256": "b9d376bae79971b224aca99ff9d50f44bd4c13c40d47a22a6c9cf1d83a31eeeb",
+          "matches_selected_zip_archive": true
+        },
+        {
+          "name": "9ba626afa44a3aa3.patch_1",
+          "bytes": 4096,
+          "sha256": "3f78a86894f7083dc559ac1e4bd626908c24d673799eb82af18c51f6daa83434",
+          "matches_selected_zip_archive": true
+        },
+        {
+          "name": "9ba626afa44a3aa3.patch_2",
+          "bytes": 4096,
+          "sha256": "c1e57635572acbcf6f1aef7c111c79b70ae4ba630aaac6118ff8cd75fef4ef02",
+          "matches_selected_zip_archive": true
+        },
+        {
+          "name": "9ba626afa44a3aa3.patch_3",
+          "bytes": 4096,
+          "sha256": "498366ffef47a55f630c11811d836930a660019ee8409b3e3966c741dd1221cf",
+          "matches_selected_zip_archive": true
+        },
+        {
+          "name": "9ba626afa44a3aa3.patch_4",
+          "bytes": 4096,
+          "sha256": "89b90249d68c0afe86e14f556300a6872b67615293a5c145f99371ade856468b",
+          "matches_selected_zip_archive": true
+        },
+        {
+          "name": "9ba626afa44a3aa3.patch_5",
+          "bytes": 4096,
+          "sha256": "bc00050a10c42c7e9f583833d9a03368c1ac95d7c5bec610cf6702c06ee6fb94",
+          "matches_selected_zip_archive": true
+        },
+        {
+          "name": "9ba626afa44a3aa3.patch_6",
+          "bytes": 4096,
+          "sha256": "b0e39a70c9f9b7813d679e9e752ccf44a863bdeabe0578d37f8f9757d39f338b",
+          "matches_selected_zip_archive": true
+        }
+      ],
+      "temporary_config_restored": true,
+      "original_config_sha256": "ebade543df4225da9a90a98e0a4b475714319e5a455f0d557e9c7c873b3831f8",
+      "executable_code_writes": false,
+      "field_shift_verified": false,
+      "continued_mission_activity_log_time": "16:04:04",
+      "target_adjustments_observed": 12
+    },
+    "temporary_config_restored": true,
+    "forward_target_data_live_verified": true,
+    "forward_target_live_evidence": {
+      "version": "0.5.1",
+      "method": "addon internal target read-back log; no external process-memory inspection",
+      "projectile": 192,
+      "bombs_per_aircraft": 20,
+      "forward_metres": 80,
+      "aircraft_adjustments": [
+        {
+          "log_time": "16:00:55",
+          "entity": 525,
+          "configured_metres": 80,
+          "before": [
+            -62.7,
+            -129.0,
+            1.3
+          ],
+          "after": [
+            -142.3,
+            -137.3,
+            1.3
+          ],
+          "horizontal_delta_metres_from_rounded_log": 80.032,
+          "altitude_unchanged": true
+        },
+        {
+          "log_time": "16:00:55",
+          "entity": 528,
+          "configured_metres": 80,
+          "before": [
+            -60.1,
+            -153.6,
+            1.3
+          ],
+          "after": [
+            -139.7,
+            -161.9,
+            1.3
+          ],
+          "horizontal_delta_metres_from_rounded_log": 80.032,
+          "altitude_unchanged": true
+        },
+        {
+          "log_time": "16:00:55",
+          "entity": 531,
+          "configured_metres": 80,
+          "before": [
+            -57.6,
+            -178.2,
+            1.3
+          ],
+          "after": [
+            -137.1,
+            -186.5,
+            1.3
+          ],
+          "horizontal_delta_metres_from_rounded_log": 79.932,
+          "altitude_unchanged": true
+        },
+        {
+          "log_time": "16:01:20",
+          "entity": 537,
+          "configured_metres": 80,
+          "before": [
+            -58.8,
+            -131.1,
+            1.6
+          ],
+          "after": [
+            -136.4,
+            -150.5,
+            1.6
+          ],
+          "horizontal_delta_metres_from_rounded_log": 79.988,
+          "altitude_unchanged": true
+        },
+        {
+          "log_time": "16:01:20",
+          "entity": 540,
+          "configured_metres": 80,
+          "before": [
+            -52.8,
+            -155.1,
+            1.6
+          ],
+          "after": [
+            -130.4,
+            -174.5,
+            1.6
+          ],
+          "horizontal_delta_metres_from_rounded_log": 79.988,
+          "altitude_unchanged": true
+        },
+        {
+          "log_time": "16:01:20",
+          "entity": 543,
+          "configured_metres": 80,
+          "before": [
+            -46.8,
+            -179.0,
+            1.6
+          ],
+          "after": [
+            -124.4,
+            -198.5,
+            1.6
+          ],
+          "horizontal_delta_metres_from_rounded_log": 80.013,
+          "altitude_unchanged": true
+        },
+        {
+          "log_time": "16:02:43",
+          "entity": 566,
+          "configured_metres": 80,
+          "before": [
+            -64.4,
+            -99.5,
+            3.8
+          ],
+          "after": [
+            -80.3,
+            -21.1,
+            3.8
+          ],
+          "horizontal_delta_metres_from_rounded_log": 79.996,
+          "altitude_unchanged": true
+        },
+        {
+          "log_time": "16:02:43",
+          "entity": 569,
+          "configured_metres": 80,
+          "before": [
+            -88.6,
+            -104.4,
+            3.8
+          ],
+          "after": [
+            -104.6,
+            -26.0,
+            3.8
+          ],
+          "horizontal_delta_metres_from_rounded_log": 80.016,
+          "altitude_unchanged": true
+        },
+        {
+          "log_time": "16:02:43",
+          "entity": 572,
+          "configured_metres": 80,
+          "before": [
+            -112.8,
+            -109.4,
+            3.8
+          ],
+          "after": [
+            -128.8,
+            -31.0,
+            3.8
+          ],
+          "horizontal_delta_metres_from_rounded_log": 80.016,
+          "altitude_unchanged": true
+        },
+        {
+          "log_time": "16:04:04",
+          "entity": 624,
+          "configured_metres": 80,
+          "before": [
+            -55.2,
+            -134.6,
+            1.0
+          ],
+          "after": [
+            -133.2,
+            -152.4,
+            1.0
+          ],
+          "horizontal_delta_metres_from_rounded_log": 80.005,
+          "altitude_unchanged": true
+        },
+        {
+          "log_time": "16:04:04",
+          "entity": 627,
+          "configured_metres": 80,
+          "before": [
+            -49.7,
+            -158.7,
+            1.0
+          ],
+          "after": [
+            -127.7,
+            -176.5,
+            1.0
+          ],
+          "horizontal_delta_metres_from_rounded_log": 80.005,
+          "altitude_unchanged": true
+        },
+        {
+          "log_time": "16:04:04",
+          "entity": 630,
+          "configured_metres": 80,
+          "before": [
+            -44.2,
+            -182.8,
+            1.0
+          ],
+          "after": [
+            -122.2,
+            -200.6,
+            1.0
+          ],
+          "horizontal_delta_metres_from_rounded_log": 80.005,
+          "altitude_unchanged": true
+        }
+      ],
+      "actual_impact_distribution_verified": true,
+      "pending": null,
+      "user_report": "信标两侧都有爆炸，覆盖更均匀"
+    },
+    "battlefield_test": {
+      "version": "0.5.1",
+      "projectile": 192,
+      "bombs_per_aircraft": 20,
+      "forward_metres": 80,
+      "user_report": "信标两侧都有爆炸，覆盖更均匀",
+      "reported_at": "2026-10-02T16:09:38.773829",
+      "result": "IMPACT_COVERAGE_ACROSS_BOTH_SIDES_OF_BEACON",
+      "native_aircraft_adjustments_logged": 6,
+      "calls_with_logged_adjustments": 2,
+      "method": "addon file logs and user observation; no external game-memory inspection",
+      "actual_bomb_count_measured": false,
+      "reported_error": false
+    },
+    "500kg_package_startup": {
+      "version": "0.5.1",
+      "checked_at": "2026-10-02T16:10:39.674963",
+      "status": "LOADER_PRESETS_AND_USER_REPORTED_BOMBING_VERIFIED",
+      "uses": 5,
+      "call_interval": 15,
+      "rearm": "vanilla",
+      "projectile": 239,
+      "bombs_per_aircraft": 20,
+      "forward_metres": 0,
+      "native500kg_package_expected": "9bc33b7058a2bd5a",
+      "package_validation": "Addon validates original500kg record and selects its package before publishing native grant; active log reached",
+      "selected_archives": [
+        {
+          "name": "9ba626afa44a3aa3.patch_0",
+          "sha256": "b9d376bae79971b224aca99ff9d50f44bd4c13c40d47a22a6c9cf1d83a31eeeb",
+          "matches_selected_zip_archive": true
+        },
+        {
+          "name": "9ba626afa44a3aa3.patch_1",
+          "sha256": "3f78a86894f7083dc559ac1e4bd626908c24d673799eb82af18c51f6daa83434",
+          "matches_selected_zip_archive": true
+        },
+        {
+          "name": "9ba626afa44a3aa3.patch_2",
+          "sha256": "c1e57635572acbcf6f1aef7c111c79b70ae4ba630aaac6118ff8cd75fef4ef02",
+          "matches_selected_zip_archive": true
+        },
+        {
+          "name": "9ba626afa44a3aa3.patch_3",
+          "sha256": "498366ffef47a55f630c11811d836930a660019ee8409b3e3966c741dd1221cf",
+          "matches_selected_zip_archive": true
+        },
+        {
+          "name": "9ba626afa44a3aa3.patch_4",
+          "sha256": "647b3e3a68e0d49d604551bc4562590a186e582a16508c59af8f52da14a4c617",
+          "matches_selected_zip_archive": true
+        },
+        {
+          "name": "9ba626afa44a3aa3.patch_5",
+          "sha256": "bc00050a10c42c7e9f583833d9a03368c1ac95d7c5bec610cf6702c06ee6fb94",
+          "matches_selected_zip_archive": true
+        },
+        {
+          "name": "9ba626afa44a3aa3.patch_6",
+          "sha256": "81eab9a0f5b23858725738d47daaed6622a044fc0a5038071d549155bd967ede",
+          "matches_selected_zip_archive": true
+        }
+      ],
+      "method": "file logs and archive equality only; no external process-memory inspection",
+      "actual_bombing_verified": false
+    },
+    "500kg_battlefield_test": {
+      "version": "0.5.1",
+      "projectile": 239,
+      "bombs_per_aircraft": 20,
+      "forward_metres": 0,
+      "uses": 5,
+      "call_interval": 15,
+      "rearm": "vanilla",
+      "user_report": "正常投弹",
+      "reported_at": "2026-10-02T16:20:51+08:00",
+      "result": "USER_CONFIRMED_NORMAL_BOMB_DROPS",
+      "method": "addon file logs, selected archive equality and user observation; no external game-memory inspection",
+      "actual_bomb_count_measured": false,
+      "delayed_explosion_detail_independently_verified": false,
+      "reported_error": null
+    },
+    "field_test_scope": "200 kg / 1x / forward 80 m coverage and 500 kg / 1x / forward 0 m normal bomb drops verified by user; other combinations and multiplayer remain unverified.",
+    "subsequent_forward_feedback": {
+      "user_report": "貌似前移并没有什么特别的效果，把变量删了试试",
+      "action": "Removed forward option and all runtime aircraft-target adjustment in v0.5.2; previous coverage improvement was a subjective observation, not an isolated effectiveness test."
+    }
   },
-  "offline_validation_file": "validation/offline_report.json",
-  "deployment": "v0.4.0 imported and deployed through Arsenal; current selections 2 charges / 15 s interval / vanilla rearm. Temporary 30 s runtime rearm test reverted and original config bytes restored.",
-  "rearm_configuration_live_verified": true,
-  "manager_rearm_custom_choice_cold_start_verified": false,
-  "rearm_full_cycle_stopwatch_verified": false,
-  "native_default_grant_live_verified": true,
-  "payload_repair_live_verified": true,
-  "vanilla_eagle_rows_preserved_live_verified": true,
-  "full_package_cold_start": {
-    "pid": 47756,
-    "status": "PASSED",
-    "user_report": "已进入",
-    "loader": "loader-v18",
-    "log_time": "2026-10-01 23:53:52",
-    "uses": 2,
-    "call_interval": 15,
-    "rearm_choice": "vanilla",
-    "original_rearm_base_seconds": 150,
-    "component_aliases_verified": 18,
-    "approach_height": 120
-  },
-  "rearm_runtime_test": {
-    "version": "0.4.0",
-    "pid": 47756,
-    "method": "addon config; external process handle read-only",
-    "tested_rearm": 30,
-    "config_restored": true,
-    "restoration_verified": true,
-    "original_rearm": 150.0,
-    "uses": 2,
-    "call_interval": 15.0,
-    "only_rearm_cooldown_changed": true,
-    "config_sha256": "ebade543df4225da9a90a98e0a4b475714319e5a455f0d557e9c7c873b3831f8",
-    "restored_rearm": 150.0,
-    "log_tail": [
-      "23:53:52 Loading v0.4.0 manager presets",
-      "23:53:52 Manager presets: uses=2 call_interval=15 rearm=-1",
-      "23:53:52 Loaded v0.4.0; native grant experiment, Bingus Shared Loader v18 / API 1",
-      "23:53:55 Missing native payload reconstructed: 17 component/entity aliases; private Eagle payload 6, approach height 120 m; vanilla Eagles preserved",
-      "23:53:55 active: Resupply (33) additional_stratagem=103; native CarpetBomb (103), uses=2, call_interval=15s, rearm=unchanged; 8 fields changed",
-      "00:01:23 active: Resupply (33) additional_stratagem=103; native CarpetBomb (103), uses=2, call_interval=15s, rearm=30s (all carried Eagles); 1 fields changed",
-      "00:01:24 active: Resupply (33) additional_stratagem=103; native CarpetBomb (103), uses=2, call_interval=15s, rearm=unchanged; 1 fields changed"
-    ]
-  },
-  "restart_persistence": "Complete v0.4.0 manager package with core and all three preset axes cold-started; custom rearm transaction checked through config in the same process."
+  "prior_test_scope": "v0.5.1: 200 kg / 1x / forward 80 m coverage and 500 kg / 1x / forward 0 m normal bomb drops reported by user. No v0.5.2 live test yet.",
+  "deployment": "v0.5.2 release package; replaces the withdrawn v0.6.0 local experiment. Import, clear old deployment, deploy and restart before entering a new mission.",
+  "updated_at": "2026-10-02T17:29:02+08:00"
 }
