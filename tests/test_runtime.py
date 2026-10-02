@@ -294,13 +294,13 @@ def bomb_reload_and_fixed_quantity():
             s.cfg(f'bomb=239\nbomb_count={count}\nuses=3\ncooldown=60\nforward=120\n')
             shadow=int(s.state[b'repair'][b'eagle'][b'table'])
             assert s.state[b'phase']==b'active' and s.mem.read(shadow+1992+24,4)==U(239)
-            assert s.state[b'config'][b'bomb_count']==20
+            assert s.state[b'config'][b'bomb_count']==20 and s.state[b'config'][b'forward']==120
             assert s.mem.read(BASE+0x8a4d88,11)==bytes.fromhex('ffc383fb140f82adfdffff')
             assert s.mem.read(BASE+0x8a4b25,9)==bytes.fromhex('f3440f1035ae2ab201')
             assert not s.mem.flushes and not s.mem.alloc_attempts
             assert not any(BASE<=address<BASE+0x4744000 for address,_ in s.mem.writes)
-            for config in ('bomb=999\n',):
-                s.cfg(config);assert s.mem.read(shadow+1992+24,4)==U(239)
+            for config in ('bomb=999\n','forward=-1\n','forward=301\n','forward=10.5\n'):
+                s.cfg(config);assert s.mem.read(shadow+1992+24,4)==U(239) and s.state[b'config'][b'forward']==120
             s.cfg('enabled=0\nbomb_count=10\n')
             assert s.state[b'phase']==b'disabled' and s.r(33,0xc8,4)==U(0)
         finally:s.close()
@@ -313,38 +313,57 @@ def eagle_state(s,current=(-400,0,120),velocity=(200,0,-20),resource=0x6ccb97667
     s.mem.put(BASE+0x3326650,Q(manager));s.mem.put(manager,header);s.mem.put(objects,Q(descriptor));s.mem.put(descriptor,Q(resource)+U(901)+U(902));s.mem.put(states,state)
     return manager,objects,states,descriptor
 
-def original_targets_preserved():
-    # Old presets/configurations must not reactivate the removed target adjustment.
-    for bomb in (170,192,239):
-        s=Scenario({'bomb':bomb,'forward':160})
+def forward_shift():
+    directions=[((-400,0,120),(200,0,-20),(80,0,6)),((400,0,120),(-200,0,-20),(-80,0,6)),
+                ((0,-400,120),(0,200,-20),(0,80,6)),((0,400,120),(0,-200,-20),(0,-80,6)),
+                ((-400,-400,120),(200,200,-20),(80/2**0.5,80/2**0.5,6)),((-400,0,120),(0,0,0),(80,0,6))]
+    for current,velocity,expected in directions:
+        s=Scenario({'bomb':192,'forward':80})
         try:
-            manager,objects,states,descriptor=eagle_state(s)
-            original=s.mem.read(states,0xfc)
-            s.tick();assert s.state[b'phase']==b'active'
-            for value in ('120','-1','301','10.5','manager'):
-                s.cfg(f'forward={value}\nuses=5\ncooldown=15\n')
-                assert s.state[b'config'][b'forward'] is None
-                assert s.mem.read(states,0xfc)==original
-                assert s.r(103,0x50,4)==U(5) and s.r(103,0x68,4)==F(15)
-            for _ in range(5):s.tick()
-            assert s.mem.read(states,0xfc)==original
-            assert not any(states<=address<states+0xfc for address,_ in s.mem.writes)
-            assert s.tick()==(1.1,b'preserved',42)
+            manager,objects,states,descriptor=eagle_state(s,current,velocity);original=s.mem.read(states,0xfc)
+            s.tick();actual=struct.unpack('<3f',s.mem.read(states+0x54,12))
+            assert all(abs(a-b)<1e-4 for a,b in zip(actual,expected))
+            changed=s.mem.read(states,0xfc);assert changed[:0x54]==original[:0x54] and changed[0x5c:]==original[0x5c:]
+            writes=len(s.mem.writes);s.tick();assert len(s.mem.writes)==writes and s.state[b'forward_adjustments']==1
+            s.cfg('forward=160\n');assert s.mem.read(states,0xfc)==changed
+            s.mem.put(manager+0x20,U(0));s.tick()
+            eagle_state(s,current,velocity);s.tick()
+            actual=struct.unpack('<3f',s.mem.read(states+0x54,12))
+            assert all(abs(a-b)<1e-4 for a,b in zip(actual,(expected[0]*2,expected[1]*2,6)))
+            assert not any(BASE<=address<BASE+0x4744000 for address,_ in s.mem.writes)
         finally:s.close()
-    assert b'forward' not in SOURCE and b'0x3326650' not in SOURCE
+
+def forward_shift_guards():
+    for mode in ('other_eagle','already_firing','already_attacked','outgoing','nan','zero_offset','disabled','partial_write','bad_count','stale_state'):
+        s=Scenario({'forward':0 if mode=='zero_offset' else 80})
+        try:
+            values={}
+            if mode=='other_eagle':values['resource']=0x2ea01cb1676aca29
+            elif mode=='already_firing':values['firing']=1
+            elif mode=='already_attacked':values['attacked']=1
+            elif mode=='outgoing':values['velocity']=(-200,0,0)
+            elif mode=='nan':values['current']=(float('nan'),0,120)
+            manager,objects,states,descriptor=eagle_state(s,**values);original=s.mem.read(states,0xfc)
+            if mode=='disabled':s.cfg('enabled=0\n')
+            elif mode=='partial_write':s.mem.fail_address=states+0x54
+            elif mode=='bad_count':s.mem.put(manager+0x20,U(65))
+            elif mode=='stale_state':s.mem.put(manager+0x58,Q(0))
+            s.tick();assert s.mem.read(states,0xfc)==original
+            assert not any(BASE<=address<BASE+0x4744000 for address,_ in s.mem.writes)
+            if mode in ('partial_write','bad_count'):assert s.state[b'forward_fault'] and s.state[b'phase']==b'active'
+        finally:s.close()
 
 def package():
     sys.path.insert(0,str(ROOT/'tools'));from build import build,murmur64
     from preset_bytecode import validate_with_lupa
     path=build();counts={}
     with zipfile.ZipFile(path) as z:
-        manifest=json.loads(z.read('manifest.json').decode('ascii'));assert len(manifest['Options'])==6
+        manifest=json.loads(z.read('manifest.json').decode('ascii'));assert len(manifest['Options'])==7
         assert '每次使用之间' in manifest['Options'][2]['Name']
         assert '所有携带的飞鹰战备共用' in manifest['Options'][3]['Description']
         assert '200 kg' in manifest['Options'][4]['SubOptions'][1]['Name'] and '500 kg' in manifest['Options'][4]['SubOptions'][2]['Name']
         assert [x['Name'] for x in manifest['Options'][5]['SubOptions']]==['1x（每架 20 枚）']
-        assert not any(name.startswith('Options/forward/') for name in z.namelist())
-        assert all('前移' not in option['Name'] for option in manifest['Options'])
+        assert [x['Name'] for x in manifest['Options'][6]['SubOptions']]==['80 米','0 米','40 米','120 米','160 米']
         for name in z.namelist():
             if not re.search(r'\.patch_\d+$',name):continue
             b=z.read(name);assert struct.unpack_from('<4I',b)==(0xf0000011,1,1,0)
@@ -360,12 +379,12 @@ def package():
                 assert source.startswith(b'\x1bLJ\x02\x02')
                 validate_with_lupa(value,source)
                 counts[axis]=counts.get(axis,0)+1
-        assert counts=={'uses':9,'cooldown':10,'rearm':13,'bomb':3,'bomb_count':1}
-        assert len({murmur64(('mods/carpet_bomb_native/'+a).encode()) for a in counts})==5
+        assert counts=={'uses':9,'cooldown':10,'rearm':13,'bomb':3,'bomb_count':1,'forward':5}
+        assert len({murmur64(('mods/carpet_bomb_native/'+a).encode()) for a in counts})==6
         for option in manifest['Options']:
             for item in option.get('SubOptions',[option]):
                 assert all(any(name.startswith(folder+'/') for name in z.namelist()) for folder in item['Include'])
-    print('Validated 36 independent preset modules; 3510 selectable combinations and native grant archive.')
+    print('Validated 41 independent preset modules; 17550 selectable combinations and native grant archive.')
 passed=[]
 for name,fn in [('default carrying, repaired payload, original Eagle rows preserved and disable restoration',defaults),
     ('independent charges/cooldown, preserved native identity and configuration validation',settings),
@@ -378,11 +397,12 @@ for name,fn in [('default carrying, repaired payload, original Eagle rows preser
     ('partial rearm write rolls back native grant transaction',rearm_partial),
     ('all three bomb identities/resources, unchanged original Eagles/projectiles and disable restoration',bomb_settings),
     ('bomb reload, fixed original quantity, ignored legacy ratios and no executable writes',bomb_reload_and_fixed_quantity),
-    ('original aircraft targets preserved and legacy forward options ignored',original_targets_preserved),
-    ('manager archives and 36 presets with 3510 selectable combinations',package)]:
+    ('forward shift in every direction, one adjustment per aircraft and future-flight reload',forward_shift),
+    ('forward shift guards, other Eagles, firing/outgoing states, invalid vectors and partial-write restoration',forward_shift_guards),
+    ('manager archives and 41 presets with 17550 selectable combinations',package)]:
     fn();passed.append(name);print('PASS',name)
 result_path=ROOT/'validation/offline_report.json'
-result_path.write_text(json.dumps({'version':'0.5.2','game_build':25480438,'tests_passed':passed,
-  'preset_combinations':3510,'preset_modules_checked':36,'in_game_loader_verified':False,'default_carry_verified':False,
+result_path.write_text(json.dumps({'version':'0.5.1','game_build':25480438,'tests_passed':passed,
+  'preset_combinations':17550,'preset_modules_checked':41,'in_game_loader_verified':False,'default_carry_verified':False,
   'in_game_bombing_verified':False,'multiplayer_verified':False,'status':'OFFLINE_PASSED',
   'previous_version':{'version':'0.1.0','default_carry_verified':True,'battlefield_test':'CRASHED: missing EagleComponent for native payload; removed'}},indent=2),encoding='utf-8',newline='\n')

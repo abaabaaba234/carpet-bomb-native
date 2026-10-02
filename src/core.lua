@@ -2,7 +2,7 @@
 -- Native CarpetBomb grant and missing payload reconstruction.
 local previous=rawget(_G,'CarpetBombNative')
 if previous then return previous end
-local S={version='0.5.2',phase='waiting',elapsed=0,owned={},writes=0,allocations={}}
+local S={version='0.5.1',phase='waiting',elapsed=0,owned={},writes=0,allocations={}}
 rawset(_G,'CarpetBombNative',S)
 local ffi=require('ffi')
 local ROOT=(os.getenv('LOCALAPPDATA') or '')..'\\CowboyBingus\\Helldivers2\\Logs\\'
@@ -20,7 +20,7 @@ local function preset(axis,default)
 end
 log('Loading v'..S.version..' manager presets')
 local defaults={enabled=1,uses=preset('uses',2),cooldown=preset('cooldown',15),rearm=preset('rearm',-1),
-    bomb=preset('bomb',170),bomb_count=20}
+    bomb=preset('bomb',170),bomb_count=20,forward=preset('forward',80)}
 log('Manager presets: uses='..defaults.uses..' call_interval='..defaults.cooldown..' rearm='..defaults.rearm
     ..' projectile='..defaults.bomb..' bombs_per_aircraft='..defaults.bomb_count)
 local config={};for k,v in pairs(defaults) do config[k]=v end
@@ -34,8 +34,8 @@ local function read_config()
           '# cooldown = interval between uses; rearm = return/reload cooldown for ALL carried Eagles.\n',
           '# rearm=-1 keeps the existing game setting.\n',
           '# bomb=170 (Airstrike), 192 (200 kg), 239 (Eagle 500 kg).\n',
-          '# bomb_count is fixed at20.\n',
-          'enabled=1\nuses=manager\ncooldown=manager\nrearm=manager\nbomb=manager\nbomb_count=manager\n');f:close();f=io.open(CFG,'rb') end
+          '# bomb_count is fixed at20; forward=0..300 metres along incoming flight direction.\n',
+          'enabled=1\nuses=manager\ncooldown=manager\nrearm=manager\nbomb=manager\nbomb_count=manager\nforward=manager\n');f:close();f=io.open(CFG,'rb') end
     end
     local text=f and f:read('*a') or '';if f then f:close() end
     if text==last_text then return false end
@@ -51,7 +51,8 @@ local function read_config()
                 or (key=='uses' and n~=-1 and (n<1 or n>100))
                 or (key=='cooldown' and (n<0 or n>1800))
                 or (key=='rearm' and (n< -1 or n>1800))
-                or (key=='bomb' and n~=170 and n~=192 and n~=239) then
+                or (key=='bomb' and n~=170 and n~=192 and n~=239)
+                or (key=='forward' and (n<0 or n>300)) then
                 last_text=text;log('Config rejected: '..key..'='..value);return false
             end
             next_config[key]=n
@@ -356,11 +357,70 @@ local function apply()
         S.plan=watched
     end
     S.phase=active and 'active' or 'disabled'
-    log(string.format('%s: Resupply (33) additional_stratagem=%d; native CarpetBomb (103), uses=%s, call_interval=%ds, rearm=%s; projectile=%d (%s), bombs_per_aircraft=%d (%.2fx); %d fields changed',
+    log(string.format('%s: Resupply (33) additional_stratagem=%d; native CarpetBomb (103), uses=%s, call_interval=%ds, rearm=%s; projectile=%d (%s), bombs_per_aircraft=%d (%.2fx), forward=%dm; %d fields changed',
         S.phase,active and 103 or 0,config.uses==-1 and 'unlimited' or tostring(config.uses),config.cooldown,
         custom_rearm and (config.rearm..'s (all carried Eagles)') or 'unchanged',
         active and config.bomb or 170,PROJECTILES[active and config.bomb or 170].label,
-        active and config.bomb_count or 20,(active and config.bomb_count or 20)/20,#done))
+        active and config.bomb_count or 20,(active and config.bomb_count or 20)/20,config.forward,#done))
+end
+local function vector(bytes,offset)
+    local values=ffi.new('float[3]');ffi.copy(values,bytes:sub(offset+1,offset+12),12)
+    local out={tonumber(values[0]),tonumber(values[1]),tonumber(values[2])}
+    for _,v in ipairs(out) do if v~=v or math.abs(v)>10000000 then return nil end end
+    return out
+end
+local function shift_incoming_targets(dt)
+    if S.phase~='active' or S.forward_fault then return end
+    S.forward_elapsed=(S.forward_elapsed or 0)+((type(dt)=='number' and dt>0 and dt<5) and dt or 1/60)
+    if S.forward_elapsed<0.1 then return end;S.forward_elapsed=0
+    local manager=ptr(S.base+0x3326650)
+    local header=manager and read(manager,0x60);if not header then return end
+    local n=u32(header,0x20);if n==0 then S.forward_seen={};return end
+    if n>64 then error('Eagle state count differs; forward adjustment disabled') end
+    local objects,states=u64(header,0x48),u64(header,0x58)
+    if objects<0x10000 or states<0x10000 then return end
+    local previous=S.forward_seen or {};local present={}
+    for i=0,n-1 do
+        local descriptor=ptr(objects+i*8);local identity=descriptor and read(descriptor,16)
+        if identity and identity:sub(1,8)==NATIVE then
+            local key=tostring(descriptor)..':'..u32(identity,8)..':'..u32(identity,12)
+            present[key]=previous[key]
+            if not present[key] then
+                local address=states+i*0xfc;local state=read(address,0xfc)
+                if state then
+                    if config.forward==0 or state:byte(0x71)~=0 or state:byte(0x72)~=0 then
+                        present[key]=true
+                    else
+                        local target,current,velocity=vector(state,0x54),vector(state,0x78),vector(state,0xd4)
+                        if target and current and velocity then
+                            local dx,dy=target[1]-current[1],target[2]-current[2]
+                            local distance=math.sqrt(dx*dx+dy*dy)
+                            local vx,vy=velocity[1],velocity[2];local speed=math.sqrt(vx*vx+vy*vy)
+                            if distance>=50 and (speed<=1 or vx*dx+vy*dy>0) then
+                                if speed>1 then dx,dy,distance=vx,vy,speed end
+                                local x=target[1]+dx/distance*config.forward
+                                local y=target[2]+dy/distance*config.forward
+                                local before=state:sub(0x55,0x5c);local wanted=pack_float(x)..pack_float(y)
+                                -- Recheck the native descriptor and current state allocation.
+                                -- Only its horizontal target moves; beacon and altitude stay intact.
+                                if read(descriptor,16)==identity and ptr(manager+0x48)==objects
+                                    and ptr(manager+0x58)==states and read(address+0x54,8)==before then
+                                    if not write(address+0x54,wanted) then
+                                        if read(descriptor,16)==identity and ptr(manager+0x58)==states then write(address+0x54,before) end
+                                        error('Forward target write failed; target restoration attempted')
+                                    end
+                                    present[key]=true;S.forward_adjustments=(S.forward_adjustments or 0)+1
+                                    log(string.format('Forward strike shift: entity=%d, %dm, target=(%.1f, %.1f, %.1f) -> (%.1f, %.1f, %.1f)',
+                                        u32(identity,8),config.forward,target[1],target[2],target[3],x,y,target[3]))
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    S.forward_seen=present
 end
 local function initialize()
     S.base=check_build();if not S.base then return end
@@ -406,6 +466,8 @@ local old_update=rawget(_G,'update')
 if type(old_update)~='function' then S.phase='stopped';log('Global update callback unavailable');return S end
 function update(dt,...)
     local ok,err=pcall(tick,dt);if not ok then stop(tostring(err)) end
+    local shifted,shift_error=pcall(shift_incoming_targets,dt)
+    if not shifted then S.forward_fault=true;log('Forward adjustment stopped: '..tostring(shift_error)) end
     return old_update(dt,...)
 end
 return S

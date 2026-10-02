@@ -1,5 +1,5 @@
 {
-  "version": "0.5.2",
+  "version": "0.5.1",
   "game_build": 25480438,
   "tests_passed": [
     "default carrying, repaired payload, original Eagle rows preserved and disable restoration",
@@ -15,11 +15,12 @@
     "partial rearm write rolls back native grant transaction",
     "all three bomb identities/resources, unchanged original Eagles/projectiles and disable restoration",
     "bomb reload, fixed original quantity, ignored legacy ratios and no executable writes",
-    "original aircraft targets preserved and legacy forward options ignored",
-    "manager archives and 36 presets with 3510 selectable combinations"
+    "forward shift in every direction, one adjustment per aircraft and future-flight reload",
+    "forward shift guards, other Eagles, firing/outgoing states, invalid vectors and partial-write restoration",
+    "manager archives and 41 presets with 17550 selectable combinations"
   ],
-  "preset_combinations": 3510,
-  "preset_modules_checked": 36,
+  "preset_combinations": 17550,
+  "preset_modules_checked": 41,
   "in_game_loader_verified": false,
   "default_carry_verified": false,
   "in_game_bombing_verified": false,
