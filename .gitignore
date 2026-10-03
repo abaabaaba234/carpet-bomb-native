@@ -8,3 +8,4 @@ PROGRESS_*.md
 validation/*
 !validation/report.json
 !validation/offline_report.json
+!validation/user_test_feedback.json

@@ -1,9 +1,48 @@
 """Build the standalone v18 native CarpetBomb addon and independent manager presets."""
 from pathlib import Path
-import struct,json,hashlib,zipfile
+import struct,json,hashlib,zipfile,re,subprocess,sys,os
 from preset_bytecode import encode as preset_bytecode
 ROOT=Path(__file__).resolve().parents[1]
-VERSION='0.5.1-menu';MASK=(1<<64)-1
+MASK=(1<<64)-1
+
+def core_source():
+    return (ROOT/'src/core.lua').read_bytes().replace(b'\r\n',b'\n')
+
+def runtime_version():
+    return re.search(rb"local S=\{version='([^']+)'",core_source())[1].decode('ascii')
+
+def runtime_build():
+    return int(re.search(rb'local BUILD=\{steam=(\d+)',core_source())[1])
+
+def validation_context():
+    provider=os.environ.get('HD2_MOD_OPTIONS_MENU_SOURCE')
+    return {'menu_provider_sha256':hashlib.sha256(Path(provider).read_bytes()).hexdigest() if provider else None}
+
+def validation_inputs():
+    paths=[ROOT/'requirements-dev.txt']
+    for folder,pattern in [('src','*.lua'),('tools','*.py'),('tests','*.py'),('tests/fixtures','*.json')]:
+        paths.extend((ROOT/folder).glob(pattern))
+    return {p.relative_to(ROOT).as_posix():hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(paths)}
+
+def validate_report(report):
+    if report.get('status')!='OFFLINE_PASSED' or report.get('version')!=runtime_version():
+        raise ValueError('Validation status/version does not match runtime')
+    if report.get('game_build')!=runtime_build() or report.get('validation_context')!=validation_context():
+        raise ValueError('Validation game build or menu provider does not match')
+    if report.get('source_sha256')!=hashlib.sha256(core_source()).hexdigest():
+        raise ValueError('Validation source hash does not match runtime')
+    if report.get('validation_inputs')!=validation_inputs():
+        raise ValueError('Validation inputs changed; tests must run again')
+
+def validated_report():
+    path=ROOT/'validation/offline_report.json'
+    try:
+        report=json.loads(path.read_text(encoding='utf-8'));validate_report(report);return report
+    except (OSError,ValueError):
+        # Test mode never creates a distributable before its report is complete.
+        environment=dict(os.environ,HD2_VALIDATE_ONLY='1')
+        subprocess.run([sys.executable,str(ROOT/'tests/test_runtime.py')],cwd=ROOT,env=environment,check=True)
+        report=json.loads(path.read_text(encoding='utf-8'));validate_report(report);return report
 def murmur64(data):
     m=0xc6a4a7935bd1e995;h=len(data)*m&MASK
     for i in range(0,len(data)//8*8,8):
@@ -20,12 +59,13 @@ def patch(resource,source):
     type_entry=struct.pack('<IIQQII',0,0,kind,1,16,16)
     entry=struct.pack('<7Q6I',murmur64(resource.encode()),kind,offset,0,0,0,0,len(body),0,0,16,16,0)
     return header+type_entry+entry+bytes(offset-len(header+type_entry+entry))+body+bytes(size-offset-len(body))
-def build():
+def make_files(report=None):
+    version=runtime_version()
     files={}
     def add(folder,index,resource,source):
         name=f'{folder}/9ba626afa44a3aa3.patch_{index}'
         files[name]=patch(resource,source);files[name+'.stream']=b'';files[name+'.gpu_resources']=b''
-    add('Core',0,'mods/carpet_bomb_native/core',(ROOT/'src/core.lua').read_bytes().replace(b'\r\n',b'\n'))
+    add('Core',0,'mods/carpet_bomb_native/core',core_source())
     options=[{'Name':'核心 / Core','Description':'修复地毯轰炸缺失的实体组件和进场高度，作为补给附带的额外战备进入任务。需要 v18 加载器。','Include':['Core']}]
     for index,(axis,title,values,description) in enumerate([
         ('uses','使用次数 / Charges',[2,1,3,4,5,6,8,10,-1],'默认 2 次；使用个人飞鹰次数与补给机制。'),
@@ -49,17 +89,32 @@ def build():
             else:label='无限 / Unlimited' if axis=='uses' and n==-1 else '保持原版 / Vanilla' if n==-1 else f'{n} 次' if axis=='uses' else f'{n} 秒'
             choices.append({'Name':label,'Description':description,'Include':[folder]})
         options.append({'Name':title,'Description':description+' 部署后重启并进入新任务。','SubOptions':choices})
-    manifest={'Version':1,'Guid':'acffed9b-07c3-48f8-a936-19874038111b','Name':'原生地毯轰炸默认携带 / Native CarpetBomb v'+VERSION,
+    manifest={'Version':1,'Guid':'acffed9b-07c3-48f8-a936-19874038111b','Name':'原生地毯轰炸默认携带 / Native CarpetBomb v'+version,
       'Description':'基于 v0.5.1 的 MODS 菜单适配，支持本模组中英语言、启用开关、次数、调用冷却、飞鹰装填、炸弹类型和目标前移。各参数可跟随管理器预设或自定义。数量固定原版 1x。需要 Bingus Shared Loader v18；游戏内菜单另需 Bingus ModOptionsMenu version2。支持 Steam build 25480438。', 'Options':options}
     # Arsenal's import can decode text with the Windows ANSI code page.
     # JSON escapes retain the Chinese labels under either text encoding.
     files['manifest.json']=json.dumps(manifest,ensure_ascii=True,indent=2).encode('ascii')
-    for name in ('README_中文.md','README_MODS菜单.md','CREDITS.md'):files[name]=(ROOT/name).read_bytes()
+    for name in ('README_中文.md','README_MODS菜单.md','PERFORMANCE_AUDIT.md','RELIABILITY_AUDIT.md','RELEASE_NOTES_v0.5.1-menu-perf2.md','CREDITS.md'):files[name]=(ROOT/name).read_bytes()
     if (ROOT/'validation/report.json').exists():files['VALIDATION.json']=(ROOT/'validation/report.json').read_bytes()
-    output=ROOT/'dist'/f'NativeCarpetBomb_v{VERSION}.zip';output.parent.mkdir(exist_ok=True)
-    with zipfile.ZipFile(output,'w',zipfile.ZIP_DEFLATED) as archive:
+    if (ROOT/'validation/user_test_feedback.json').exists():files['USER_TEST_FEEDBACK.json']=(ROOT/'validation/user_test_feedback.json').read_bytes()
+    if report is not None:
+        validate_report(report)
+        files['OFFLINE_VALIDATION.json']=json.dumps(report,indent=2).encode('utf-8')+b'\n'
+    return files
+
+def build():
+    report=validated_report();files=make_files(report)
+    output=ROOT/'dist'/f'NativeCarpetBomb_v{runtime_version()}.zip';output.parent.mkdir(exist_ok=True)
+    temporary=output.with_suffix('.zip.tmp')
+    with zipfile.ZipFile(temporary,'w',zipfile.ZIP_DEFLATED) as archive:
         for name,body in sorted(files.items()):
             info=zipfile.ZipInfo(name,(2026,10,1,0,0,0));info.compress_type=zipfile.ZIP_DEFLATED;archive.writestr(info,body)
+    with zipfile.ZipFile(temporary) as archive:
+        if archive.testzip() is not None:raise ValueError('Archive CRC verification failed')
+        for name,body in files.items():
+            if archive.read(name)!=body:raise ValueError('Archive differs from inputs: '+name)
+    # Recheck inputs before replacing the previous successful archive.
+    validate_report(report);os.replace(temporary,output)
     (ROOT/'manifest.json').write_bytes(files['manifest.json'])
     print(output);print('SHA256',hashlib.sha256(output.read_bytes()).hexdigest());return output
 if __name__=='__main__':build()

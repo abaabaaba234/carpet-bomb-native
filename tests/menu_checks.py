@@ -209,11 +209,25 @@ def run(Scenario,SOURCE,ROOT):
         try:
             m=load_menu(s);s.tick();saved=file(s);writes=len(s.mem.writes)
             s.lua.execute(b'''original_io_open=io.open
-                io.open=function(path,mode)if path:match('CarpetBombNative%.cfg$') and mode=='wb' then
+                io.open=function(path,mode)if path:match('CarpetBombNative%.cfg%.tmp$') and mode=='wb' then
                     return nil,'simulated save failure' end;return original_io_open(path,mode)end''')
             apply(s,m,enabled=False,cooldown=45)
             assert s.state[b'phase']==b'active' and get(m,'enabled') is True and get(m,'cooldown')==15
             assert file(s)==saved and len(s.mem.writes)==writes
+        finally:s.close()
+
+    def stopped_callbacks():
+        s=Scenario()
+        try:
+            m=load_menu(s);s.tick()
+            s.mem.put(s.address[103]+0x68,struct.pack('<f',77));s.tick()
+            assert s.state[b'phase']==b'stopped'
+            before=snapshot(s);saved=file(s);writes=len(s.mem.writes)
+            callbacks=m[b'state'][b'callbacks']
+            for key,value in [('enabled',False),('enabled',True),('uses',9),('language',2)]:
+                callbacks[PREFIX+key.encode()][1](value)
+            s.tick();s.tick()
+            assert snapshot(s)==before and file(s)==saved and len(s.mem.writes)==writes
         finally:s.close()
 
     passed=[]
@@ -221,7 +235,8 @@ def run(Scenario,SOURCE,ROOT):
         ('real menu: order, language migration/refresh, cache authority, pending edits and restart',language_cache_pending_and_restart),
         ('real menu: valid ranges, invalid callback rejection, manager restoration and disable restoration',parameters_manager_restore_and_disable),
         ('real menu: sentinel sources and simultaneous language/parameter changes',source_modes_and_simultaneous_changes),
-        ('optional menu version/registration/callback/sync failures and config save failure',menu_failures_and_save_failures)]:
+        ('optional menu version/registration/callback/sync failures and config save failure',menu_failures_and_save_failures),
+        ('stopped runtime rejects all menu callbacks without persisting or reviving writes',stopped_callbacks)]:
         name=name if provider is not None else name.replace('real menu:', 'menu contract:')
         fn();passed.append(name);print('PASS',name)
     return passed

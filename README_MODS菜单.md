@@ -1,10 +1,10 @@
-# 地毯轰炸 v0.5.1-menu
+# 地毯轰炸 v0.5.1-menu-perf2
 
 基于 `NativeCarpetBomb_v0.5.1.zip` 内的核心 Lua 适配。保留原有默认携带、载荷修复、禁用恢复和目标前移路径；每架投弹数量继续固定为 20 枚。
 
 ## 安装
 
-关闭游戏，用 Arsenal / HD2MM 导入 `NativeCarpetBomb_v0.5.1-menu.zip` 替换旧版，启用核心并选择管理器预设，按加载器要求 Purge + Deploy 后重启。不要同时部署原版与此适配版。
+关闭游戏，用 Arsenal / HD2MM 导入 `NativeCarpetBomb_v0.5.1-menu-perf2.zip` 替换旧版，启用核心并选择管理器预设，按加载器要求 Purge + Deploy 后重启。不要同时部署原版与此适配版。
 
 需要 Bingus Shared Loader v18。游戏内 MODS 页面另外需要安装 **Bingus ModOptionsMenu API 1 / version 2**；Shared Loader 本身不提供菜单。没有菜单或菜单注册失败时，管理器预设和配置文件仍可使用。
 
@@ -37,8 +37,8 @@
 
 保持原版装填保存为 `rearm=-1`，无限次数保存为 `uses=-1`，关闭保存为 `enabled=0`。`bomb_count` 仍强制为 20，旧数量覆盖仍被忽略。
 
-本适配版本仅进行了离线 LuaJIT 和菜单 API 验证；游戏内显示、战斗和联机行为尚未实测。原版 v0.5.1 的既有实测记录见 `README_中文.md`，不代表菜单适配版已通过实机测试。
+本适配版本已通过离线 LuaJIT 和菜单 API 验证；2026-10-04 用户报告完成优化版测试，反馈性能良好。未提供菜单专项、量化性能或联机测试详情。原版 v0.5.1 的既有实测记录见 `README_中文.md`，不代表菜单适配版已通过实机测试。
 
 ## 源码与检查
 
-源码 `src/core.lua`；打包 `python tools/build.py`；测试 `python tests/test_runtime.py`。开发依赖沿用 `requirements-dev.txt`。默认检查使用菜单 API 模拟环境。要用真实提供者验证，将环境变量 `HD2_MOD_OPTIONS_MENU_SOURCE` 设置为已安装 ModOptionsMenu 的 Lua 源码路径后运行同一测试。真实 API 检查只执行注册、配置、应用与翻译函数，不安装原生 UI 更新 hook，也不接触运行中的游戏。第三方菜单源码不随本仓库分发。检查结果见包内 `VALIDATION.json`。
+源码 `src/core.lua`；打包 `python tools/build.py`；测试 `python tests/test_runtime.py`。开发依赖沿用 `requirements-dev.txt`。默认检查使用菜单 API 模拟环境。要用真实提供者验证，将环境变量 `HD2_MOD_OPTIONS_MENU_SOURCE` 设置为已安装 ModOptionsMenu 的 Lua 源码路径后运行同一测试。真实 API 检查只执行注册、配置、应用与翻译函数，不安装原生 UI 更新 hook，也不接触运行中的游戏。第三方菜单源码不随本仓库分发。本次 37 组离线检查结果见包内 `OFFLINE_VALIDATION.json`；`VALIDATION.json` 为历史实机记录。性能改动见 [检查报告](PERFORMANCE_AUDIT.md)，失败恢复、配置保存与打包流程见 [规范化报告](RELIABILITY_AUDIT.md)。

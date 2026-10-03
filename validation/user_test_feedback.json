@@ -1,0 +1,14 @@
+{
+  "version": "0.5.1-menu-perf2",
+  "reported_on": "2026-10-04",
+  "timezone": "Asia/Shanghai",
+  "evidence_type": "user_report",
+  "feedback": "ok了测试完了性能还是不错的",
+  "runtime_source_sha256": "b58ace640b459df9611859b9a2d5d814e290d04b82ae7d9af9577c2e40b0e52b",
+  "tested_archive_sha256": "24db7661690202daf230dc99f4315ce86a2b4b553bed7b847a739432f7ed43d7",
+  "measured_cpu_percent": null,
+  "measured_fps": null,
+  "multiplayer_verified": false,
+  "scope": "用户报告已完成测试且性能良好；未提供量化指标、菜单专项检查或联机测试详情。",
+  "release_note": "发布归档补充实测反馈与文档；核心 Lua 与用户测试的版本一致。"
+}

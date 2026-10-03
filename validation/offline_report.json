@@ -1,5 +1,5 @@
 {
-  "version": "0.5.1-menu",
+  "version": "0.5.1-menu-perf2",
   "game_build": 25480438,
   "tests_passed": [
     "default carrying, repaired payload, original Eagle rows preserved and disable restoration",
@@ -10,6 +10,11 @@
     "stale carrier identity refused",
     "payload alias refusal, read-only protection restoration and competing table writer",
     "late game datalibrary initialization retries without configuration edits",
+    "500 delayed retries cache hash slots, allocate nothing, then publish exactly once",
+    "module and stratagem bootstrap caching while records load late",
+    "prepared payload root, table, donor bytes and target conflict guards",
+    "unpublished copy/alias failure frees memory; published pointer stays alive",
+    "cached projectile identity and moved-address guards",
     "independent rearm setting, vanilla restoration, zero/max values and disable restoration",
     "default rearm non-interference, competing rearm writer and stale rearm record refusal",
     "partial rearm write rolls back native grant transaction",
@@ -17,16 +22,74 @@
     "bomb reload, fixed original quantity, ignored legacy ratios and no executable writes",
     "forward shift in every direction, one adjustment per aircraft and future-flight reload",
     "forward shift guards, other Eagles, firing/outgoing states, invalid vectors and partial-write restoration",
+    "64 aircraft use one pointer-array read, new generations shift once and departed flights are pruned",
+    "initialization and delayed-loading memory read budgets",
     "manager archives and 41 presets with 17550 selectable combinations",
-    "real menu: order, language migration/refresh, cache authority, pending edits and restart",
-    "real menu: valid ranges, invalid callback rejection, manager restoration and disable restoration",
-    "real menu: sentinel sources and simultaneous language/parameter changes",
-    "optional menu version/registration/callback/sync failures and config save failure"
+    "build rejects failed, old-version, stale-source and changed-test reports",
+    "menu contract: order, language migration/refresh, cache authority, pending edits and restart",
+    "menu contract: valid ranges, invalid callback rejection, manager restoration and disable restoration",
+    "menu contract: sentinel sources and simultaneous language/parameter changes",
+    "optional menu version/registration/callback/sync failures and config save failure",
+    "stopped runtime rejects all menu callbacks without persisting or reviving writes",
+    "restore retains failures, preserves foreign values and stops after three cleanup rounds",
+    "failed transaction rollback retries before restoring original owned fields",
+    "cleanup refuses moved records and subsequent competing writers",
+    "page protection and unpublished allocation cleanup retry safely",
+    "public disable persists, is idempotent and cannot revive a stopped runtime",
+    "atomic config write/flush/close/replace failures preserve original bytes and settings",
+    "shared schema rejects invalid presets and malformed config without resetting on missing files",
+    "failed flight-target restoration retries only while the same aircraft identity remains"
   ],
-  "test_group_count": 20,
+  "validation_context": {
+    "menu_provider_sha256": null
+  },
+  "source_sha256": "b58ace640b459df9611859b9a2d5d814e290d04b82ae7d9af9577c2e40b0e52b",
+  "validation_inputs": {
+    "requirements-dev.txt": "c355c313ec4744320b1e0d22e7e70465d899a48e8c62293578ddff95d0672c6b",
+    "src/core.lua": "b58ace640b459df9611859b9a2d5d814e290d04b82ae7d9af9577c2e40b0e52b",
+    "src/core_v0.1.0_FAILED.lua": "cb3cdf1dd40789d9dedc5e432fc93b3bb928375147b53009020edac8dd7e1909",
+    "src/core_v0.2.0_FAILED_FAR_IMPACTS.lua": "369ea0c65bb12449e7c37df7a5bd77b27c828dc22fd6f119e1a50244a81bde3f",
+    "tests/fixtures/payload_tables_build25480438.json": "51b17c0a0b0c4cc888aabefa343355b9f144e09f4a6e8b2443ec1b4eb8880ac6",
+    "tests/fixtures/projectiles_build25480438.json": "0c27b8218e1a4cacc4123fc1ea6c5f73a500daeb55a732b657cd97c906662f23",
+    "tests/fixtures/stratagems_build25480438.json": "2fc606595a39b47a0939b742e71796155b9f47bdc33e86a6d75c91d30cc4e245",
+    "tests/menu_checks.py": "a5a4cb0ebffbf7d96002a224a27ef9b6fcb93b607bca3c1749078b958f9960ea",
+    "tests/reliability_checks.py": "947e6480cee8dad47dbf9be7cfd56c885633fa71e5b451d77d7e3b461c162fb2",
+    "tests/test_runtime.py": "cc9440c50b9d1ab5c67bbd18e9e484976220b6f588864c42c6f982601a408bbd",
+    "tools/build.py": "800884b011582ddffb49230032044c07185d9580d19feef2e6e5d420849de251",
+    "tools/capture_ballistics.py": "8f114692e15d15f9ec57b44a54aa07d995da7cfb1d46c2b9916e7ec78a5ce3c5",
+    "tools/capture_eagles.py": "4388c76f926ffb72b3ab536185c119c22452f7c530d55fe5caa21f8a602838d5",
+    "tools/capture_live.py": "e9e8d5b508a7b6caffb9fd842aca54bb9de7b5b8d455c3c622f1d50162d5b618",
+    "tools/capture_projectiles.py": "f45f76838bbdd4d3204c266f278b9d8870303863287e82b3fcbd4942926cec3c",
+    "tools/eagle_research.py": "d0929bbfa1ffb7084279b1938b236679faeeb3483b77ef2fb0898ff6ad1b5d23",
+    "tools/inspect_dump.py": "f8b8e93e07ace2459d61e9f937ba0f0b223035ec78b74ea6739cb5dccbe28e69",
+    "tools/install_test.py": "7d0e6f78c278c1c69ae86aee7ef58002f4af7226966013734efbede3459f5476",
+    "tools/isolate_presets.py": "93ebe692ff87d7065a4fda8704a4628c9c97aa8c823d536477dbec3960a6ce5f",
+    "tools/preset_bytecode.py": "cfb376a3566f3d55bf3a0de0a9cf9840e869cc9a6e526c5a4d15c6d96f15a268",
+    "tools/remove_test.py": "365d553a32735b32a475d4d2d771f56b2f397274857f65405efed3ed3ba444e4",
+    "tools/repair_manager.py": "170ab2f78ce54e1ef2429d7611cdc3df1d0e25cb458b38d1bc95cf5f3748511f",
+    "tools/test_height.py": "d70a892c28c5d23e1b519cda1789689707e1ccc4cd48e580052eb3fc07a8fbc4",
+    "tools/test_rearm_config.py": "769a95272cf9b32da8f176b631b65a016c720e9a64d695c0974f3546515e9241",
+    "tools/verify_capture.py": "73ab1884b36cb05f877dfc416077852cea0830589bde9b70fc91ebc65af5752c"
+  },
+  "performance_counters": {
+    "initialization": {
+      "rpm_calls": 281,
+      "bytes": 13076
+    },
+    "steady_100_ticks": {
+      "rpm_calls": 5300,
+      "bytes": 68800
+    },
+    "delayed_10_ticks": {
+      "rpm_calls": 364,
+      "bytes": 8960,
+      "allocations": 0
+    }
+  },
+  "test_group_count": 37,
   "menu_api_verification": {
-    "provider": "external version2 source",
-    "provider_sha256": "36c7ae97bd480613d7f7a994da1d385d8977d8e6d9f7d4a8842e8d8c83594530",
+    "provider": "API contract fixture",
+    "provider_sha256": null,
     "registered_rows": 11,
     "first_row": "Language",
     "native_ui_hook_executed": false
