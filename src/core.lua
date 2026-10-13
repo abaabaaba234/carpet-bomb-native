@@ -2,7 +2,7 @@
 -- Native CarpetBomb grant and missing payload reconstruction.
 local previous=rawget(_G,'CarpetBombNative')
 if previous then return previous end
-local S={version='0.5.1-menu-perf2',phase='waiting',elapsed=0,owned={},writes=0,allocations={},projectiles={},
+local S={version='0.5.3',phase='waiting',elapsed=0,owned={},writes=0,allocations={},projectiles={},
     recovery={},protection_pending={},cleanup_attempts=0}
 rawset(_G,'CarpetBombNative',S)
 local ffi=require('ffi')
@@ -126,7 +126,7 @@ local function save_config()
     last_text=text;return true
 end
 local MENU_TEXT={
-    zh={title='原生地毯轰炸',language_description='选择本模组语言；应用后关闭并重新打开 Esc 菜单刷新文字。',
+    zh={title='原生地毯轰炸',language_description='选择本模组标题、标签和选项的语言；所有介绍始终中英双语显示。应用后关闭并重新打开 Esc 菜单刷新文字。',
         enabled='启用',enabled_description='默认携带地毯轰炸。关闭后沿用原版恢复逻辑，停止调整后续飞机。',
         manager='跟随管理器',custom='自定义',limited='有限次数',unlimited='无限',vanilla='保持原版',
         uses_mode='使用次数来源',uses_mode_description='跟随部署预设，或指定有限次数 / 无限。已有次数可能需要新任务更新。',
@@ -139,7 +139,7 @@ local MENU_TEXT={
         airstrike='原版飞鹰空袭炸弹',native_bomb='地毯轰炸 200 kg',heavy_bomb='飞鹰 500 kg',
         forward_source='目标前移来源',forward_source_description='跟随部署预设，或自定义沿飞鹰进场方向的前移距离。',
         forward='投弹目标前移（米）',forward_description='0–300 米；应用此滑块会切换为自定义。仅影响后续新出动飞机，0 米保留原落点。'},
-    en={title='Native CarpetBomb',language_description='Select this mod\'s language. Apply, then close and reopen the Esc menu.',
+    en={title='Native CarpetBomb',language_description='Select the language of this mod\'s title, labels and choices. Descriptions always show Chinese and English. Apply, then close and reopen the Esc menu.',
         enabled='Enable',enabled_description='Carry CarpetBomb automatically. Disable restores owned settings and stops adjusting future aircraft.',
         manager='Manager preset',custom='Custom',limited='Limited charges',unlimited='Unlimited',vanilla='Vanilla',
         uses_mode='Charges source',uses_mode_description='Use the deployed preset, limited charges, or unlimited charges. Existing charges may require a new mission.',
@@ -156,6 +156,9 @@ local MENU_TEXT={
 local menu_api,menu_blocked
 local function menu_text(key)
     return function()return MENU_TEXT[config.language=='en' and 'en' or 'zh'][key]end
+end
+local function menu_description(key)
+    return function()return MENU_TEXT.zh[key]..' / '..MENU_TEXT.en[key]end
 end
 local menu_title=menu_text('title')
 local function finite_uses()return config.uses>0 and config.uses or (defaults.uses>0 and defaults.uses or 2)end
@@ -226,7 +229,7 @@ local function menu_attach(menu)
     for _,row in ipairs(rows)do
         local key,kind=row[1],row[2]
         local option={type=kind,mod=menu_title,label=key=='language' and 'Language' or menu_text(key),
-            default=values[key],description=menu_text(key=='language' and 'language_description' or key..'_description')}
+            default=values[key],description=menu_description(key=='language' and 'language_description' or key..'_description')}
         if kind=='choice' then
             option.choices={}
             for _,choice in ipairs(row[3])do

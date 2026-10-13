@@ -1,16 +1,18 @@
-# 地毯轰炸 v0.5.1-menu-perf2
+# 地毯轰炸 v0.5.3
 
-基于 `NativeCarpetBomb_v0.5.1.zip` 内的核心 Lua 适配。保留原有默认携带、载荷修复、禁用恢复和目标前移路径；每架投弹数量继续固定为 20 枚。
+基于 v0.5.1-menu-perf2 修改菜单介绍和打包文档。保留原有默认携带、载荷修复、禁用恢复、性能与恢复逻辑和目标前移路径；每架投弹数量继续固定为 20 枚。v0.5.2 曾撤回，因此新版本使用 v0.5.3。
 
 ## 安装
 
-关闭游戏，用 Arsenal / HD2MM 导入 `NativeCarpetBomb_v0.5.1-menu-perf2.zip` 替换旧版，启用核心并选择管理器预设，按加载器要求 Purge + Deploy 后重启。不要同时部署原版与此适配版。
+关闭游戏，用 Arsenal / HD2MM 导入 `NativeCarpetBomb_v0.5.3.zip` 替换旧版，启用核心并选择管理器预设，按加载器要求 Purge + Deploy 后重启。不要同时部署原版与此适配版。
 
 需要 Bingus Shared Loader v18。游戏内 MODS 页面另外需要安装 **Bingus ModOptionsMenu API 1 / version 2**；Shared Loader 本身不提供菜单。没有菜单或菜单注册失败时，管理器预设和配置文件仍可使用。
 
 ## MODS 菜单
 
-在 Esc → MODS → 原生地毯轰炸中设置，点击“应用”后写入配置文件，再由原有更新路径处理。第一行 `Language` 提供 `简体汉字` / `English`，只影响本模组文字，默认中文。应用语言后关闭并重新打开 Esc 菜单刷新；菜单会将 English 显示为 ENGLISH。
+在 Esc → MODS → 原生地毯轰炸中设置，点击“应用”后写入配置文件，再由原有更新路径处理。第一行 `Language` 提供 `简体汉字` / `English`，只影响本模组标题、标签和选项，默认中文。无论选择哪种语言，全部设置介绍始终同时显示中文和英文；管理器中的核心与预设介绍也为中英双语。应用语言后关闭并重新打开 Esc 菜单刷新；菜单会将 English 显示为 ENGLISH。
+
+All setting descriptions show Chinese and English together in either language mode. The Language option still controls this mod's title, labels and choices, with Chinese as the default. Manager preset descriptions are bilingual as well. Apply the language change, then close and reopen the Esc menu.
 
 | 菜单项 | 含义 |
 | --- | --- |
@@ -37,7 +39,7 @@
 
 保持原版装填保存为 `rearm=-1`，无限次数保存为 `uses=-1`，关闭保存为 `enabled=0`。`bomb_count` 仍强制为 20，旧数量覆盖仍被忽略。
 
-本适配版本已通过离线 LuaJIT 和菜单 API 验证；2026-10-04 用户报告完成优化版测试，反馈性能良好。未提供菜单专项、量化性能或联机测试详情。原版 v0.5.1 的既有实测记录见 `README_中文.md`，不代表菜单适配版已通过实机测试。
+v0.5.3 已通过离线 LuaJIT 和菜单 API 验证，包括全部 11 行介绍在语言切换前后保持中英双语；本版未进行实机或联机测试。2026-10-04 用户报告完成此前 v0.5.1-menu-perf2 的优化版测试，反馈性能良好，未提供菜单专项、量化性能或联机测试详情。原版 v0.5.1 的既有实测记录见 `README_中文.md`，不代表 v0.5.3 已通过实机测试。
 
 ## 源码与检查
 

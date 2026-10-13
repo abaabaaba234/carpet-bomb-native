@@ -91,6 +91,14 @@ def run(Scenario,SOURCE,ROOT):
         m[b'apply_pending']();s.tick()
     def file(s):return (s.logs/'CarpetBombNative.cfg').read_text(encoding='utf-8')
     def snapshot(s):return {k:v for k,v in s.state[b'config'].items() if k!=b'language'}
+    def bilingual_descriptions(options):
+        descriptions={key:options[PREFIX+key.encode()][b'description'] for key in ORDER}
+        for text in descriptions.values():
+            decoded=text.decode('utf-8')
+            assert ' / ' in decoded and any('\u4e00'<=c<='\u9fff' for c in decoded)
+            assert any('A'<=c<='Z' or 'a'<=c<='z' for c in decoded)
+            assert len(decoded)<=400 and all(ord(c)>=32 and ord(c)!=127 for c in decoded)
+        return descriptions
 
     def language_cache_pending_and_restart():
         old='# keep comment\nunknown_future_key=preserved\nenabled=1\nuses=manager\ncooldown=17\nrearm=-1\nbomb=192\nforward=43\n'
@@ -107,6 +115,7 @@ def run(Scenario,SOURCE,ROOT):
             assert options[PREFIX+b'language'][b'label']==b'Language'
             assert options[PREFIX+b'language'][b'choices'][1]=='简体汉字'.encode()
             assert options[PREFIX+b'language'][b'choices'][2]==b'ENGLISH'
+            descriptions=bilingual_descriptions(options)
             assert get(m,'language')==1 and get(m,'enabled') is True and get(m,'cooldown')==17
             assert get(m,'uses_mode')==1 and get(m,'uses')==4 and get(m,'rearm_mode')==2
             for _ in range(4):s.tick()
@@ -120,6 +129,7 @@ def run(Scenario,SOURCE,ROOT):
             s.tick();m[b'translation'][b'refresh']()
             assert get(m,'language')==2 and get(m,'cooldown')==33 and get(m,'cooldown_source')==2
             assert options[PREFIX+b'enabled'][b'label']==b'Enable' and mod[b'title']==b'NATIVE CARPETBOMB'
+            assert bilingual_descriptions(options)==descriptions
             assert len(s.mem.writes)==writes+1 and s.state[b'config'][b'uses']==4
             assert '# keep comment' in file(s) and 'unknown_future_key=preserved' in file(s)
             assert 'uses=manager' in file(s) and 'language=en' in file(s)
@@ -127,6 +137,7 @@ def run(Scenario,SOURCE,ROOT):
             apply(s,m,language=1);m[b'translation'][b'refresh']()
             assert snapshot(s)==before and len(s.mem.writes)==writes
             assert mod[b'title']=='原生地毯轰炸'.encode()
+            assert bilingual_descriptions(options)==descriptions
             apply(s,m,language=2)
             saved=file(s)
             # Invalid old/new fields reject the complete edit, retaining valid config.
@@ -232,7 +243,7 @@ def run(Scenario,SOURCE,ROOT):
 
     passed=[]
     for name,fn in [
-        ('real menu: order, language migration/refresh, cache authority, pending edits and restart',language_cache_pending_and_restart),
+        ('real menu: bilingual descriptions, order, language migration/refresh, cache authority, pending edits and restart',language_cache_pending_and_restart),
         ('real menu: valid ranges, invalid callback rejection, manager restoration and disable restoration',parameters_manager_restore_and_disable),
         ('real menu: sentinel sources and simultaneous language/parameter changes',source_modes_and_simultaneous_changes),
         ('optional menu version/registration/callback/sync failures and config save failure',menu_failures_and_save_failures),

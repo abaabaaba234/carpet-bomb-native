@@ -1,5 +1,5 @@
 {
-  "version": "0.5.1-menu-perf2",
+  "version": "0.5.3",
   "game_build": 25480438,
   "tests_passed": [
     "default carrying, repaired payload, original Eagle rows preserved and disable restoration",
@@ -26,7 +26,7 @@
     "initialization and delayed-loading memory read budgets",
     "manager archives and 41 presets with 17550 selectable combinations",
     "build rejects failed, old-version, stale-source and changed-test reports",
-    "menu contract: order, language migration/refresh, cache authority, pending edits and restart",
+    "menu contract: bilingual descriptions, order, language migration/refresh, cache authority, pending edits and restart",
     "menu contract: valid ranges, invalid callback rejection, manager restoration and disable restoration",
     "menu contract: sentinel sources and simultaneous language/parameter changes",
     "optional menu version/registration/callback/sync failures and config save failure",
@@ -43,19 +43,19 @@
   "validation_context": {
     "menu_provider_sha256": null
   },
-  "source_sha256": "b58ace640b459df9611859b9a2d5d814e290d04b82ae7d9af9577c2e40b0e52b",
+  "source_sha256": "c730233b74c85a542ba8ac0ad5ec55070b01e8144219e9a1b14ba4e3f9bb1f65",
   "validation_inputs": {
     "requirements-dev.txt": "c355c313ec4744320b1e0d22e7e70465d899a48e8c62293578ddff95d0672c6b",
-    "src/core.lua": "b58ace640b459df9611859b9a2d5d814e290d04b82ae7d9af9577c2e40b0e52b",
+    "src/core.lua": "c730233b74c85a542ba8ac0ad5ec55070b01e8144219e9a1b14ba4e3f9bb1f65",
     "src/core_v0.1.0_FAILED.lua": "cb3cdf1dd40789d9dedc5e432fc93b3bb928375147b53009020edac8dd7e1909",
     "src/core_v0.2.0_FAILED_FAR_IMPACTS.lua": "369ea0c65bb12449e7c37df7a5bd77b27c828dc22fd6f119e1a50244a81bde3f",
     "tests/fixtures/payload_tables_build25480438.json": "51b17c0a0b0c4cc888aabefa343355b9f144e09f4a6e8b2443ec1b4eb8880ac6",
     "tests/fixtures/projectiles_build25480438.json": "0c27b8218e1a4cacc4123fc1ea6c5f73a500daeb55a732b657cd97c906662f23",
     "tests/fixtures/stratagems_build25480438.json": "2fc606595a39b47a0939b742e71796155b9f47bdc33e86a6d75c91d30cc4e245",
-    "tests/menu_checks.py": "a5a4cb0ebffbf7d96002a224a27ef9b6fcb93b607bca3c1749078b958f9960ea",
+    "tests/menu_checks.py": "2d4a802dd0d0ff24d29633141239a0e98ed80b301b9e1e365d2e2d247fcd6363",
     "tests/reliability_checks.py": "947e6480cee8dad47dbf9be7cfd56c885633fa71e5b451d77d7e3b461c162fb2",
     "tests/test_runtime.py": "cc9440c50b9d1ab5c67bbd18e9e484976220b6f588864c42c6f982601a408bbd",
-    "tools/build.py": "800884b011582ddffb49230032044c07185d9580d19feef2e6e5d420849de251",
+    "tools/build.py": "4ac436d593cd37660a071c58c20b1d226141acae761d49db20e998612826c40f",
     "tools/capture_ballistics.py": "8f114692e15d15f9ec57b44a54aa07d995da7cfb1d46c2b9916e7ec78a5ce3c5",
     "tools/capture_eagles.py": "4388c76f926ffb72b3ab536185c119c22452f7c530d55fe5caa21f8a602838d5",
     "tools/capture_live.py": "e9e8d5b508a7b6caffb9fd842aca54bb9de7b5b8d455c3c622f1d50162d5b618",

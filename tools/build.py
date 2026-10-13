@@ -66,18 +66,18 @@ def make_files(report=None):
         name=f'{folder}/9ba626afa44a3aa3.patch_{index}'
         files[name]=patch(resource,source);files[name+'.stream']=b'';files[name+'.gpu_resources']=b''
     add('Core',0,'mods/carpet_bomb_native/core',core_source())
-    options=[{'Name':'核心 / Core','Description':'修复地毯轰炸缺失的实体组件和进场高度，作为补给附带的额外战备进入任务。需要 v18 加载器。','Include':['Core']}]
+    options=[{'Name':'核心 / Core','Description':'修复地毯轰炸缺失的实体组件和进场高度，作为补给附带的额外战备进入任务。需要 v18 加载器。 / Repairs missing CarpetBomb entity components and approach height, granting it alongside Resupply as an extra stratagem. Requires Shared Loader v18.','Include':['Core']}]
     for index,(axis,title,values,description) in enumerate([
-        ('uses','使用次数 / Charges',[2,1,3,4,5,6,8,10,-1],'默认 2 次；使用个人飞鹰次数与补给机制。'),
-        ('cooldown','调用冷却（每次使用之间） / Call Interval',[15,900,0,5,10,30,60,120,300,600],'地毯式轰炸每次使用之间的基础冷却，默认 15 秒。'),
+        ('uses','使用次数 / Charges',[2,1,3,4,5,6,8,10,-1],'默认 2 次；使用个人飞鹰次数与补给机制。 / Defaults to 2 charges; uses the personal Eagle charge and rearm mechanism.'),
+        ('cooldown','调用冷却（每次使用之间） / Call Interval',[15,900,0,5,10,30,60,120,300,600],'地毯式轰炸每次使用之间的基础冷却，默认 15 秒。 / Base cooldown between CarpetBomb calls; defaults to 15 seconds.'),
         ('rearm','飞鹰返航装填冷却 / Eagle Rearm',[-1,0,5,10,15,30,60,120,150,180,300,600,900],
-         '次数耗尽后飞鹰返回装填的基础冷却，也适用于手动重新武装。所有携带的飞鹰战备共用，舰船升级仍按原版计算。默认保持原版。'),
+         '次数耗尽后飞鹰返回装填的基础冷却，也适用于手动重新武装。所有携带的飞鹰战备共用，舰船升级仍按原版计算。默认保持原版。 / Base cooldown for Eagle rearm after charges are depleted or manual rearm. Shared by all carried Eagle stratagems; ship upgrades still apply. Defaults to Vanilla.'),
         ('bomb','炸弹类型 / Bomb Type',[170,192,239],
-         '选择地毯式轰炸投下的实际弹体和对应爆炸效果。默认保留原版飞鹰空袭炸弹；可选地毯轰炸专用 200 kg 或飞鹰 500 kg。'),
+         '选择地毯式轰炸投下的实际弹体和对应爆炸效果。默认保留原版飞鹰空袭炸弹；可选地毯轰炸专用 200 kg 或飞鹰 500 kg。 / Selects the dropped projectile and its explosion effects. Defaults to the vanilla Eagle Airstrike bomb; CarpetBomb 200 kg and Eagle 500 kg are also available.'),
         ('bomb_count','投弹数量（暂固定原版） / Bomb Quantity',[20],
-         '当前仅提供原版 1x：每架 20 枚。带数量倍率的测试在舰桥出现 GameGuard 1015，旧实现已移除。数量倍率尚未完成。'),
+         '当前仅提供原版 1x：每架 20 枚。带数量倍率的测试在舰桥出现 GameGuard 1015，旧实现已移除。数量倍率尚未完成。 / Fixed at vanilla 1x: 20 bombs per aircraft. An earlier quantity multiplier test reported GameGuard 1015 on the bridge; that implementation was removed. Quantity multipliers are unfinished.'),
         ('forward','投弹目标前移 / Strike Forward Offset',[80,0,40,120,160],
-         '沿飞鹰前进方向移动地毯式轰炸的目标，默认 80 米。0 米保留原落点；用于调整信标两侧的覆盖。仅影响新出动的地毯轰炸飞机。'),
+         '沿飞鹰前进方向移动地毯式轰炸的目标，默认 80 米。0 米保留原落点；用于调整信标两侧的覆盖。仅影响新出动的地毯轰炸飞机。 / Moves the CarpetBomb target along the incoming flight direction; defaults to 80 metres. Zero retains the original target. Adjusts coverage around the beacon and affects only future CarpetBomb aircraft.'),
     ],1):
         choices=[]
         for n in values:
@@ -88,13 +88,13 @@ def make_files(report=None):
             elif axis=='bomb_count':label=f'{n/20:g}x（每架 {n} 枚）'
             else:label='无限 / Unlimited' if axis=='uses' and n==-1 else '保持原版 / Vanilla' if n==-1 else f'{n} 次' if axis=='uses' else f'{n} 秒'
             choices.append({'Name':label,'Description':description,'Include':[folder]})
-        options.append({'Name':title,'Description':description+' 部署后重启并进入新任务。','SubOptions':choices})
+        options.append({'Name':title,'Description':description+' 部署后重启并进入新任务。 Restart after deployment and enter a new mission.','SubOptions':choices})
     manifest={'Version':1,'Guid':'acffed9b-07c3-48f8-a936-19874038111b','Name':'原生地毯轰炸默认携带 / Native CarpetBomb v'+version,
-      'Description':'基于 v0.5.1 的 MODS 菜单适配，支持本模组中英语言、启用开关、次数、调用冷却、飞鹰装填、炸弹类型和目标前移。各参数可跟随管理器预设或自定义。数量固定原版 1x。需要 Bingus Shared Loader v18；游戏内菜单另需 Bingus ModOptionsMenu version2。支持 Steam build 25480438。', 'Options':options}
+      'Description':'地毯轰炸默认携带；菜单介绍始终中英双语，可配置次数、冷却、弹体和目标前移。数量固定每架20枚。需要Loader v18；菜单另需ModOptionsMenu v2。支持build 25480438。 / Automatically carries CarpetBomb. Bilingual descriptions in either language; configurable charges, cooldowns, bombs and forward offset. Fixed at 20 bombs per aircraft. Requires Loader v18; menu needs ModOptionsMenu v2. Build 25480438.', 'Options':options}
     # Arsenal's import can decode text with the Windows ANSI code page.
     # JSON escapes retain the Chinese labels under either text encoding.
     files['manifest.json']=json.dumps(manifest,ensure_ascii=True,indent=2).encode('ascii')
-    for name in ('README_中文.md','README_MODS菜单.md','PERFORMANCE_AUDIT.md','RELIABILITY_AUDIT.md','RELEASE_NOTES_v0.5.1-menu-perf2.md','CREDITS.md'):files[name]=(ROOT/name).read_bytes()
+    for name in ('README.md','README_中文.md','README_MODS菜单.md','PERFORMANCE_AUDIT.md','RELIABILITY_AUDIT.md','RELEASE_NOTES_v0.5.1-menu-perf2.md','CREDITS.md'):files[name]=(ROOT/name).read_bytes()
     if (ROOT/'validation/report.json').exists():files['VALIDATION.json']=(ROOT/'validation/report.json').read_bytes()
     if (ROOT/'validation/user_test_feedback.json').exists():files['USER_TEST_FEEDBACK.json']=(ROOT/'validation/user_test_feedback.json').read_bytes()
     if report is not None:
