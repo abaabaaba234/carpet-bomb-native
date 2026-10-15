@@ -4,7 +4,7 @@ from pathlib import Path
 
 PREFIX=b'carpet_bomb_native_'
 ORDER=['language','enabled','uses_mode','uses','cooldown_source','cooldown',
-       'rearm_mode','rearm','bomb','forward_source','forward']
+       'rearm_mode','rearm','bomb','direction','forward_source','forward']
 
 def run(Scenario,SOURCE,ROOT):
     provider=Path(os.environ['HD2_MOD_OPTIONS_MENU_SOURCE']) if os.environ.get('HD2_MOD_OPTIONS_MENU_SOURCE') else None
@@ -111,7 +111,7 @@ def run(Scenario,SOURCE,ROOT):
             assert s.tick()==(1.1,b'preserved',42)
             assert s.state[b'phase']==b'active' and s.state[b'menu_registered']
             state=m[b'state'];options=state[b'options'];mod=state[b'mods'][options[PREFIX+b'language'][b'mod']]
-            assert [mod[b'order'][i][b'id'] for i in range(1,12)]==[PREFIX+k.encode() for k in ORDER]
+            assert [mod[b'order'][i][b'id'] for i in range(1,len(ORDER)+1)]==[PREFIX+k.encode() for k in ORDER]
             assert options[PREFIX+b'language'][b'label']==b'Language'
             assert options[PREFIX+b'language'][b'choices'][1]=='简体汉字'.encode()
             assert options[PREFIX+b'language'][b'choices'][2]==b'ENGLISH'
@@ -171,7 +171,7 @@ def run(Scenario,SOURCE,ROOT):
             callbacks=m[b'state'][b'callbacks'];before=snapshot(s);saved=file(s)
             for key,value in [('uses',0),('uses',101),('uses',1.5),('cooldown',float('nan')),
                 ('cooldown',1801),('rearm',-1),('rearm',1801),('forward',-1),('forward',301),
-                ('bomb',0),('bomb',5),('language',3),('enabled',0),('uses_mode',0),('rearm_mode',4)]:
+                ('bomb',0),('bomb',8),('direction',0),('direction',4),('language',3),('enabled',0),('uses_mode',0),('rearm_mode',4)]:
                 callbacks[PREFIX+key.encode()][1](value)
             s.tick();assert snapshot(s)==before and file(s)==saved
             apply(s,m,uses_mode=1,cooldown_source=1,rearm_mode=1,bomb=1,forward_source=1)
@@ -199,6 +199,38 @@ def run(Scenario,SOURCE,ROOT):
             assert c[b'uses']==9 and c[b'rearm']==35 and c[b'cooldown']==31 and c[b'forward']==41
             assert get(m,'uses_mode')==2 and get(m,'rearm_mode')==3
             assert get(m,'cooldown_source')==2 and get(m,'forward_source')==2
+        finally:s.close()
+
+    def payload_direction_and_restart():
+        s=Scenario({'direction':180})
+        try:
+            m=load_menu(s);s.tick()
+            assert get(m,'direction')==1 and s.state[b'config'][b'direction']==180
+            for choice,bomb in ((5,286),(6,141),(7,188)):
+                apply(s,m,bomb=choice,direction=2)
+                assert s.state[b'config'][b'bomb']==bomb and s.state[b'config'][b'direction']==90
+                apply(s,m,direction=3)
+                assert s.state[b'config'][b'direction']==180
+                apply(s,m,language=2);m[b'translation'][b'refresh']()
+                options=m[b'state'][b'options'];bilingual_descriptions(options)
+                assert options[PREFIX+b'direction'][b'choices'][3]==b'FRONT / BACK'
+                assert options[PREFIX+b'bomb'][b'choices'][choice] in (b'EAGLE CLUSTER BOMB',b'EAGLE NAPALM',b'EAGLE GAS')
+                apply(s,m,language=1);m[b'translation'][b'refresh']()
+                assert options[PREFIX+b'direction'][b'choices'][2]=='左右'.encode()
+            saved=file(s)
+            assert 'bomb=188' in saved and 'direction=180' in saved
+            apply(s,m,direction=1)
+            assert 'direction=manager' in file(s) and s.state[b'config'][b'direction']==180
+            # Failed persistence must roll back the two new menu settings too.
+            before=snapshot(s);s.replace_failure=True
+            apply(s,m,bomb=5,direction=2)
+            assert snapshot(s)==before
+        finally:s.close()
+        s=Scenario(cfg=saved)
+        try:
+            m=load_menu(s);s.tick()
+            assert get(m,'bomb')==7 and get(m,'direction')==3
+            assert s.state[b'config'][b'bomb']==188 and s.state[b'config'][b'direction']==180
         finally:s.close()
 
     def menu_failures_and_save_failures():
@@ -246,6 +278,7 @@ def run(Scenario,SOURCE,ROOT):
         ('real menu: bilingual descriptions, order, language migration/refresh, cache authority, pending edits and restart',language_cache_pending_and_restart),
         ('real menu: valid ranges, invalid callback rejection, manager restoration and disable restoration',parameters_manager_restore_and_disable),
         ('real menu: sentinel sources and simultaneous language/parameter changes',source_modes_and_simultaneous_changes),
+        ('real menu: new payload choices and approach direction, bilingual refresh, source restore, save failure and restart',payload_direction_and_restart),
         ('optional menu version/registration/callback/sync failures and config save failure',menu_failures_and_save_failures),
         ('stopped runtime rejects all menu callbacks without persisting or reviving writes',stopped_callbacks)]:
         name=name if provider is not None else name.replace('real menu:', 'menu contract:')

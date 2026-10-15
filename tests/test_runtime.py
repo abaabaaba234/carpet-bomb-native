@@ -377,16 +377,16 @@ def projectile_cache_guards():
         finally:s.close()
 
 def bomb_settings():
-    for bomb in (170,192,239):
+    for bomb in (170,192,239,286,141,188):
         s=Scenario({'bomb':bomb,'uses':4,'cooldown':10,'rearm':30})
         try:
             s.tick();assert s.state[b'phase']==b'active'
             shadow=int(s.state[b'repair'][b'eagle'][b'table'])
             assert s.mem.read(shadow+1992+24,4)==U(bomb)
             assert s.mem.read(shadow+1992+16,4)==U(6) and s.mem.read(shadow+1992+0x3c,4)==F(120)
-            assert s.r(103,0xa8,8)==s.originals[3 if bomb==239 else 18][0xa8:0xb0]
+            assert s.r(103,0xa8,8)==s.originals[{239:3,286:65,141:133,188:126}.get(bomb,18)][0xa8:0xb0]
             assert s.r(103,0x50,4)==U(4) and s.r(103,0x68,4)==F(10) and s.r(49,0x68,4)==F(30)
-            for t in (3,18,38):assert s.r(t,0,400)==s.originals[t]
+            for t in (3,18,38,65,126,133):assert s.r(t,0,400)==s.originals[t]
             for address,raw in s.projectiles.values():assert s.mem.read(address,272)==raw
             eagle=next(t for t in s.tables if t['row']['name']=='EagleComponentData')
             assert s.mem.read(shadow+320,1672)==eagle['original'][320:]
@@ -514,7 +514,7 @@ def package():
     with zipfile.ZipFile(stream,'w') as z:
         for name,body in make_files().items():z.writestr(name,body)
     with zipfile.ZipFile(stream) as z:
-        manifest=json.loads(z.read('manifest.json').decode('ascii'));assert len(manifest['Options'])==7
+        manifest=json.loads(z.read('manifest.json').decode('ascii'));assert len(manifest['Options'])==8
         assert '每次使用之间' in manifest['Options'][2]['Name']
         assert '所有携带的飞鹰战备共用' in manifest['Options'][3]['Description']
         assert '200 kg' in manifest['Options'][4]['SubOptions'][1]['Name'] and '500 kg' in manifest['Options'][4]['SubOptions'][2]['Name']
@@ -535,12 +535,12 @@ def package():
                 assert source.startswith(b'\x1bLJ\x02\x02')
                 validate_with_lupa(value,source)
                 counts[axis]=counts.get(axis,0)+1
-        assert counts=={'uses':9,'cooldown':10,'rearm':13,'bomb':3,'bomb_count':1,'forward':5}
-        assert len({murmur64(('mods/carpet_bomb_native/'+a).encode()) for a in counts})==6
+        assert counts=={'uses':9,'cooldown':10,'rearm':13,'bomb':6,'bomb_count':1,'forward':5,'direction':2}
+        assert len({murmur64(('mods/carpet_bomb_native/'+a).encode()) for a in counts})==7
         for option in manifest['Options']:
             for item in option.get('SubOptions',[option]):
                 assert all(any(name.startswith(folder+'/') for name in z.namelist()) for folder in item['Include'])
-    print('Validated 41 independent preset modules; 17550 selectable combinations and native grant archive.')
+    print('Validated 46 independent preset modules; 70200 selectable combinations and native grant archive.')
 
 def package_report_gate():
     import build as builder
@@ -585,19 +585,21 @@ for name,fn in [('default carrying, repaired payload, original Eagle rows preser
     ('independent rearm setting, vanilla restoration, zero/max values and disable restoration',rearm_settings),
     ('default rearm non-interference, competing rearm writer and stale rearm record refusal',rearm_conflicts),
     ('partial rearm write rolls back native grant transaction',rearm_partial),
-    ('all three bomb identities/resources, unchanged original Eagles/projectiles and disable restoration',bomb_settings),
+    ('all six bomb identities/resources, unchanged original Eagles/projectiles and disable restoration',bomb_settings),
     ('bomb reload, fixed original quantity, ignored legacy ratios and no executable writes',bomb_reload_and_fixed_quantity),
     ('forward shift in every direction, one adjustment per aircraft and future-flight reload',forward_shift),
     ('forward shift guards, other Eagles, firing/outgoing states, invalid vectors and partial-write restoration',forward_shift_guards),
     ('64 aircraft use one pointer-array read, new generations shift once and departed flights are pruned',forward_batch_and_cache_lifetime),
     ('initialization and delayed-loading memory read budgets',performance_counters),
-    ('manager archives and 41 presets with 17550 selectable combinations',package),
+    ('manager archives and 46 presets with 70200 selectable combinations',package),
     ('build rejects failed, old-version, stale-source and changed-test reports',package_report_gate)]:
     fn();passed.append(name);print('PASS',name)
 from menu_checks import run as run_menu_checks
 passed.extend(run_menu_checks(Scenario,SOURCE,ROOT))
 from reliability_checks import run as run_reliability_checks
 passed.extend(run_reliability_checks(Scenario,BASE,eagle_state))
+from variant_checks import run as run_variant_checks
+passed.extend(run_variant_checks(Scenario,BASE,ROOT))
 result_path=ROOT/'validation/offline_report.json'
 from build import runtime_version,runtime_build,validation_inputs,validation_context,build,validate_report
 result_path.write_text(json.dumps({'version':runtime_version(),'game_build':runtime_build(),'tests_passed':passed,
@@ -607,8 +609,8 @@ result_path.write_text(json.dumps({'version':runtime_version(),'game_build':runt
   'test_group_count':len(passed),
   'menu_api_verification':{'provider':'external version2 source' if os.environ.get('HD2_MOD_OPTIONS_MENU_SOURCE') else 'API contract fixture',
     'provider_sha256':hashlib.sha256(Path(os.environ['HD2_MOD_OPTIONS_MENU_SOURCE']).read_bytes()).hexdigest() if os.environ.get('HD2_MOD_OPTIONS_MENU_SOURCE') else None,
-    'registered_rows':11,'first_row':'Language','native_ui_hook_executed':False},
-  'preset_combinations':17550,'preset_modules_checked':41,'in_game_loader_verified':False,'default_carry_verified':False,
+    'registered_rows':12,'first_row':'Language','native_ui_hook_executed':False},
+  'preset_combinations':70200,'preset_modules_checked':46,'in_game_loader_verified':False,'default_carry_verified':False,
   'in_game_bombing_verified':False,'in_game_menu_verified':False,'multiplayer_verified':False,'status':'OFFLINE_PASSED',
   'previous_version':{'version':'0.1.0','default_carry_verified':True,'battlefield_test':'CRASHED: missing EagleComponent for native payload; removed'}},indent=2),encoding='utf-8',newline='\n')
 if os.environ.get('HD2_VALIDATE_ONLY')!='1':build()

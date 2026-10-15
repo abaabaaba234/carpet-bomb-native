@@ -1,0 +1,643 @@
+{
+  "game_build": 25480438,
+  "date": "2026-10-16",
+  "decoded_reference_equivalence": "NOT ESTABLISHED",
+  "package_source": "Extracted from current installation using local Filediver CLI; references only, no game assets",
+  "decoded_source_sha256": "21377252b81fdbc670eba1e59a8ab64b170323df208f175e708992e4c1fb515e",
+  "direction": {
+    "component_offset": 28,
+    "default": 90,
+    "choices": [
+      90,
+      180
+    ],
+    "evidence": "game.dll +0x89F1A6 reads local EagleComponent +0x1C; +0x89F1B5 converts degrees to radians; +0x89F266..+0x89F296 rotates the throw vector before spawning"
+  },
+  "variants": [
+    {
+      "stratagem_type": 65,
+      "projectile": 286,
+      "package": "f70996775c6430a9",
+      "payload": "9d4f7cb4eb34515d",
+      "package_export_sha256": "8af1a832a1d4786ab7c6a3e430bed88d1754f577440f4511c1ab61e94074682b",
+      "dependencies": [
+        [
+          "18dead01056b72e9",
+          "4e401cc877093220"
+        ],
+        [
+          "535a7bd3e650d799",
+          "2230aa2c2dbded10"
+        ],
+        [
+          "5f7203c8f280dab8",
+          "4e401cc877093220"
+        ],
+        [
+          "5f7203c8f280dab8",
+          "71e52f800636b336"
+        ],
+        [
+          "a486d4045106165c",
+          "4e401cc877093220"
+        ],
+        [
+          "a8193123526fad64",
+          "02f409b3ceb55ab3"
+        ],
+        [
+          "a8193123526fad64",
+          "254eef68a2ec5d17"
+        ],
+        [
+          "a8193123526fad64",
+          "2d1f9cb560e84eae"
+        ],
+        [
+          "a8193123526fad64",
+          "4f069f48ce3cdb45"
+        ],
+        [
+          "a8193123526fad64",
+          "55d2fd8ea3d8d263"
+        ],
+        [
+          "a8193123526fad64",
+          "f3839a7b1ab60bb8"
+        ],
+        [
+          "a8193123526fad64",
+          "f9d3ebb48b49cf87"
+        ],
+        [
+          "af32095c82f2b070",
+          "2230aa2c2dbded10"
+        ],
+        [
+          "cd4238c6a0c69e32",
+          "08a890644fb6e6ba"
+        ],
+        [
+          "cd4238c6a0c69e32",
+          "0cc53e172ee61d07"
+        ],
+        [
+          "cd4238c6a0c69e32",
+          "0fbfe62490bc93e9"
+        ],
+        [
+          "cd4238c6a0c69e32",
+          "113d8cc99dccb83f"
+        ],
+        [
+          "cd4238c6a0c69e32",
+          "2573690380303f43"
+        ],
+        [
+          "cd4238c6a0c69e32",
+          "6132ae3210a37922"
+        ],
+        [
+          "cd4238c6a0c69e32",
+          "6c5c5a8aeca25d7f"
+        ],
+        [
+          "cd4238c6a0c69e32",
+          "9bf0c2355f9b048c"
+        ],
+        [
+          "cd4238c6a0c69e32",
+          "b1000d14bf6eb0fb"
+        ],
+        [
+          "cd4238c6a0c69e32",
+          "b217c4de9b6cf02a"
+        ],
+        [
+          "cd4238c6a0c69e32",
+          "cf5970d37ff4afad"
+        ],
+        [
+          "cd4238c6a0c69e32",
+          "e66f86b8db7bc6c0"
+        ],
+        [
+          "e0a48d0be9a7453f",
+          "4e401cc877093220"
+        ],
+        [
+          "e0a48d0be9a7453f",
+          "71e52f800636b336"
+        ],
+        [
+          "eac0b497876adedf",
+          "0a90899d196cafa8"
+        ],
+        [
+          "eac0b497876adedf",
+          "0f3201437c248dfc"
+        ],
+        [
+          "eac0b497876adedf",
+          "2ae73578812a73a7"
+        ],
+        [
+          "eac0b497876adedf",
+          "395d7e5b74bcad1b"
+        ],
+        [
+          "eac0b497876adedf",
+          "3fad5a7bd8524bd3"
+        ],
+        [
+          "eac0b497876adedf",
+          "4a31268d506b0252"
+        ],
+        [
+          "eac0b497876adedf",
+          "4a49c99c122a155e"
+        ],
+        [
+          "eac0b497876adedf",
+          "5b2e4d92c382720c"
+        ],
+        [
+          "eac0b497876adedf",
+          "6bd2e56fb7bcec27"
+        ],
+        [
+          "eac0b497876adedf",
+          "6f16c2a048d61a09"
+        ],
+        [
+          "eac0b497876adedf",
+          "906550f1c04f4c1e"
+        ],
+        [
+          "eac0b497876adedf",
+          "a77f3175dd3d9dd5"
+        ],
+        [
+          "eac0b497876adedf",
+          "b3479e208fa6851a"
+        ],
+        [
+          "eac0b497876adedf",
+          "b79d1157d6ff5c57"
+        ],
+        [
+          "eac0b497876adedf",
+          "c6668eb235de43a0"
+        ],
+        [
+          "eac0b497876adedf",
+          "d6e75d04df4e9b28"
+        ],
+        [
+          "eac0b497876adedf",
+          "fe44024861b6c42d"
+        ]
+      ],
+      "explosions": [
+        {
+          "id": 417,
+          "damage_info_id": 388,
+          "inner_radius": 1.0,
+          "outer_radius": 2.0,
+          "particle_hash": "f9d3ebb48b49cf87",
+          "persistent_status_template_id": 0,
+          "status_duration_seconds": 0.0,
+          "record_hex": "a10100008401000000000000000000000000803f0000004000002041000034420000a04200000000d001010000000000020000000000000087cf498bb4ebd3f90b537ed5040000001f0000000000000008000000830000000f000000020000000000000000000000000000000000000000000000150000000000000002000000000000000000000000000042030000000000000000000000"
+        },
+        {
+          "id": 162,
+          "damage_info_id": 388,
+          "inner_radius": 3.0,
+          "outer_radius": 6.0,
+          "particle_hash": "254eef68a2ec5d17",
+          "persistent_status_template_id": 0,
+          "status_duration_seconds": 0.0,
+          "record_hex": "a2000000840100000000000000000000000040400000c04000000041000000000000a0410000000098000100000000000100000000000000175deca268ef4e251d400122050000001e0000000000000000000000000000000e000000020000000000000000000000000000000000000000000000110000000000000002000000000000000000000000000042030000000000000000000000"
+        }
+      ]
+    },
+    {
+      "stratagem_type": 133,
+      "projectile": 141,
+      "package": "de456f55554abb56",
+      "payload": "27bb558c893383cc",
+      "package_export_sha256": "90fe9cb8164be562cf83d967da9d8b314b45461326ba309fd683e09aa4a48df9",
+      "dependencies": [
+        [
+          "18dead01056b72e9",
+          "4e401cc877093220"
+        ],
+        [
+          "504b55235d21440e",
+          "38e26259c81b2e1f"
+        ],
+        [
+          "504b55235d21440e",
+          "d78c2486c8c51f07"
+        ],
+        [
+          "504b55235d21440e",
+          "e0f595cece4daf68"
+        ],
+        [
+          "535a7bd3e650d799",
+          "305ea229b288addf"
+        ],
+        [
+          "5f7203c8f280dab8",
+          "4e401cc877093220"
+        ],
+        [
+          "5f7203c8f280dab8",
+          "71e52f800636b336"
+        ],
+        [
+          "a486d4045106165c",
+          "4e401cc877093220"
+        ],
+        [
+          "a8193123526fad64",
+          "02f409b3ceb55ab3"
+        ],
+        [
+          "a8193123526fad64",
+          "2d1f9cb560e84eae"
+        ],
+        [
+          "a8193123526fad64",
+          "4f069f48ce3cdb45"
+        ],
+        [
+          "a8193123526fad64",
+          "55d2fd8ea3d8d263"
+        ],
+        [
+          "a8193123526fad64",
+          "6bf2d192071af21f"
+        ],
+        [
+          "a8193123526fad64",
+          "a3f78867a59662c4"
+        ],
+        [
+          "a8193123526fad64",
+          "f3839a7b1ab60bb8"
+        ],
+        [
+          "af32095c82f2b070",
+          "305ea229b288addf"
+        ],
+        [
+          "cd4238c6a0c69e32",
+          "08a890644fb6e6ba"
+        ],
+        [
+          "cd4238c6a0c69e32",
+          "0cc53e172ee61d07"
+        ],
+        [
+          "cd4238c6a0c69e32",
+          "0fbfe62490bc93e9"
+        ],
+        [
+          "cd4238c6a0c69e32",
+          "113d8cc99dccb83f"
+        ],
+        [
+          "cd4238c6a0c69e32",
+          "2573690380303f43"
+        ],
+        [
+          "cd4238c6a0c69e32",
+          "6132ae3210a37922"
+        ],
+        [
+          "cd4238c6a0c69e32",
+          "9bf0c2355f9b048c"
+        ],
+        [
+          "cd4238c6a0c69e32",
+          "b1000d14bf6eb0fb"
+        ],
+        [
+          "cd4238c6a0c69e32",
+          "b217c4de9b6cf02a"
+        ],
+        [
+          "cd4238c6a0c69e32",
+          "cf5970d37ff4afad"
+        ],
+        [
+          "cd4238c6a0c69e32",
+          "e66f86b8db7bc6c0"
+        ],
+        [
+          "e0a48d0be9a7453f",
+          "4e401cc877093220"
+        ],
+        [
+          "e0a48d0be9a7453f",
+          "71e52f800636b336"
+        ],
+        [
+          "eac0b497876adedf",
+          "0f3201437c248dfc"
+        ],
+        [
+          "eac0b497876adedf",
+          "1747f46ebcd38b89"
+        ],
+        [
+          "eac0b497876adedf",
+          "2ae73578812a73a7"
+        ],
+        [
+          "eac0b497876adedf",
+          "37e327a5d5dd99e3"
+        ],
+        [
+          "eac0b497876adedf",
+          "395d7e5b74bcad1b"
+        ],
+        [
+          "eac0b497876adedf",
+          "3fad5a7bd8524bd3"
+        ],
+        [
+          "eac0b497876adedf",
+          "4a31268d506b0252"
+        ],
+        [
+          "eac0b497876adedf",
+          "4a49c99c122a155e"
+        ],
+        [
+          "eac0b497876adedf",
+          "6bd2e56fb7bcec27"
+        ],
+        [
+          "eac0b497876adedf",
+          "701352a31e18aef9"
+        ],
+        [
+          "eac0b497876adedf",
+          "906550f1c04f4c1e"
+        ],
+        [
+          "eac0b497876adedf",
+          "a77f3175dd3d9dd5"
+        ],
+        [
+          "eac0b497876adedf",
+          "b3479e208fa6851a"
+        ],
+        [
+          "eac0b497876adedf",
+          "b79d1157d6ff5c57"
+        ],
+        [
+          "eac0b497876adedf",
+          "c6668eb235de43a0"
+        ],
+        [
+          "eac0b497876adedf",
+          "c9231206e9b43232"
+        ],
+        [
+          "eac0b497876adedf",
+          "d6e75d04df4e9b28"
+        ],
+        [
+          "eac0b497876adedf",
+          "f451ffc475e1daf5"
+        ],
+        [
+          "eac0b497876adedf",
+          "f66f466efae9034e"
+        ],
+        [
+          "eac0b497876adedf",
+          "fa652423406182d3"
+        ],
+        [
+          "eac0b497876adedf",
+          "fe44024861b6c42d"
+        ]
+      ],
+      "explosions": [
+        {
+          "id": 359,
+          "damage_info_id": 390,
+          "inner_radius": 2.0,
+          "outer_radius": 10.0,
+          "particle_hash": "a3f78867a59662c4",
+          "persistent_status_template_id": 0,
+          "status_duration_seconds": 0.0,
+          "record_hex": "6701000086010000000000000000000000000040000020410000704100000000000096420000000018020100000000000100000000000000c46296a56788f7a306093f0e060000000000000000000000000000000000000010000000020000000400000000000000000000000000000000000000050000000000000002000000000000000000000000000042030000000000000000000000"
+        }
+      ]
+    },
+    {
+      "stratagem_type": 126,
+      "projectile": 188,
+      "package": "d2cebf1fedb86a19",
+      "payload": "dbb286ad7ed9df96",
+      "package_export_sha256": "14ef2e7f2327045adbdf9c00c09bdcfc8cd7998070e9b36a7a6a567d3e629b2b",
+      "dependencies": [
+        [
+          "18dead01056b72e9",
+          "4e401cc877093220"
+        ],
+        [
+          "504b55235d21440e",
+          "38e26259c81b2e1f"
+        ],
+        [
+          "504b55235d21440e",
+          "848ef0089b589a08"
+        ],
+        [
+          "504b55235d21440e",
+          "d78c2486c8c51f07"
+        ],
+        [
+          "504b55235d21440e",
+          "e0f595cece4daf68"
+        ],
+        [
+          "535a7bd3e650d799",
+          "e2c84431724ff8f0"
+        ],
+        [
+          "5f7203c8f280dab8",
+          "4e401cc877093220"
+        ],
+        [
+          "5f7203c8f280dab8",
+          "71e52f800636b336"
+        ],
+        [
+          "a486d4045106165c",
+          "4e401cc877093220"
+        ],
+        [
+          "a8193123526fad64",
+          "02f409b3ceb55ab3"
+        ],
+        [
+          "a8193123526fad64",
+          "2d1f9cb560e84eae"
+        ],
+        [
+          "a8193123526fad64",
+          "4f069f48ce3cdb45"
+        ],
+        [
+          "a8193123526fad64",
+          "55d2fd8ea3d8d263"
+        ],
+        [
+          "a8193123526fad64",
+          "af8ae08bbff2bffe"
+        ],
+        [
+          "a8193123526fad64",
+          "f3839a7b1ab60bb8"
+        ],
+        [
+          "af32095c82f2b070",
+          "e2c84431724ff8f0"
+        ],
+        [
+          "cd4238c6a0c69e32",
+          "08a890644fb6e6ba"
+        ],
+        [
+          "cd4238c6a0c69e32",
+          "0cc53e172ee61d07"
+        ],
+        [
+          "cd4238c6a0c69e32",
+          "0fbfe62490bc93e9"
+        ],
+        [
+          "cd4238c6a0c69e32",
+          "113d8cc99dccb83f"
+        ],
+        [
+          "cd4238c6a0c69e32",
+          "2573690380303f43"
+        ],
+        [
+          "cd4238c6a0c69e32",
+          "3766fce6535e946f"
+        ],
+        [
+          "cd4238c6a0c69e32",
+          "6132ae3210a37922"
+        ],
+        [
+          "cd4238c6a0c69e32",
+          "9bf0c2355f9b048c"
+        ],
+        [
+          "cd4238c6a0c69e32",
+          "b1000d14bf6eb0fb"
+        ],
+        [
+          "cd4238c6a0c69e32",
+          "b217c4de9b6cf02a"
+        ],
+        [
+          "cd4238c6a0c69e32",
+          "cf5970d37ff4afad"
+        ],
+        [
+          "cd4238c6a0c69e32",
+          "e66f86b8db7bc6c0"
+        ],
+        [
+          "e0a48d0be9a7453f",
+          "4e401cc877093220"
+        ],
+        [
+          "e0a48d0be9a7453f",
+          "71e52f800636b336"
+        ],
+        [
+          "eac0b497876adedf",
+          "0f3201437c248dfc"
+        ],
+        [
+          "eac0b497876adedf",
+          "2ae73578812a73a7"
+        ],
+        [
+          "eac0b497876adedf",
+          "3fad5a7bd8524bd3"
+        ],
+        [
+          "eac0b497876adedf",
+          "4a31268d506b0252"
+        ],
+        [
+          "eac0b497876adedf",
+          "4a49c99c122a155e"
+        ],
+        [
+          "eac0b497876adedf",
+          "6bd2e56fb7bcec27"
+        ],
+        [
+          "eac0b497876adedf",
+          "906550f1c04f4c1e"
+        ],
+        [
+          "eac0b497876adedf",
+          "a77f3175dd3d9dd5"
+        ],
+        [
+          "eac0b497876adedf",
+          "b3479e208fa6851a"
+        ],
+        [
+          "eac0b497876adedf",
+          "b79d1157d6ff5c57"
+        ],
+        [
+          "eac0b497876adedf",
+          "c6668eb235de43a0"
+        ],
+        [
+          "eac0b497876adedf",
+          "d096905c4b11c45c"
+        ],
+        [
+          "eac0b497876adedf",
+          "d6e75d04df4e9b28"
+        ],
+        [
+          "eac0b497876adedf",
+          "fe44024861b6c42d"
+        ]
+      ],
+      "explosions": [
+        {
+          "id": 331,
+          "damage_info_id": 391,
+          "inner_radius": 1.0,
+          "outer_radius": 12.0,
+          "particle_hash": "af8ae08bbff2bffe",
+          "persistent_status_template_id": 16,
+          "status_duration_seconds": 15.0,
+          "record_hex": "4b0100008701000000000000000000000000803f000040410000704100000000000020420000000028020100000000000100000000000000febff2bf8be08aaf9b28b0a1000000001c0000000000000000000000000000000e00000002000000000000001000000000007041ef19495e028ff77a050000000000000002000000000000000000000000000042030000000000000000000000"
+        }
+      ]
+    }
+  ]
+}

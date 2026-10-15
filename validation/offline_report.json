@@ -1,5 +1,5 @@
 {
-  "version": "0.5.3",
+  "version": "0.5.4",
   "game_build": 25480438,
   "tests_passed": [
     "default carrying, repaired payload, original Eagle rows preserved and disable restoration",
@@ -18,17 +18,18 @@
     "independent rearm setting, vanilla restoration, zero/max values and disable restoration",
     "default rearm non-interference, competing rearm writer and stale rearm record refusal",
     "partial rearm write rolls back native grant transaction",
-    "all three bomb identities/resources, unchanged original Eagles/projectiles and disable restoration",
+    "all six bomb identities/resources, unchanged original Eagles/projectiles and disable restoration",
     "bomb reload, fixed original quantity, ignored legacy ratios and no executable writes",
     "forward shift in every direction, one adjustment per aircraft and future-flight reload",
     "forward shift guards, other Eagles, firing/outgoing states, invalid vectors and partial-write restoration",
     "64 aircraft use one pointer-array read, new generations shift once and departed flights are pruned",
     "initialization and delayed-loading memory read budgets",
-    "manager archives and 41 presets with 17550 selectable combinations",
+    "manager archives and 46 presets with 70200 selectable combinations",
     "build rejects failed, old-version, stale-source and changed-test reports",
     "menu contract: bilingual descriptions, order, language migration/refresh, cache authority, pending edits and restart",
     "menu contract: valid ranges, invalid callback rejection, manager restoration and disable restoration",
     "menu contract: sentinel sources and simultaneous language/parameter changes",
+    "menu contract: new payload choices and approach direction, bilingual refresh, source restore, save failure and restart",
     "optional menu version/registration/callback/sync failures and config save failure",
     "stopped runtime rejects all menu callbacks without persisting or reviving writes",
     "restore retains failures, preserves foreign values and stops after three cleanup rounds",
@@ -38,24 +39,30 @@
     "public disable persists, is idempotent and cannot revive a stopped runtime",
     "atomic config write/flush/close/replace failures preserve original bytes and settings",
     "shared schema rejects invalid presets and malformed config without resetting on missing files",
-    "failed flight-target restoration retries only while the same aircraft identity remains"
+    "failed flight-target restoration retries only while the same aircraft identity remains",
+    "six payloads: private left/right and front/back angles, reload/migration and disable restoration",
+    "approach angle: partial-write rollback, disable failure, external owner and donor guard",
+    "selected resource packages: late loading, changed IDs/addresses/packages and cluster secondary guard",
+    "current package references: plane/bomb/audio/particles, cluster bomblets, napalm fire and gas status chain"
   ],
   "validation_context": {
     "menu_provider_sha256": null
   },
-  "source_sha256": "c730233b74c85a542ba8ac0ad5ec55070b01e8144219e9a1b14ba4e3f9bb1f65",
+  "source_sha256": "dd7d25e1d6f511a23aa590db4cefc4cea0da8f2902c9480dcb3a4350ad60cae2",
   "validation_inputs": {
     "requirements-dev.txt": "c355c313ec4744320b1e0d22e7e70465d899a48e8c62293578ddff95d0672c6b",
-    "src/core.lua": "c730233b74c85a542ba8ac0ad5ec55070b01e8144219e9a1b14ba4e3f9bb1f65",
+    "src/core.lua": "dd7d25e1d6f511a23aa590db4cefc4cea0da8f2902c9480dcb3a4350ad60cae2",
     "src/core_v0.1.0_FAILED.lua": "cb3cdf1dd40789d9dedc5e432fc93b3bb928375147b53009020edac8dd7e1909",
     "src/core_v0.2.0_FAILED_FAR_IMPACTS.lua": "369ea0c65bb12449e7c37df7a5bd77b27c828dc22fd6f119e1a50244a81bde3f",
+    "tests/fixtures/bomb_variants_build25480438.json": "65627b1e5f456140c4f65a2396a18e7df42ee45186d9323f44c4396fe15f6853",
     "tests/fixtures/payload_tables_build25480438.json": "51b17c0a0b0c4cc888aabefa343355b9f144e09f4a6e8b2443ec1b4eb8880ac6",
-    "tests/fixtures/projectiles_build25480438.json": "0c27b8218e1a4cacc4123fc1ea6c5f73a500daeb55a732b657cd97c906662f23",
-    "tests/fixtures/stratagems_build25480438.json": "2fc606595a39b47a0939b742e71796155b9f47bdc33e86a6d75c91d30cc4e245",
-    "tests/menu_checks.py": "2d4a802dd0d0ff24d29633141239a0e98ed80b301b9e1e365d2e2d247fcd6363",
+    "tests/fixtures/projectiles_build25480438.json": "317c7432fbfab1ec303e9e280377e3eedb0c1527e2446fb8905c2866e6fed379",
+    "tests/fixtures/stratagems_build25480438.json": "1d07acc402ab652c303fc12f1255146aa5972c3062cc5cef680ca58c5a52170e",
+    "tests/menu_checks.py": "760d75eacb861af7dc63fbcdff7494199f9685f49b224637bef75d4bd290a74e",
     "tests/reliability_checks.py": "947e6480cee8dad47dbf9be7cfd56c885633fa71e5b451d77d7e3b461c162fb2",
-    "tests/test_runtime.py": "cc9440c50b9d1ab5c67bbd18e9e484976220b6f588864c42c6f982601a408bbd",
-    "tools/build.py": "4ac436d593cd37660a071c58c20b1d226141acae761d49db20e998612826c40f",
+    "tests/test_runtime.py": "41a5046625f97fd5ccc39025bf11142df092fc3966adcb8229d471b8ffd73bd7",
+    "tests/variant_checks.py": "74fc3b3192674b4e193ba6cb46ca00a1647dbe37814655c002c64c977df64494",
+    "tools/build.py": "0bb9f42ef79e85adf84cb2c3858347a04e0cb6f06dd97a643a54ef5d8bf7a55e",
     "tools/capture_ballistics.py": "8f114692e15d15f9ec57b44a54aa07d995da7cfb1d46c2b9916e7ec78a5ce3c5",
     "tools/capture_eagles.py": "4388c76f926ffb72b3ab536185c119c22452f7c530d55fe5caa21f8a602838d5",
     "tools/capture_live.py": "e9e8d5b508a7b6caffb9fd842aca54bb9de7b5b8d455c3c622f1d50162d5b618",
@@ -73,29 +80,29 @@
   },
   "performance_counters": {
     "initialization": {
-      "rpm_calls": 281,
-      "bytes": 13076
+      "rpm_calls": 283,
+      "bytes": 13095
     },
     "steady_100_ticks": {
-      "rpm_calls": 5300,
-      "bytes": 68800
+      "rpm_calls": 5400,
+      "bytes": 69200
     },
     "delayed_10_ticks": {
-      "rpm_calls": 364,
-      "bytes": 8960,
+      "rpm_calls": 365,
+      "bytes": 8975,
       "allocations": 0
     }
   },
-  "test_group_count": 37,
+  "test_group_count": 42,
   "menu_api_verification": {
     "provider": "API contract fixture",
     "provider_sha256": null,
-    "registered_rows": 11,
+    "registered_rows": 12,
     "first_row": "Language",
     "native_ui_hook_executed": false
   },
-  "preset_combinations": 17550,
-  "preset_modules_checked": 41,
+  "preset_combinations": 70200,
+  "preset_modules_checked": 46,
   "in_game_loader_verified": false,
   "default_carry_verified": false,
   "in_game_bombing_verified": false,

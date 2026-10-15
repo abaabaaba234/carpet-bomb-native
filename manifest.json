@@ -1,8 +1,8 @@
 {
   "Version": 1,
   "Guid": "acffed9b-07c3-48f8-a936-19874038111b",
-  "Name": "\u539f\u751f\u5730\u6bef\u8f70\u70b8\u9ed8\u8ba4\u643a\u5e26 / Native CarpetBomb v0.5.3",
-  "Description": "\u5730\u6bef\u8f70\u70b8\u9ed8\u8ba4\u643a\u5e26\uff1b\u83dc\u5355\u4ecb\u7ecd\u59cb\u7ec8\u4e2d\u82f1\u53cc\u8bed\uff0c\u53ef\u914d\u7f6e\u6b21\u6570\u3001\u51b7\u5374\u3001\u5f39\u4f53\u548c\u76ee\u6807\u524d\u79fb\u3002\u6570\u91cf\u56fa\u5b9a\u6bcf\u67b620\u679a\u3002\u9700\u8981Loader v18\uff1b\u83dc\u5355\u53e6\u9700ModOptionsMenu v2\u3002\u652f\u6301build 25480438\u3002 / Automatically carries CarpetBomb. Bilingual descriptions in either language; configurable charges, cooldowns, bombs and forward offset. Fixed at 20 bombs per aircraft. Requires Loader v18; menu needs ModOptionsMenu v2. Build 25480438.",
+  "Name": "\u539f\u751f\u5730\u6bef\u8f70\u70b8\u9ed8\u8ba4\u643a\u5e26 / Native CarpetBomb v0.5.4",
+  "Description": "\u5730\u6bef\u8f70\u70b8\u9ed8\u8ba4\u643a\u5e26\uff1b\u652f\u6301\u7a7a\u88ad\u3001200 kg\u3001500 kg\u3001\u96c6\u675f\u3001\u71c3\u70e7\u548c\u6bd2\u6c14\uff0c\u4ee5\u53ca\u5de6\u53f3\u6216\u524d\u540e\u6765\u88ad\u3002\u6bcf\u67b620\u679a\u4e3b\u5f39\uff1b\u83dc\u5355\u4ecb\u7ecd\u4e2d\u82f1\u53cc\u8bed\u3002\u9700\u8981Loader v18\uff0c\u83dc\u5355\u53e6\u9700ModOptionsMenu v2\uff0c\u652f\u6301build 25480438\u3002\u672c\u7248\u4ec5\u79bb\u7ebf\u9a8c\u8bc1\u3002 / Automatically carries CarpetBomb with Airstrike, 200 kg, 500 kg, Cluster, Napalm or Gas bombs, and left/right or front/back approaches. 20 primary bombs per aircraft; bilingual menu descriptions. Requires Loader v18; menu needs ModOptionsMenu v2. Build 25480438. Offline-tested only.",
   "Options": [
     {
       "Name": "\u6838\u5fc3 / Core",
@@ -255,27 +255,48 @@
     },
     {
       "Name": "\u70b8\u5f39\u7c7b\u578b / Bomb Type",
-      "Description": "\u9009\u62e9\u5730\u6bef\u5f0f\u8f70\u70b8\u6295\u4e0b\u7684\u5b9e\u9645\u5f39\u4f53\u548c\u5bf9\u5e94\u7206\u70b8\u6548\u679c\u3002\u9ed8\u8ba4\u4fdd\u7559\u539f\u7248\u98de\u9e70\u7a7a\u88ad\u70b8\u5f39\uff1b\u53ef\u9009\u5730\u6bef\u8f70\u70b8\u4e13\u7528 200 kg \u6216\u98de\u9e70 500 kg\u3002 / Selects the dropped projectile and its explosion effects. Defaults to the vanilla Eagle Airstrike bomb; CarpetBomb 200 kg and Eagle 500 kg are also available. \u90e8\u7f72\u540e\u91cd\u542f\u5e76\u8fdb\u5165\u65b0\u4efb\u52a1\u3002 Restart after deployment and enter a new mission.",
+      "Description": "\u9009\u62e9\u5b9e\u9645\u5f39\u4f53\u53ca\u5176\u539f\u751f\u8d44\u6e90\u5305\uff1a\u7a7a\u88ad\u3001200 kg\u3001500 kg\u3001\u96c6\u675f\u3001\u71c3\u70e7\u6216\u6bd2\u6c14\u3002\u6bcf\u67b6\u56fa\u5b9a\u6295\u4e0b20\u679a\u4e3b\u5f39\uff0c\u96c6\u675f\u53e6\u6709\u539f\u751f\u5b50\u5f39\u3002\u66f4\u6362\u540e\u91cd\u542f\u5e76\u8fdb\u5165\u65b0\u4efb\u52a1\u3002 / Selects the projectile and native package: Airstrike, 200 kg, 500 kg, Cluster, Napalm or Gas. Fixed at 20 primary bombs per aircraft; Cluster also spawns native bomblets. Restart and enter a new mission after changing. \u90e8\u7f72\u540e\u91cd\u542f\u5e76\u8fdb\u5165\u65b0\u4efb\u52a1\u3002 Restart after deployment and enter a new mission.",
       "SubOptions": [
         {
           "Name": "\u539f\u7248\u98de\u9e70\u7a7a\u88ad\u70b8\u5f39 / Airstrike",
-          "Description": "\u9009\u62e9\u5730\u6bef\u5f0f\u8f70\u70b8\u6295\u4e0b\u7684\u5b9e\u9645\u5f39\u4f53\u548c\u5bf9\u5e94\u7206\u70b8\u6548\u679c\u3002\u9ed8\u8ba4\u4fdd\u7559\u539f\u7248\u98de\u9e70\u7a7a\u88ad\u70b8\u5f39\uff1b\u53ef\u9009\u5730\u6bef\u8f70\u70b8\u4e13\u7528 200 kg \u6216\u98de\u9e70 500 kg\u3002 / Selects the dropped projectile and its explosion effects. Defaults to the vanilla Eagle Airstrike bomb; CarpetBomb 200 kg and Eagle 500 kg are also available.",
+          "Description": "\u9009\u62e9\u5b9e\u9645\u5f39\u4f53\u53ca\u5176\u539f\u751f\u8d44\u6e90\u5305\uff1a\u7a7a\u88ad\u3001200 kg\u3001500 kg\u3001\u96c6\u675f\u3001\u71c3\u70e7\u6216\u6bd2\u6c14\u3002\u6bcf\u67b6\u56fa\u5b9a\u6295\u4e0b20\u679a\u4e3b\u5f39\uff0c\u96c6\u675f\u53e6\u6709\u539f\u751f\u5b50\u5f39\u3002\u66f4\u6362\u540e\u91cd\u542f\u5e76\u8fdb\u5165\u65b0\u4efb\u52a1\u3002 / Selects the projectile and native package: Airstrike, 200 kg, 500 kg, Cluster, Napalm or Gas. Fixed at 20 primary bombs per aircraft; Cluster also spawns native bomblets. Restart and enter a new mission after changing.",
           "Include": [
             "Options/bomb/170"
           ]
         },
         {
           "Name": "\u5730\u6bef\u5f0f\u8f70\u70b8 200 kg",
-          "Description": "\u9009\u62e9\u5730\u6bef\u5f0f\u8f70\u70b8\u6295\u4e0b\u7684\u5b9e\u9645\u5f39\u4f53\u548c\u5bf9\u5e94\u7206\u70b8\u6548\u679c\u3002\u9ed8\u8ba4\u4fdd\u7559\u539f\u7248\u98de\u9e70\u7a7a\u88ad\u70b8\u5f39\uff1b\u53ef\u9009\u5730\u6bef\u8f70\u70b8\u4e13\u7528 200 kg \u6216\u98de\u9e70 500 kg\u3002 / Selects the dropped projectile and its explosion effects. Defaults to the vanilla Eagle Airstrike bomb; CarpetBomb 200 kg and Eagle 500 kg are also available.",
+          "Description": "\u9009\u62e9\u5b9e\u9645\u5f39\u4f53\u53ca\u5176\u539f\u751f\u8d44\u6e90\u5305\uff1a\u7a7a\u88ad\u3001200 kg\u3001500 kg\u3001\u96c6\u675f\u3001\u71c3\u70e7\u6216\u6bd2\u6c14\u3002\u6bcf\u67b6\u56fa\u5b9a\u6295\u4e0b20\u679a\u4e3b\u5f39\uff0c\u96c6\u675f\u53e6\u6709\u539f\u751f\u5b50\u5f39\u3002\u66f4\u6362\u540e\u91cd\u542f\u5e76\u8fdb\u5165\u65b0\u4efb\u52a1\u3002 / Selects the projectile and native package: Airstrike, 200 kg, 500 kg, Cluster, Napalm or Gas. Fixed at 20 primary bombs per aircraft; Cluster also spawns native bomblets. Restart and enter a new mission after changing.",
           "Include": [
             "Options/bomb/192"
           ]
         },
         {
           "Name": "\u98de\u9e70 500 kg",
-          "Description": "\u9009\u62e9\u5730\u6bef\u5f0f\u8f70\u70b8\u6295\u4e0b\u7684\u5b9e\u9645\u5f39\u4f53\u548c\u5bf9\u5e94\u7206\u70b8\u6548\u679c\u3002\u9ed8\u8ba4\u4fdd\u7559\u539f\u7248\u98de\u9e70\u7a7a\u88ad\u70b8\u5f39\uff1b\u53ef\u9009\u5730\u6bef\u8f70\u70b8\u4e13\u7528 200 kg \u6216\u98de\u9e70 500 kg\u3002 / Selects the dropped projectile and its explosion effects. Defaults to the vanilla Eagle Airstrike bomb; CarpetBomb 200 kg and Eagle 500 kg are also available.",
+          "Description": "\u9009\u62e9\u5b9e\u9645\u5f39\u4f53\u53ca\u5176\u539f\u751f\u8d44\u6e90\u5305\uff1a\u7a7a\u88ad\u3001200 kg\u3001500 kg\u3001\u96c6\u675f\u3001\u71c3\u70e7\u6216\u6bd2\u6c14\u3002\u6bcf\u67b6\u56fa\u5b9a\u6295\u4e0b20\u679a\u4e3b\u5f39\uff0c\u96c6\u675f\u53e6\u6709\u539f\u751f\u5b50\u5f39\u3002\u66f4\u6362\u540e\u91cd\u542f\u5e76\u8fdb\u5165\u65b0\u4efb\u52a1\u3002 / Selects the projectile and native package: Airstrike, 200 kg, 500 kg, Cluster, Napalm or Gas. Fixed at 20 primary bombs per aircraft; Cluster also spawns native bomblets. Restart and enter a new mission after changing.",
           "Include": [
             "Options/bomb/239"
+          ]
+        },
+        {
+          "Name": "\u98de\u9e70\u96c6\u675f / Eagle Cluster",
+          "Description": "\u9009\u62e9\u5b9e\u9645\u5f39\u4f53\u53ca\u5176\u539f\u751f\u8d44\u6e90\u5305\uff1a\u7a7a\u88ad\u3001200 kg\u3001500 kg\u3001\u96c6\u675f\u3001\u71c3\u70e7\u6216\u6bd2\u6c14\u3002\u6bcf\u67b6\u56fa\u5b9a\u6295\u4e0b20\u679a\u4e3b\u5f39\uff0c\u96c6\u675f\u53e6\u6709\u539f\u751f\u5b50\u5f39\u3002\u66f4\u6362\u540e\u91cd\u542f\u5e76\u8fdb\u5165\u65b0\u4efb\u52a1\u3002 / Selects the projectile and native package: Airstrike, 200 kg, 500 kg, Cluster, Napalm or Gas. Fixed at 20 primary bombs per aircraft; Cluster also spawns native bomblets. Restart and enter a new mission after changing.",
+          "Include": [
+            "Options/bomb/286"
+          ]
+        },
+        {
+          "Name": "\u98de\u9e70\u71c3\u70e7 / Eagle Napalm",
+          "Description": "\u9009\u62e9\u5b9e\u9645\u5f39\u4f53\u53ca\u5176\u539f\u751f\u8d44\u6e90\u5305\uff1a\u7a7a\u88ad\u3001200 kg\u3001500 kg\u3001\u96c6\u675f\u3001\u71c3\u70e7\u6216\u6bd2\u6c14\u3002\u6bcf\u67b6\u56fa\u5b9a\u6295\u4e0b20\u679a\u4e3b\u5f39\uff0c\u96c6\u675f\u53e6\u6709\u539f\u751f\u5b50\u5f39\u3002\u66f4\u6362\u540e\u91cd\u542f\u5e76\u8fdb\u5165\u65b0\u4efb\u52a1\u3002 / Selects the projectile and native package: Airstrike, 200 kg, 500 kg, Cluster, Napalm or Gas. Fixed at 20 primary bombs per aircraft; Cluster also spawns native bomblets. Restart and enter a new mission after changing.",
+          "Include": [
+            "Options/bomb/141"
+          ]
+        },
+        {
+          "Name": "\u98de\u9e70\u6bd2\u6c14 / Eagle Gas",
+          "Description": "\u9009\u62e9\u5b9e\u9645\u5f39\u4f53\u53ca\u5176\u539f\u751f\u8d44\u6e90\u5305\uff1a\u7a7a\u88ad\u3001200 kg\u3001500 kg\u3001\u96c6\u675f\u3001\u71c3\u70e7\u6216\u6bd2\u6c14\u3002\u6bcf\u67b6\u56fa\u5b9a\u6295\u4e0b20\u679a\u4e3b\u5f39\uff0c\u96c6\u675f\u53e6\u6709\u539f\u751f\u5b50\u5f39\u3002\u66f4\u6362\u540e\u91cd\u542f\u5e76\u8fdb\u5165\u65b0\u4efb\u52a1\u3002 / Selects the projectile and native package: Airstrike, 200 kg, 500 kg, Cluster, Napalm or Gas. Fixed at 20 primary bombs per aircraft; Cluster also spawns native bomblets. Restart and enter a new mission after changing.",
+          "Include": [
+            "Options/bomb/188"
           ]
         }
       ]
@@ -330,6 +351,26 @@
           "Description": "\u6cbf\u98de\u9e70\u524d\u8fdb\u65b9\u5411\u79fb\u52a8\u5730\u6bef\u5f0f\u8f70\u70b8\u7684\u76ee\u6807\uff0c\u9ed8\u8ba4 80 \u7c73\u30020 \u7c73\u4fdd\u7559\u539f\u843d\u70b9\uff1b\u7528\u4e8e\u8c03\u6574\u4fe1\u6807\u4e24\u4fa7\u7684\u8986\u76d6\u3002\u4ec5\u5f71\u54cd\u65b0\u51fa\u52a8\u7684\u5730\u6bef\u8f70\u70b8\u98de\u673a\u3002 / Moves the CarpetBomb target along the incoming flight direction; defaults to 80 metres. Zero retains the original target. Adjusts coverage around the beacon and affects only future CarpetBomb aircraft.",
           "Include": [
             "Options/forward/160"
+          ]
+        }
+      ]
+    },
+    {
+      "Name": "\u98de\u9e70\u6765\u88ad\u65b9\u5411 / Eagle Approach",
+      "Description": "\u76f8\u5bf9\u6295\u63b7\u65b9\u5411\u9009\u62e9\u5de6\u53f3\u6a2a\u7a7f\u6216\u524d\u540e\u7eb5\u5411\uff0c\u9ed8\u8ba4\u5de6\u53f3\u3002\u4ec5\u5f71\u54cd\u65b0\u51fa\u52a8\u7684\u5730\u6bef\u8f70\u70b8\u98de\u673a\u3002 / Relative to the throw: left/right across it or front/back along it. Defaults to left/right. Only future CarpetBomb aircraft change. \u90e8\u7f72\u540e\u91cd\u542f\u5e76\u8fdb\u5165\u65b0\u4efb\u52a1\u3002 Restart after deployment and enter a new mission.",
+      "SubOptions": [
+        {
+          "Name": "\u5de6\u53f3 / Left and right",
+          "Description": "\u76f8\u5bf9\u6295\u63b7\u65b9\u5411\u9009\u62e9\u5de6\u53f3\u6a2a\u7a7f\u6216\u524d\u540e\u7eb5\u5411\uff0c\u9ed8\u8ba4\u5de6\u53f3\u3002\u4ec5\u5f71\u54cd\u65b0\u51fa\u52a8\u7684\u5730\u6bef\u8f70\u70b8\u98de\u673a\u3002 / Relative to the throw: left/right across it or front/back along it. Defaults to left/right. Only future CarpetBomb aircraft change.",
+          "Include": [
+            "Options/direction/90"
+          ]
+        },
+        {
+          "Name": "\u524d\u540e / Front and back",
+          "Description": "\u76f8\u5bf9\u6295\u63b7\u65b9\u5411\u9009\u62e9\u5de6\u53f3\u6a2a\u7a7f\u6216\u524d\u540e\u7eb5\u5411\uff0c\u9ed8\u8ba4\u5de6\u53f3\u3002\u4ec5\u5f71\u54cd\u65b0\u51fa\u52a8\u7684\u5730\u6bef\u8f70\u70b8\u98de\u673a\u3002 / Relative to the throw: left/right across it or front/back along it. Defaults to left/right. Only future CarpetBomb aircraft change.",
+          "Include": [
+            "Options/direction/180"
           ]
         }
       ]

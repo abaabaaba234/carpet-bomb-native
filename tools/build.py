@@ -72,25 +72,28 @@ def make_files(report=None):
         ('cooldown','调用冷却（每次使用之间） / Call Interval',[15,900,0,5,10,30,60,120,300,600],'地毯式轰炸每次使用之间的基础冷却，默认 15 秒。 / Base cooldown between CarpetBomb calls; defaults to 15 seconds.'),
         ('rearm','飞鹰返航装填冷却 / Eagle Rearm',[-1,0,5,10,15,30,60,120,150,180,300,600,900],
          '次数耗尽后飞鹰返回装填的基础冷却，也适用于手动重新武装。所有携带的飞鹰战备共用，舰船升级仍按原版计算。默认保持原版。 / Base cooldown for Eagle rearm after charges are depleted or manual rearm. Shared by all carried Eagle stratagems; ship upgrades still apply. Defaults to Vanilla.'),
-        ('bomb','炸弹类型 / Bomb Type',[170,192,239],
-         '选择地毯式轰炸投下的实际弹体和对应爆炸效果。默认保留原版飞鹰空袭炸弹；可选地毯轰炸专用 200 kg 或飞鹰 500 kg。 / Selects the dropped projectile and its explosion effects. Defaults to the vanilla Eagle Airstrike bomb; CarpetBomb 200 kg and Eagle 500 kg are also available.'),
+        ('bomb','炸弹类型 / Bomb Type',[170,192,239,286,141,188],
+         '选择实际弹体及其原生资源包：空袭、200 kg、500 kg、集束、燃烧或毒气。每架固定投下20枚主弹，集束另有原生子弹。更换后重启并进入新任务。 / Selects the projectile and native package: Airstrike, 200 kg, 500 kg, Cluster, Napalm or Gas. Fixed at 20 primary bombs per aircraft; Cluster also spawns native bomblets. Restart and enter a new mission after changing.'),
         ('bomb_count','投弹数量（暂固定原版） / Bomb Quantity',[20],
          '当前仅提供原版 1x：每架 20 枚。带数量倍率的测试在舰桥出现 GameGuard 1015，旧实现已移除。数量倍率尚未完成。 / Fixed at vanilla 1x: 20 bombs per aircraft. An earlier quantity multiplier test reported GameGuard 1015 on the bridge; that implementation was removed. Quantity multipliers are unfinished.'),
         ('forward','投弹目标前移 / Strike Forward Offset',[80,0,40,120,160],
          '沿飞鹰前进方向移动地毯式轰炸的目标，默认 80 米。0 米保留原落点；用于调整信标两侧的覆盖。仅影响新出动的地毯轰炸飞机。 / Moves the CarpetBomb target along the incoming flight direction; defaults to 80 metres. Zero retains the original target. Adjusts coverage around the beacon and affects only future CarpetBomb aircraft.'),
+        ('direction','飞鹰来袭方向 / Eagle Approach',[90,180],
+         '相对投掷方向选择左右横穿或前后纵向，默认左右。仅影响新出动的地毯轰炸飞机。 / Relative to the throw: left/right across it or front/back along it. Defaults to left/right. Only future CarpetBomb aircraft change.'),
     ],1):
         choices=[]
         for n in values:
             folder=f'Options/{axis}/{"unlimited" if axis=="uses" and n==-1 else "vanilla" if n==-1 else n}'
             add(folder,index,'mods/carpet_bomb_native/'+axis,preset_bytecode(n))
-            if axis=='bomb':label={170:'原版飞鹰空袭炸弹 / Airstrike',192:'地毯式轰炸 200 kg',239:'飞鹰 500 kg'}[n]
+            if axis=='bomb':label={170:'原版飞鹰空袭炸弹 / Airstrike',192:'地毯式轰炸 200 kg',239:'飞鹰 500 kg',286:'飞鹰集束 / Eagle Cluster',141:'飞鹰燃烧 / Eagle Napalm',188:'飞鹰毒气 / Eagle Gas'}[n]
+            elif axis=='direction':label={90:'左右 / Left and right',180:'前后 / Front and back'}[n]
             elif axis=='forward':label=f'{n} 米'
             elif axis=='bomb_count':label=f'{n/20:g}x（每架 {n} 枚）'
             else:label='无限 / Unlimited' if axis=='uses' and n==-1 else '保持原版 / Vanilla' if n==-1 else f'{n} 次' if axis=='uses' else f'{n} 秒'
             choices.append({'Name':label,'Description':description,'Include':[folder]})
         options.append({'Name':title,'Description':description+' 部署后重启并进入新任务。 Restart after deployment and enter a new mission.','SubOptions':choices})
     manifest={'Version':1,'Guid':'acffed9b-07c3-48f8-a936-19874038111b','Name':'原生地毯轰炸默认携带 / Native CarpetBomb v'+version,
-      'Description':'地毯轰炸默认携带；菜单介绍始终中英双语，可配置次数、冷却、弹体和目标前移。数量固定每架20枚。需要Loader v18；菜单另需ModOptionsMenu v2。支持build 25480438。 / Automatically carries CarpetBomb. Bilingual descriptions in either language; configurable charges, cooldowns, bombs and forward offset. Fixed at 20 bombs per aircraft. Requires Loader v18; menu needs ModOptionsMenu v2. Build 25480438.', 'Options':options}
+      'Description':'地毯轰炸默认携带；支持空袭、200 kg、500 kg、集束、燃烧和毒气，以及左右或前后来袭。每架20枚主弹；菜单介绍中英双语。需要Loader v18，菜单另需ModOptionsMenu v2，支持build 25480438。本版仅离线验证。 / Automatically carries CarpetBomb with Airstrike, 200 kg, 500 kg, Cluster, Napalm or Gas bombs, and left/right or front/back approaches. 20 primary bombs per aircraft; bilingual menu descriptions. Requires Loader v18; menu needs ModOptionsMenu v2. Build 25480438. Offline-tested only.', 'Options':options}
     # Arsenal's import can decode text with the Windows ANSI code page.
     # JSON escapes retain the Chinese labels under either text encoding.
     files['manifest.json']=json.dumps(manifest,ensure_ascii=True,indent=2).encode('ascii')

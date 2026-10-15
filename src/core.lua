@@ -2,7 +2,7 @@
 -- Native CarpetBomb grant and missing payload reconstruction.
 local previous=rawget(_G,'CarpetBombNative')
 if previous then return previous end
-local S={version='0.5.3',phase='waiting',elapsed=0,owned={},writes=0,allocations={},projectiles={},
+local S={version='0.5.4',phase='waiting',elapsed=0,owned={},writes=0,allocations={},projectiles={},
     recovery={},protection_pending={},cleanup_attempts=0}
 rawset(_G,'CarpetBombNative',S)
 local ffi=require('ffi')
@@ -22,7 +22,8 @@ local SCHEMA={
     uses={default=2,min=1,max=100,sentinel=-1,manager=true},
     cooldown={default=15,min=0,max=1800,manager=true},
     rearm={default=-1,min=0,max=1800,sentinel=-1,manager=true},
-    bomb={default=170,choices={[170]=true,[192]=true,[239]=true},manager=true},
+    bomb={default=170,choices={[170]=true,[192]=true,[239]=true,[286]=true,[141]=true,[188]=true},manager=true},
+    direction={default=90,choices={[90]=true,[180]=true},manager=true},
     bomb_count={default=20,min=20,max=20,manager=true},
     forward={default=80,min=0,max=300,manager=true},
 }
@@ -49,7 +50,7 @@ local config={};for k,v in pairs(defaults) do config[k]=v end
 S.config=config
 local last_text
 local config_values={}
-local config_keys={'language','enabled','uses','cooldown','rearm','bomb','bomb_count','forward'}
+local config_keys={'language','enabled','uses','cooldown','rearm','bomb','bomb_count','forward','direction'}
 local function atomic_config(text)
     local temporary=CFG..'.tmp'
     local f,reason=io.open(temporary,'wb')
@@ -74,9 +75,10 @@ local function read_config()
         local initial='# Native CarpetBomb. Save to reload. manager = deployed dropdown.\n'
           ..'# cooldown = interval between uses; rearm = return/reload cooldown for ALL carried Eagles.\n'
           ..'# rearm=-1 keeps the existing game setting.\n'
-          ..'# bomb=170 (Airstrike), 192 (200 kg), 239 (Eagle 500 kg).\n'
+          ..'# bomb=170 (Airstrike), 192 (200 kg), 239 (500 kg), 286 (Cluster), 141 (Napalm), 188 (Gas).\n'
+          ..'# direction=90 (left/right), 180 (front/back), relative to the throw.\n'
           ..'# bomb_count is fixed at20; forward=0..300 metres along incoming flight direction.\n'
-          ..'language=zh\nenabled=1\nuses=manager\ncooldown=manager\nrearm=manager\nbomb=manager\nbomb_count=manager\nforward=manager\n'
+          ..'language=zh\nenabled=1\nuses=manager\ncooldown=manager\nrearm=manager\nbomb=manager\nbomb_count=manager\nforward=manager\ndirection=manager\n'
         atomic_config(initial);f=io.open(CFG,'rb')
     end
     local text='';if f then text=f:read('*a');f:close() end
@@ -84,7 +86,7 @@ local function read_config()
     if text==last_text then return false end
     local next_config={};for k,v in pairs(defaults) do next_config[k]=v end
     local next_values={language='zh',enabled=1,uses='manager',cooldown='manager',rearm='manager',
-        bomb='manager',bomb_count='manager',forward='manager'}
+        bomb='manager',bomb_count='manager',forward='manager',direction='manager'}
     for line in text:gmatch('[^\r\n]+') do
         local key,value=line:gsub('^\239\187\191',''):gsub('#.*$',''):match('^%s*([%w_]+)%s*=%s*(.-)%s*$')
         if key=='language' then
@@ -135,8 +137,11 @@ local MENU_TEXT={
         cooldown='调用冷却（秒）',cooldown_description='0–1800 秒；应用此滑块会切换为自定义。已在进行的计时可能需要新任务更新。',
         rearm_mode='飞鹰装填来源',rearm_mode_description='跟随部署预设、保持原版，或自定义。全部携带的飞鹰战备共用；舰船升级仍由游戏计算。',
         rearm='飞鹰装填冷却（秒）',rearm_description='0–1800 秒；应用此滑块会切换为自定义。影响全部携带的飞鹰战备。',
-        bomb='炸弹类型',bomb_description='跟随预设或选择弹体。更换后需重启并进入新任务载入资源；数量固定为每架 20 枚。',
+        bomb='炸弹类型',bomb_description='跟随预设或选择空袭、200 kg、500 kg、集束、燃烧、毒气。更换后重启并进入新任务载入资源。每架20枚主弹，集束另有原生子弹。',
         airstrike='原版飞鹰空袭炸弹',native_bomb='地毯轰炸 200 kg',heavy_bomb='飞鹰 500 kg',
+        cluster_bomb='飞鹰集束炸弹',napalm_bomb='飞鹰燃烧弹',gas_bomb='飞鹰毒气弹',
+        direction='飞鹰来袭方向',direction_description='相对投掷方向：左右横穿或前后纵向。默认左右；只影响之后新出动的地毯轰炸飞机，其他飞鹰不变。',
+        sideways='左右',longitudinal='前后',
         forward_source='目标前移来源',forward_source_description='跟随部署预设，或自定义沿飞鹰进场方向的前移距离。',
         forward='投弹目标前移（米）',forward_description='0–300 米；应用此滑块会切换为自定义。仅影响后续新出动飞机，0 米保留原落点。'},
     en={title='Native CarpetBomb',language_description='Select the language of this mod\'s title, labels and choices. Descriptions always show Chinese and English. Apply, then close and reopen the Esc menu.',
@@ -148,8 +153,11 @@ local MENU_TEXT={
         cooldown='Call interval (seconds)',cooldown_description='0–1800 seconds. Applying this slider selects Custom. Running timers may require a new mission.',
         rearm_mode='Eagle rearm source',rearm_mode_description='Use the deployed preset, Vanilla, or Custom. Shared by all carried Eagles; ship upgrades still apply.',
         rearm='Eagle rearm (seconds)',rearm_description='0–1800 seconds. Applying this slider selects Custom. Affects all carried Eagles.',
-        bomb='Bomb type',bomb_description='Use the preset or select a projectile. Restart and enter a new mission to load its resources. Fixed at 20 bombs per aircraft.',
+        bomb='Bomb type',bomb_description='Preset, Airstrike, 200 kg, 500 kg, Cluster, Napalm or Gas. Restart and enter a new mission to load resources. 20 primary bombs per aircraft; Cluster adds native bomblets.',
         airstrike='Airstrike bomb',native_bomb='CarpetBomb 200 kg',heavy_bomb='Eagle 500 kg',
+        cluster_bomb='Eagle Cluster Bomb',napalm_bomb='Eagle Napalm',gas_bomb='Eagle Gas',
+        direction='Eagle approach direction',direction_description='Relative to the throw: left/right across it or front/back along it. Defaults to left/right. Only future CarpetBomb aircraft change; other Eagles keep their settings.',
+        sideways='Left / right',longitudinal='Front / back',
         forward_source='Forward offset source',forward_source_description='Use the deployed preset or a custom offset along the incoming flight direction.',
         forward='Strike forward offset (metres)',forward_description='0–300 metres. Applying this slider selects Custom. Only future aircraft change; 0 retains the original target.'},
 }
@@ -168,7 +176,8 @@ local function menu_values()
         uses_mode=config_values.uses=='manager' and 1 or config.uses==-1 and 3 or 2,uses=finite_uses(),
         cooldown_source=config_values.cooldown=='manager' and 1 or 2,cooldown=config.cooldown,
         rearm_mode=config_values.rearm=='manager' and 1 or config.rearm==-1 and 2 or 3,rearm=finite_rearm(),
-        bomb=config_values.bomb=='manager' and 1 or config.bomb==170 and 2 or config.bomb==192 and 3 or 4,
+        bomb=config_values.bomb=='manager' and 1 or ({[170]=2,[192]=3,[239]=4,[286]=5,[141]=6,[188]=7})[config.bomb],
+        direction=config_values.direction=='manager' and 1 or config.direction==90 and 2 or 3,
         forward_source=config_values.forward=='manager' and 1 or 2,forward=config.forward}
 end
 local function menu_checked(ok,reason)
@@ -198,7 +207,10 @@ local function menu_change(key,value)
         if value~=1 and value~=2 then return end
         wanted=value==1 and 'manager' or config[axis]
     elseif key=='bomb' then
-        wanted=({[1]='manager',[2]=170,[3]=192,[4]=239})[value]
+        wanted=({[1]='manager',[2]=170,[3]=192,[4]=239,[5]=286,[6]=141,[7]=188})[value]
+        if wanted==nil then return end
+    elseif key=='direction' then
+        wanted=({[1]='manager',[2]=90,[3]=180})[value]
         if wanted==nil then return end
     else
         if not valid_value(key,value,false) then return false,'invalid value' end
@@ -223,7 +235,8 @@ local function menu_attach(menu)
         {'uses_mode','choice',{'manager','limited','unlimited'}}, {'uses','slider'},
         {'cooldown_source','choice',{'manager','custom'}}, {'cooldown','slider'},
         {'rearm_mode','choice',{'manager','vanilla','custom'}}, {'rearm','slider'},
-        {'bomb','choice',{'manager','airstrike','native_bomb','heavy_bomb'}},
+        {'bomb','choice',{'manager','airstrike','native_bomb','heavy_bomb','cluster_bomb','napalm_bomb','gas_bomb'}},
+        {'direction','choice',{'manager','sideways','longitudinal'}},
         {'forward_source','choice',{'manager','custom'}}, {'forward','slider'},
     }
     for _,row in ipairs(rows)do
@@ -243,7 +256,7 @@ local function menu_attach(menu)
         menu_checked(menu.on_change('carpet_bomb_native_'..key,function(value)menu_change(key,value)end))
     end
     menu_api=menu;menu_sync();S.menu_registered=true
-    log('MODS menu registered (11 options; fixed vanilla quantity)')
+    log('MODS menu registered (12 options; fixed vanilla quantity)')
 end
 local function menu_step()
     if menu_blocked then return end
@@ -320,7 +333,7 @@ local STRATAGEM={size=0x190,title=0x10,category=0x3c,uses=0x50,cooldown=0x68,
     resource_package=0xa8,additional_stratagem=0xc8,identity_flag=0xcc,transport_flags=0x104}
 local PROJECTILE_LAYOUT={size=272,identity_size=0xa0,mass=0x24,resource=0x80,impact=0x90,expire=0x9c}
 local EAGLE={component_slot=0xf12e78,row_size=152,private_row=11,original_bytes=1992,
-    mode=0x10,projectile=0x18,approach_height=0x3c,manager_size=0x60,count=0x20,
+    mode=0x10,projectile=0x18,approach_angle=0x1c,approach_height=0x3c,manager_size=0x60,count=0x20,
     objects=0x48,states=0x58,state_size=0xfc,target=0x54,position=0x78,velocity=0xd4,
     firing=0x70,attacked=0x71,max_count=64}
 local TABLE=ADDRESS.stratagems
@@ -335,11 +348,17 @@ local ANCHORS={
     {0x8a4806,'418b4618'},
     {0x8a4d88,'ffc383fb140f82adfdffff'},
     {0x8a4b25,'f3440f1035ae2ab201'},
+    -- Eagle spawn rotates the throw vector by component +0x1c (degrees).
+    {0x89f1a6,'f3440f1045acf3440f5905a274b201'},
 }
 local PROJECTILES={
     [170]={mass=100,impact=194,expire=0,label='Airstrike'},
     [192]={mass=200,impact=182,expire=0,label='CarpetBomb 200 kg'},
     [239]={mass=500,impact=193,expire=277,label='Eagle 500 kg'},
+    [286]={mass=100,impact=0,expire=417,label='Eagle Cluster'},
+    [141]={mass=100,impact=359,expire=0,label='Eagle Napalm'},
+    [188]={mass=100,impact=331,expire=0,label='Eagle Gas'},
+    [131]={mass=50,impact=162,expire=0,resource='79550fd65e79d84f',label='Cluster bomblet'},
 }
 local function projectile(t)
     local expected=PROJECTILES[t];local address=ptr(S.base+ADDRESS.projectiles+t*8)
@@ -349,7 +368,7 @@ local function projectile(t)
     local bytes=address and read(address,cached and PROJECTILE_LAYOUT.identity_size or PROJECTILE_LAYOUT.size)
     if not bytes then return nil end
     if u32(bytes,0)~=t or field(bytes,PROJECTILE_LAYOUT.mass,4)~=pack_float(expected.mass)
-        or field(bytes,PROJECTILE_LAYOUT.resource,8)~=unhex('36b33606802fe571')
+        or field(bytes,PROJECTILE_LAYOUT.resource,8)~=unhex(expected.resource or '36b33606802fe571')
         or u32(bytes,PROJECTILE_LAYOUT.impact)~=expected.impact or u32(bytes,PROJECTILE_LAYOUT.expire)~=expected.expire then
         error('Projectile identity differs: '..t)
     end
@@ -431,6 +450,22 @@ local function cached_record(t,name,title)
         return cache[t]
     end
     local r=record(t,name,title);cache[t]=r;return r
+end
+-- Packages are the native loadout packages, including plane, bomb, particles,
+-- audio and secondary effects. Resolve only the selected extra donor.
+local BOMB_PACKAGES={
+    [286]={65,'EagleClusterbombs','EAGLE. CLUSTERBOMBS','a930645c779609f7'},
+    [141]={133,'EagleAirstrikeNapalm','EAGLE. NAPALM AIRSTRIKE','56bb4a55556f45de'},
+    [188]={126,'EagleAirstrikeGas','EAGLE. Gas AIRSTRIKE','196ab8ed1fbfced2'},
+}
+local function selected_package()
+    local spec=BOMB_PACKAGES[config.bomb]
+    if not spec then return config.bomb==239 and S.heavy or S.donor end
+    local r=cached_record(spec[1],spec[2],spec[3]);if not r then return nil end
+    local expected=unhex(spec[4])
+    if field(r.bytes,STRATAGEM.resource_package,8)~=expected
+        or read(r.addr+STRATAGEM.resource_package,8)~=expected then error('Selected bomb package differs: '..spec[2]) end
+    return r
 end
 local DATA={ -- Verified current datalibrary headers, capacities and record strides.
     {name='Visibility',offset=0xf12478,hash=0xe96bca35,size=3344,capacity=152,rows=76,row_size=12},
@@ -523,7 +558,8 @@ local function repair_payload()
             local bytes=read_large(p,d.size);if not bytes then return false end
             local ri=u32(donor,8)
             local row=bytes:sub(d.capacity*stride+ri*d.row_size+1,d.capacity*stride+(ri+1)*d.row_size)
-            if u32(row,EAGLE.mode)~=5 or u32(row,20)~=0 or u32(row,EAGLE.projectile)~=170 then error('Eagle donor differs') end
+            if u32(row,EAGLE.mode)~=5 or u32(row,20)~=0 or u32(row,EAGLE.projectile)~=170
+                or field(row,EAGLE.approach_angle,4)~=pack_float(90) then error('Eagle donor differs') end
             local native=row:sub(1,EAGLE.mode)..pack_u32(6)..row:sub(EAGLE.mode+5)
             -- CarpetBomb predicts a horizontal release. The Airstrike donor approaches
             -- from 1000 m and starts within that range, causing immediate, distant drops.
@@ -630,11 +666,14 @@ local function apply()
     if S.phase=='stopped' then return end
     if not same_record(S.carrier) or not same_record(S.native) then stop('Stratagem table changed');return end
     local active=config.enabled==1
+    local resources=active and selected_package() or nil
+    if active and not resources then S.phase='waiting';return end
     local custom_rearm=active and config.rearm>=0
     if (custom_rearm or S.rearm_owned) and not same_record(S.rearm) then stop('Eagle rearm record changed');return end
     if active and not repair_payload() then return end
     if active and not repair_intact() then stop('Payload alias identity changed');return end
     if active and not projectile_intact(config.bomb) then stop('Selected projectile record changed');return end
+    if active and config.bomb==286 and not projectile_intact(131) then stop('Cluster bomblet unavailable');return end
     if active and config.bomb==239 and not same_record(S.heavy) then stop('Eagle 500 kg resource package changed');return end
     local plan={}
     local function add(r,offset,wanted)
@@ -648,12 +687,14 @@ local function apply()
         local offset,n=field[1],field[2]
         add(S.native,offset,active and S.donor.bytes:sub(offset+1,offset+n) or S.native.bytes:sub(offset+1,offset+n))
     end
-    -- 200 kg uses the same bomb unit and impact effect already in Airstrike's
-    -- package. 500 kg uses EagleBomb's package, including its delayed explosion.
-    local package=active and field((config.bomb==239 and S.heavy or S.donor).bytes,STRATAGEM.resource_package,8)
+    -- Keep the entire native dependency chain for the selected payload.
+    local package=active and field(resources.bytes,STRATAGEM.resource_package,8)
         or field(S.native.bytes,STRATAGEM.resource_package,8)
     add(S.native,STRATAGEM.resource_package,package)
     if S.repair then
+        plan[#plan+1]={record=S.native,address=S.repair.eagle.table+EAGLE.original_bytes+EAGLE.approach_angle,
+            original=pack_float(90),wanted=pack_float(active and config.direction or 90),
+            root=S.repair.root,table_slot=S.repair.eagle.slot,table_address=S.repair.eagle.table}
         plan[#plan+1]={record=S.native,address=S.repair.eagle.table+EAGLE.original_bytes+EAGLE.projectile,
             original=pack_u32(170),wanted=pack_u32(active and config.bomb or 170),
             root=S.repair.root,table_slot=S.repair.eagle.slot,table_address=S.repair.eagle.table}
@@ -692,11 +733,11 @@ local function apply()
         S.plan=watched
     end
     S.phase=active and 'active' or 'disabled'
-    log(string.format('%s: Resupply (33) additional_stratagem=%d; native CarpetBomb (103), uses=%s, call_interval=%ds, rearm=%s; projectile=%d (%s), bombs_per_aircraft=%d (%.2fx), forward=%dm; %d fields changed',
+    log(string.format('%s: Resupply (33) additional_stratagem=%d; native CarpetBomb (103), uses=%s, call_interval=%ds, rearm=%s; projectile=%d (%s), bombs_per_aircraft=%d (%.2fx), forward=%dm, direction=%ddeg; %d fields changed',
         S.phase,active and 103 or 0,config.uses==-1 and 'unlimited' or tostring(config.uses),config.cooldown,
         custom_rearm and (config.rearm..'s (all carried Eagles)') or 'unchanged',
         active and config.bomb or 170,PROJECTILES[active and config.bomb or 170].label,
-        active and config.bomb_count or 20,(active and config.bomb_count or 20)/20,config.forward,#done))
+        active and config.bomb_count or 20,(active and config.bomb_count or 20)/20,config.forward,config.direction,#done))
 end
 local vector_buffer=ffi.new('float[3]')
 local function vector(bytes,offset)
@@ -774,6 +815,7 @@ local function initialize()
     local heavy=cached_record(3,'EagleBomb','EAGLE. 500KG BOMB')
     if not carrier or not native or not donor or not rearm or not heavy then return end
     if not projectile(config.bomb) then return end
+    if config.bomb==286 and not projectile(131) then return end
     if field(heavy.bytes,STRATAGEM.resource_package,8)~=unhex('5abda258703bc39b') then error('Eagle 500 kg package differs') end
     if u32(rearm.bytes,STRATAGEM.category)~=7 then error('Eagle rearm category differs') end
     if u32(carrier.bytes,STRATAGEM.category)~=2 or u32(carrier.bytes,STRATAGEM.additional_stratagem)~=0 or u32(native.bytes,STRATAGEM.category)~=0
@@ -806,6 +848,8 @@ local function tick(dt)
     if S.phase=='active' then
         if not repair_intact() then stop('Payload aliases changed');return end
         if not projectile_intact(config.bomb) then stop('Projectile table changed');return end
+        if config.bomb==286 and not projectile_intact(131) then stop('Cluster bomblet unavailable');return end
+        if BOMB_PACKAGES[config.bomb] and not selected_package() then stop('Selected package unavailable');return end
         for _,e in ipairs(S.plan) do
             if read(e.address,#e.wanted)~=e.wanted then stop('Another writer changed a configured field');return end
         end
