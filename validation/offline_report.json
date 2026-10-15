@@ -1,7 +1,8 @@
 {
-  "version": "0.5.4",
+  "version": "0.5.5",
   "game_build": 25480438,
   "tests_passed": [
+    "independent captured code windows match runtime anchors and reject the v0.5.4 concatenated-anchor regression",
     "default carrying, repaired payload, original Eagle rows preserved and disable restoration",
     "independent charges/cooldown, preserved native identity and configuration validation",
     "unsupported build, existing carrier link and executable pages refused",
@@ -48,19 +49,21 @@
   "validation_context": {
     "menu_provider_sha256": null
   },
-  "source_sha256": "dd7d25e1d6f511a23aa590db4cefc4cea0da8f2902c9480dcb3a4350ad60cae2",
+  "source_sha256": "195f9f6c5b7d5511465e2c3f73579af4a38f5ade927fa289655c1305667ce171",
   "validation_inputs": {
     "requirements-dev.txt": "c355c313ec4744320b1e0d22e7e70465d899a48e8c62293578ddff95d0672c6b",
-    "src/core.lua": "dd7d25e1d6f511a23aa590db4cefc4cea0da8f2902c9480dcb3a4350ad60cae2",
+    "src/core.lua": "195f9f6c5b7d5511465e2c3f73579af4a38f5ade927fa289655c1305667ce171",
     "src/core_v0.1.0_FAILED.lua": "cb3cdf1dd40789d9dedc5e432fc93b3bb928375147b53009020edac8dd7e1909",
     "src/core_v0.2.0_FAILED_FAR_IMPACTS.lua": "369ea0c65bb12449e7c37df7a5bd77b27c828dc22fd6f119e1a50244a81bde3f",
+    "tests/code_checks.py": "c9dceb3e4317c9159bd8c9c8c4741ca438a6c17a5cce9a46f4497a8e67c452b4",
     "tests/fixtures/bomb_variants_build25480438.json": "65627b1e5f456140c4f65a2396a18e7df42ee45186d9323f44c4396fe15f6853",
+    "tests/fixtures/code_windows_build25480438.json": "76f0b96362f852c40d00267c4f8ab8916df86413caf6ff0abd33478a3a595927",
     "tests/fixtures/payload_tables_build25480438.json": "51b17c0a0b0c4cc888aabefa343355b9f144e09f4a6e8b2443ec1b4eb8880ac6",
     "tests/fixtures/projectiles_build25480438.json": "317c7432fbfab1ec303e9e280377e3eedb0c1527e2446fb8905c2866e6fed379",
     "tests/fixtures/stratagems_build25480438.json": "1d07acc402ab652c303fc12f1255146aa5972c3062cc5cef680ca58c5a52170e",
     "tests/menu_checks.py": "760d75eacb861af7dc63fbcdff7494199f9685f49b224637bef75d4bd290a74e",
     "tests/reliability_checks.py": "947e6480cee8dad47dbf9be7cfd56c885633fa71e5b451d77d7e3b461c162fb2",
-    "tests/test_runtime.py": "41a5046625f97fd5ccc39025bf11142df092fc3966adcb8229d471b8ffd73bd7",
+    "tests/test_runtime.py": "81c9635d7a72f1a96e0fdca47f8d2e5a208344a0dcfa61d2ab8c151568a61073",
     "tests/variant_checks.py": "74fc3b3192674b4e193ba6cb46ca00a1647dbe37814655c002c64c977df64494",
     "tools/build.py": "0bb9f42ef79e85adf84cb2c3858347a04e0cb6f06dd97a643a54ef5d8bf7a55e",
     "tools/capture_ballistics.py": "8f114692e15d15f9ec57b44a54aa07d995da7cfb1d46c2b9916e7ec78a5ce3c5",
@@ -80,7 +83,7 @@
   },
   "performance_counters": {
     "initialization": {
-      "rpm_calls": 283,
+      "rpm_calls": 284,
       "bytes": 13095
     },
     "steady_100_ticks": {
@@ -88,12 +91,18 @@
       "bytes": 69200
     },
     "delayed_10_ticks": {
-      "rpm_calls": 365,
+      "rpm_calls": 366,
       "bytes": 8975,
       "allocations": 0
     }
   },
-  "test_group_count": 42,
+  "test_group_count": 43,
+  "code_anchor_verification": {
+    "source": "independent historical read-only code capture windows",
+    "capture_sha256": "373fd67e02bbf277494bfa8357acbcbc5a7e2a309b5f0b20578c7b383996658b",
+    "expected_bytes_used_to_seed_mock": false,
+    "fresh_in_process_verification": false
+  },
   "menu_api_verification": {
     "provider": "API contract fixture",
     "provider_sha256": null,

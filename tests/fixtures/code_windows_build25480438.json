@@ -1,0 +1,47 @@
+{
+  "origin": "Historical bounded read-only game.dll code capture; windows selected by RVA, bytes copied directly without using runtime expectations",
+  "capture_source": "eagle-carpet-bomb/research/current/code.bin",
+  "capture_sha256": "373fd67e02bbf277494bfa8357acbcbc5a7e2a309b5f0b20578c7b383996658b",
+  "capture_base_rva": 4096,
+  "target_game_build": 25480438,
+  "installed_packed_dll_sha256": "2e2c3b7c2500646dadd5f2b4c6e0504dbb7e7896139f64cddc0d1813c718f51e",
+  "limitation": "Historical code capture, not a fresh in-process verification; packed disk DLL does not contain directly readable code at these RVAs",
+  "windows": [
+    {
+      "rva": "0x6ae490",
+      "hex": "8bc7488d0c404803c98b84cb8801000085c07505488bc5eb08498b84c700b67c03448b80c80000008bc24585c00f84810000004b8b84c700b67c03418bf08b88cc00000085c974098bc242394c84507363488b93e80900004533c9488b0d0680"
+    },
+    {
+      "rva": "0x8795b0",
+      "hex": "ffffff8bc82b4b50eb0233c98b5f5033ff488b35a0d8aa0203d9895c242039be"
+    },
+    {
+      "rva": "0x879740",
+      "hex": "4c8d8424a0000000498bcff30f104068f30f118424a0000000e8a2232f004084"
+    },
+    {
+      "rva": "0x89ee70",
+      "hex": "48895c2418564883ec20488bf1498bd8488bcae8b857c7ff0f10000f1048100f11060f1040200f114e100f1048300f11"
+    },
+    {
+      "rva": "0x5146b0",
+      "hex": "cf33c0c34885c074f88b48084869c1980000004805400100004903c2c3cccccc"
+    },
+    {
+      "rva": "0x8a4800",
+      "hex": "01e9be050000418b4618f3440f108f80000000f3440f5c4f5c85c07509488d05"
+    },
+    {
+      "rva": "0x8a4d80",
+      "hex": "897d80e8a84ab000ffc383fb140f82adfdffff4c8b7c2468f3440f102dcf1fb2"
+    },
+    {
+      "rva": "0x8a4b20",
+      "hex": "344d8d7d0cf3440f1035ae2ab201450f57edf3440f1005951fb201f2440f5ae8"
+    },
+    {
+      "rva": "0x89f190",
+      "hex": "4abe02f3440f101ff3440f106f04410f28f3f30f5c33f3440f1045ac410f28fdf30f5c7b04f3440f5905a274b2010f28c6f30f59c60f28cff3440f11442454f3"
+    }
+  ]
+}

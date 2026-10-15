@@ -68,7 +68,11 @@ class Scenario:
         dos=bytearray(0x1000);dos[:2]=b'MZ';struct.pack_into('<I',dos,60,0x100);dos[0x100:0x104]=b'PE\0\0'
         struct.pack_into('<I',dos,0x108,0 if bad_build else 0x6ab3b43f);struct.pack_into('<I',dos,0x150,0x4744000)
         self.mem.put(BASE,dos)
-        for r,h in re.findall(rb"\{(0x[0-9a-f]+),'([0-9a-f]+)'\}",SOURCE):self.mem.put(BASE+int(r,16),bytes.fromhex(h.decode()))
+        # Independent captured bytes: never seed memory from the expectations
+        # being tested, which hid the v0.5.4 non-contiguous anchor regression.
+        code=json.loads((ROOT/'tests/fixtures/code_windows_build25480438.json').read_text())
+        for window in code['windows']:
+            self.mem.put(BASE+int(window['rva'],16),bytes.fromhex(window['hex']))
         for row in json.loads((ROOT/'tests/fixtures/stratagems_build25480438.json').read_text()):
             t=row['type'];a=0x20000000+t*0x1000;raw=bytes.fromhex(row['record_hex'])
             self.mem.put(struct.unpack_from('<Q',raw,0x10)[0],row['title'].encode()+b'\0'*160)
@@ -570,7 +574,8 @@ def package_report_gate():
             assert runner.call_args.kwargs['check'] is True
             assert runner.call_args.kwargs['env']['HD2_VALIDATE_ONLY']=='1'
         assert previous.read_bytes()==b'previous successful archive'
-passed=[]
+from code_checks import run as run_code_checks
+passed=run_code_checks(SOURCE,ROOT)
 for name,fn in [('default carrying, repaired payload, original Eagle rows preserved and disable restoration',defaults),
     ('independent charges/cooldown, preserved native identity and configuration validation',settings),
     ('unsupported build, existing carrier link and executable pages refused',refusal),
@@ -607,6 +612,9 @@ result_path.write_text(json.dumps({'version':runtime_version(),'game_build':runt
   'source_sha256':hashlib.sha256(SOURCE).hexdigest(),'validation_inputs':validation_inputs(),
   'performance_counters':runtime_metrics,
   'test_group_count':len(passed),
+  'code_anchor_verification':{'source':'independent historical read-only code capture windows',
+    'capture_sha256':json.loads((ROOT/'tests/fixtures/code_windows_build25480438.json').read_text())['capture_sha256'],
+    'expected_bytes_used_to_seed_mock':False,'fresh_in_process_verification':False},
   'menu_api_verification':{'provider':'external version2 source' if os.environ.get('HD2_MOD_OPTIONS_MENU_SOURCE') else 'API contract fixture',
     'provider_sha256':hashlib.sha256(Path(os.environ['HD2_MOD_OPTIONS_MENU_SOURCE']).read_bytes()).hexdigest() if os.environ.get('HD2_MOD_OPTIONS_MENU_SOURCE') else None,
     'registered_rows':12,'first_row':'Language','native_ui_hook_executed':False},

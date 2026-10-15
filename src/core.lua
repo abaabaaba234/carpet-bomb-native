@@ -2,7 +2,7 @@
 -- Native CarpetBomb grant and missing payload reconstruction.
 local previous=rawget(_G,'CarpetBombNative')
 if previous then return previous end
-local S={version='0.5.4',phase='waiting',elapsed=0,owned={},writes=0,allocations={},projectiles={},
+local S={version='0.5.5',phase='waiting',elapsed=0,owned={},writes=0,allocations={},projectiles={},
     recovery={},protection_pending={},cleanup_attempts=0}
 rawset(_G,'CarpetBombNative',S)
 local ffi=require('ffi')
@@ -349,7 +349,8 @@ local ANCHORS={
     {0x8a4d88,'ffc383fb140f82adfdffff'},
     {0x8a4b25,'f3440f1035ae2ab201'},
     -- Eagle spawn rotates the throw vector by component +0x1c (degrees).
-    {0x89f1a6,'f3440f1045acf3440f5905a274b201'},
+    {0x89f1a6,'f3440f1045ac'},
+    {0x89f1b5,'f3440f5905a274b201'},
 }
 local PROJECTILES={
     [170]={mass=100,impact=194,expire=0,label='Airstrike'},
