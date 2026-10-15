@@ -1,5 +1,5 @@
 {
-  "version": "0.5.5",
+  "version": "0.5.6-diagnostic",
   "game_build": 25480438,
   "tests_passed": [
     "independent captured code windows match runtime anchors and reject the v0.5.4 concatenated-anchor regression",
@@ -44,15 +44,16 @@
     "six payloads: private left/right and front/back angles, reload/migration and disable restoration",
     "approach angle: partial-write rollback, disable failure, external owner and donor guard",
     "selected resource packages: late loading, changed IDs/addresses/packages and cluster secondary guard",
-    "current package references: plane/bomb/audio/particles, cluster bomblets, napalm fire and gas status chain"
+    "current package references: plane/bomb/audio/particles, cluster bomblets, napalm fire and gas status chain",
+    "bounded first-flight diagnostics preserve target handling, report early attack states and prune entity identities"
   ],
   "validation_context": {
     "menu_provider_sha256": null
   },
-  "source_sha256": "195f9f6c5b7d5511465e2c3f73579af4a38f5ade927fa289655c1305667ce171",
+  "source_sha256": "4afe858b203bf47684ebdb063b9237ba75fd917b9126f84ad8cd8e9a61e403ac",
   "validation_inputs": {
     "requirements-dev.txt": "c355c313ec4744320b1e0d22e7e70465d899a48e8c62293578ddff95d0672c6b",
-    "src/core.lua": "195f9f6c5b7d5511465e2c3f73579af4a38f5ade927fa289655c1305667ce171",
+    "src/core.lua": "4afe858b203bf47684ebdb063b9237ba75fd917b9126f84ad8cd8e9a61e403ac",
     "src/core_v0.1.0_FAILED.lua": "cb3cdf1dd40789d9dedc5e432fc93b3bb928375147b53009020edac8dd7e1909",
     "src/core_v0.2.0_FAILED_FAR_IMPACTS.lua": "369ea0c65bb12449e7c37df7a5bd77b27c828dc22fd6f119e1a50244a81bde3f",
     "tests/code_checks.py": "c9dceb3e4317c9159bd8c9c8c4741ca438a6c17a5cce9a46f4497a8e67c452b4",
@@ -61,11 +62,12 @@
     "tests/fixtures/payload_tables_build25480438.json": "51b17c0a0b0c4cc888aabefa343355b9f144e09f4a6e8b2443ec1b4eb8880ac6",
     "tests/fixtures/projectiles_build25480438.json": "317c7432fbfab1ec303e9e280377e3eedb0c1527e2446fb8905c2866e6fed379",
     "tests/fixtures/stratagems_build25480438.json": "1d07acc402ab652c303fc12f1255146aa5972c3062cc5cef680ca58c5a52170e",
+    "tests/flight_observation_checks.py": "85cdf11b0c48eb2289318b6aedde4a9cc747c6ff9638e52b9514878eb5dee12d",
     "tests/menu_checks.py": "760d75eacb861af7dc63fbcdff7494199f9685f49b224637bef75d4bd290a74e",
     "tests/reliability_checks.py": "947e6480cee8dad47dbf9be7cfd56c885633fa71e5b451d77d7e3b461c162fb2",
-    "tests/test_runtime.py": "81c9635d7a72f1a96e0fdca47f8d2e5a208344a0dcfa61d2ab8c151568a61073",
+    "tests/test_runtime.py": "b5bb455be32ddcfa01667d9e736b33ada9afc6edabc7d0446bfbf0508ca18bcf",
     "tests/variant_checks.py": "74fc3b3192674b4e193ba6cb46ca00a1647dbe37814655c002c64c977df64494",
-    "tools/build.py": "0bb9f42ef79e85adf84cb2c3858347a04e0cb6f06dd97a643a54ef5d8bf7a55e",
+    "tools/build.py": "c907fced077a6e94adc7d6540bc70c2bfc4d148461fe3f445b4b7e2c9e39e8e7",
     "tools/capture_ballistics.py": "8f114692e15d15f9ec57b44a54aa07d995da7cfb1d46c2b9916e7ec78a5ce3c5",
     "tools/capture_eagles.py": "4388c76f926ffb72b3ab536185c119c22452f7c530d55fe5caa21f8a602838d5",
     "tools/capture_live.py": "e9e8d5b508a7b6caffb9fd842aca54bb9de7b5b8d455c3c622f1d50162d5b618",
@@ -96,7 +98,13 @@
       "allocations": 0
     }
   },
-  "test_group_count": 43,
+  "test_group_count": 44,
+  "landing_diagnosis": {
+    "diagnostic_build": true,
+    "reported_longitudinal_landing_issue_fixed": false,
+    "observations": "first 12 native aircraft; first 3 changed unmatched descriptor groups",
+    "gameplay_parameters_changed": false
+  },
   "code_anchor_verification": {
     "source": "independent historical read-only code capture windows",
     "capture_sha256": "373fd67e02bbf277494bfa8357acbcbc5a7e2a309b5f0b20578c7b383996658b",

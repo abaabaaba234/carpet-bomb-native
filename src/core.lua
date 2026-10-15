@@ -2,7 +2,7 @@
 -- Native CarpetBomb grant and missing payload reconstruction.
 local previous=rawget(_G,'CarpetBombNative')
 if previous then return previous end
-local S={version='0.5.5',phase='waiting',elapsed=0,owned={},writes=0,allocations={},projectiles={},
+local S={version='0.5.6-diagnostic',phase='waiting',elapsed=0,owned={},writes=0,allocations={},projectiles={},
     recovery={},protection_pending={},cleanup_attempts=0}
 rawset(_G,'CarpetBombNative',S)
 local ffi=require('ffi')
@@ -655,7 +655,7 @@ end
 local function stop(reason)
     if S.phase=='stopped' then return end
     S.phase='stopped';S.stop_reason=reason;S.elapsed=0;cleanup()
-    S.plan=nil;S.forward_seen=nil
+    S.plan=nil;S.forward_seen=nil;S.flight_observed=nil
     S.initial_records=nil
     if S.repair_draft then
         S.repair_draft.complete=nil;S.repair_draft.eagle_original=nil
@@ -747,26 +747,49 @@ local function vector(bytes,offset)
     for _,v in ipairs(out) do if v~=v or math.abs(v)>10000000 then return nil end end
     return out
 end
+local function observe_first_flight(key,state,observed)
+    observed[key]=true
+    if (S.flight_observation_count or 0)>=12 then return end
+    S.flight_observation_count=(S.flight_observation_count or 0)+1
+    local target,current,velocity=vector(state,EAGLE.target),vector(state,EAGLE.position),vector(state,EAGLE.velocity)
+    if not target or not current or not velocity then log('Flight observation: invalid vector; target not adjusted');return end
+    local dx,dy=target[1]-current[1],target[2]-current[2]
+    local vx,vy=velocity[1],velocity[2]
+    log(string.format('Flight first observation: projectile=%d, configured_direction=%ddeg, configured_forward=%dm, firing=%d, attacked=%d, distance=%.1fm, speed=%.1fm/s, toward_dot=%.1f; position=(%.1f,%.1f,%.1f), target=(%.1f,%.1f,%.1f), velocity=(%.1f,%.1f,%.1f)',
+        config.bomb,config.direction,config.forward,state:byte(EAGLE.firing+1),state:byte(EAGLE.attacked+1),
+        math.sqrt(dx*dx+dy*dy),math.sqrt(vx*vx+vy*vy),vx*dx+vy*dy,
+        current[1],current[2],current[3],target[1],target[2],target[3],velocity[1],velocity[2],velocity[3]))
+end
 local function shift_incoming_targets(dt)
     if S.phase~='active' or S.forward_fault then return end
     S.forward_elapsed=(S.forward_elapsed or 0)+((type(dt)=='number' and dt>0 and dt<5) and dt or 1/60)
     if S.forward_elapsed<0.1 then return end;S.forward_elapsed=0
     local manager=ptr(S.base+ADDRESS.eagle_manager)
     local header=manager and read(manager,EAGLE.manager_size);if not header then return end
-    local n=u32(header,EAGLE.count);if n==0 then S.forward_seen={};return end
+    local n=u32(header,EAGLE.count);if n==0 then S.forward_seen={};S.flight_observed={};return end
     if n>EAGLE.max_count then error('Eagle state count differs; forward adjustment disabled') end
     local objects,states=u64(header,EAGLE.objects),u64(header,EAGLE.states)
     if objects<0x10000 or states<0x10000 then return end
     local object_index=read(objects,n*8);if not object_index then return end
     local previous=S.forward_seen or {};local present={}
+    local observed_before=S.flight_observed or {};local observed={}
+    local native_count=0
+    local resources=(S.flight_observation_count or 0)==0 and (S.unmatched_flight_logs or 0)<3 and {} or nil
     for i=0,n-1 do
         local descriptor=u64(object_index,i*8);local identity=read(descriptor,16)
+        if resources and identity then
+            local hash={};for j=8,1,-1 do hash[#hash+1]=string.format('%02x',identity:byte(j)) end
+            resources[#resources+1]=table.concat(hash)
+        end
         if identity and identity:sub(1,8)==NATIVE then
+            native_count=native_count+1
             local key=tostring(descriptor)..':'..u32(identity,8)..':'..u32(identity,12)
             present[key]=previous[key]
+            observed[key]=observed_before[key]
             if not present[key] then
                 local address=states+i*EAGLE.state_size;local state=read(address,EAGLE.state_size)
                 if state then
+                    if not observed[key] then observe_first_flight(key,state,observed) end
                     if config.forward==0 or state:byte(EAGLE.firing+1)~=0 or state:byte(EAGLE.attacked+1)~=0 then
                         present[key]=true
                     else
@@ -805,7 +828,14 @@ local function shift_incoming_targets(dt)
             end
         end
     end
-    S.forward_seen=present
+    if resources and native_count==0 then
+        local signature=tostring(n)..':'..table.concat(resources,',')
+        if signature~=S.unmatched_flight_signature then
+            S.unmatched_flight_signature=signature;S.unmatched_flight_logs=(S.unmatched_flight_logs or 0)+1
+            log('Eagle observation: '..n..' aircraft, no native CarpetBomb descriptor; resources='..table.concat(resources,','))
+        end
+    end
+    S.forward_seen=present;S.flight_observed=observed
 end
 local function initialize()
     if not S.base then S.base=check_build();if not S.base then return end end
