@@ -23,7 +23,7 @@
     "200kg_forward_writes_observed": true
   },
   "root_cause": "native mode6 ballistic scheduling combined with cluster primary 0.35 s timer causes early, distant splitting",
-  "next_package": "0.5.8-cluster-test",
+  "next_package": "0.5.9-cluster-test",
   "projectile_writes_added": true,
   "multiplayer_verified": false,
   "cluster_diagnostic_test": {
@@ -42,6 +42,17 @@
       "final impact positions"
     ]
   },
-  "candidate_scope": "source-linked per-instance primary fuse only; shared projectile definitions unchanged; requires exactly20 per native aircraft",
-  "candidate_gameplay_verified": false
+  "candidate_scope": "retain source-linked 20-primary batches; sampled descending height <= beacon+60m shortens extended timer to native0.35s; 128-slot bound and conservative retirement",
+  "candidate_gameplay_verified": false,
+  "cluster_v058_timing_test": {
+    "version": "0.5.8-cluster-test",
+    "log_time": "2026-10-16 15:28 Asia/Shanghai",
+    "timer_changes_observed": 60,
+    "first_extension_seconds": 5.271,
+    "sampled_height_above_target_m": 27.1,
+    "sampled_remaining_seconds": 1.1257861852645874,
+    "user_report": "primary splitting appears a little too late",
+    "observation": "some primary positions remain fixed while timer continues",
+    "limitation": "no independent impact/burst timestamps; no terrain raycast"
+  }
 }

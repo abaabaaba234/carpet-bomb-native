@@ -144,11 +144,115 @@ def run(Scenario,BASE,ROOT,eagle_state):
             assert abs(y[2]-(6+30))<.5
         finally:s.close()
 
+    def frame(s,dt=.05):s.lua.eval(b'function(dt)return update(dt,"preserved")end')(dt)
+    def near_height(s,n=20):
+        for i in range(n):
+            address=system+0x3040+i*0x70
+            current=struct.unpack('<f',s.mem.read(address+0x34,4))[0]
+            s.mem.put(address+8,F(61)) # 55m above the fixture beacon's elevation.
+            s.mem.put(address+0x34,F(current-.05))
+
+    def observed_late_fuse_replay():
+        s=scenario()
+        try:
+            seed(s);s.tick();live=fixture['live_v058_late_fuse'];previous=None
+            for sample in live['slot0_samples']:
+                for i in range(20):
+                    address=system+0x3040+i*0x70
+                    s.mem.put(address,struct.pack('<3f',*sample['position']))
+                    s.mem.put(address+12,struct.pack('<3f',*sample['velocity']))
+                    s.mem.put(address+0x34,F(sample['timer']))
+                    entry=s.state[b'cluster_pending'][i]
+                    if previous is None:
+                        entry[b'last_timer']=sample['timer'];entry[b'target_z']=live['target_elevation']
+                frame(s,.05 if previous is None else previous-sample['timer'])
+                if sample['position'][2]-live['target_elevation']>60:
+                    assert not s.state[b'cluster_height_releases']
+                else:
+                    assert sample['sample']==14 and s.state[b'cluster_height_releases']==20
+                    assert all(abs(t-.35)<1e-6 for t in timers(s))
+                    assert not list(s.state[b'cluster_pending'].keys())
+                    break
+                previous=sample['timer']
+            else:raise AssertionError('Live trace never reached height release')
+            writes=len(s.mem.writes);frame(s);assert len(s.mem.writes)==writes
+            assert 'Native cluster height release: 20 primary bombs' in log(s)
+        finally:s.close()
+
+    def height_scope_and_retirement():
+        for mode in ('source','foreign_timer','recycled','recycled_all','missing','disabled','system','age','timer_race'):
+            s=scenario()
+            try:
+                seed(s);s.tick();near_height(s)
+                address=system+0x3040+0x34
+                if mode=='source':s.mem.put(system+0x4d040,Q(source+0x1000))
+                if mode=='foreign_timer':s.mem.put(address,F(12))
+                if mode=='recycled':s.mem.put(system+0x30,U(2049))
+                if mode=='recycled_all':s.mem.put(system+0x30,U(2068))
+                if mode=='system':s.mem.put(BASE+0x347cea8,Q(system+0x100000))
+                if mode=='age':
+                    for entry in s.state[b'cluster_pending'].values():entry[b'age']=12.1
+                original=s.mem.read
+                if mode=='missing':
+                    s.mem.read=lambda p,n:None if p==system+0x3040 and n==512 else original(p,n)
+                if mode=='timer_race':
+                    def race(p,n):
+                        if p==address and n==4:s.mem.put(address,F(.1))
+                        return original(p,n)
+                    s.mem.read=race
+                if mode=='disabled':s.cfg('enabled=0\n')
+                before=list(s.mem.writes);frame(s);s.mem.read=original
+                if mode in ('source','foreign_timer','timer_race','recycled'):
+                    assert s.state[b'cluster_height_releases']==19,mode
+                    assert all(p!=address for p,_ in s.mem.writes[len(before):])
+                else:assert s.mem.writes==before,mode
+                if mode=='foreign_timer':assert timers(s)[0]==12
+                if mode=='timer_race':assert abs(timers(s)[0]-.1)<1e-6
+                assert s.state[b'phase']==(b'disabled' if mode=='disabled' else b'active')
+            finally:s.close()
+
+    def height_partial_failure():
+        s=scenario()
+        try:
+            seed(s);s.tick();near_height(s);before=timers(s)
+            s.mem.fail_address=system+0x3040+10*0x70+0x34;frame(s)
+            assert s.state[b'phase']==b'stopped' and s.state[b'cleanup_complete'] is True
+            assert abs(timers(s)[10]-before[10])<1e-6
+            assert all(abs(t-.35)<1e-6 for t in timers(s)[:10])
+            assert all(abs(t-before[i])<1e-6 for i,t in enumerate(timers(s)) if i>=10)
+            assert 'Cluster height release write failed; timer restored' in log(s)
+        finally:s.close()
+
+    def height_read_budget():
+        s=scenario()
+        try:
+            _,flight=seed(s,60);manager,objects,states,descriptor=flight
+            state=s.mem.read(states,0xfc);s.mem.put(manager+0x20,U(3))
+            for i in (1,2):
+                s.mem.put(objects+i*8,Q(descriptor+i*0x100))
+                s.mem.put(descriptor+i*0x100,Q(0x6ccb976676ef6cc6)+U(901+i)+U(902+i))
+                s.mem.put(states+i*0xfc,state)
+                s.mem.put(owner_index+((901+i)%8)*8,U(901+i)+U(i));s.mem.put(owner_rows+i*8,Q(source))
+            s.tick();assert len(list(s.state[b'cluster_pending'].keys()))==60
+            s.mem.reads.clear();s.mem.read_bytes=0;before=list(s.mem.writes);frame(s)
+            calls=sum(s.mem.reads.values());size=s.mem.read_bytes
+            assert calls<80 and size<26000,(calls,size)
+            assert s.mem.writes==before
+            for i in range(129):s.state[b'cluster_pending'][i]=s.state[b'cluster_pending'][0]
+            frame(s)
+            assert s.state[b'cluster_pending'] is None and s.state[b'phase']==b'active'
+            assert 'Cluster height tracking limit exceeded' in log(s)
+        finally:s.close()
+
     passed=[]
     for name,fn in [
         ('cluster fuse: exactly 20 source-linked native primaries, one write each, unchanged positions/damage/bomblets and no rearming',fixed_quantity_and_unchanged_data),
         ('cluster fuse: ordinary Eagles, ambiguous sources, missing/incomplete/excess batches and invalid ballistics fail closed',scope_and_invalid_batches),
         ('cluster fuse: concurrent metadata/source/timer changes and partial-write rollback',concurrency_and_failure),
-        ('cluster fuse: captured primary state reaches chosen burst elevation in independent RK4 check',numerical_cross_check)]:
+        ('cluster fuse: fallback estimate agrees with independent RK4 model, not a gameplay height guarantee',numerical_cross_check),
+        ('cluster height: replay v0.5.8 live positions and timers; shorten to native 0.35s before the observed low-altitude delay',observed_late_fuse_replay),
+        ('cluster height: changed source/timer, ring reuse, missing reads, disable, moved systems and bounded lifetime',height_scope_and_retirement),
+        ('cluster height: partial shortening restores failed timer and stops safely',height_partial_failure),
+        ('cluster height: 60 coalesced rows stay within read budget; 128-slot cap enforced',height_read_budget)]:
         fn();passed.append(name);print('PASS',name)
     return passed

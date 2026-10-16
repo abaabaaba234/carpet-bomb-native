@@ -41,5 +41,307 @@
       125.7
     ],
     "limitation": "Samples, not exact split instant or per-projectile impact records; source IDs alone do not prove native ownership"
+  },
+  "live_v058_late_fuse": {
+    "source": "User v0.5.8 test, 2026-10-16 15:28, same-session saved CarpetBombNative.log",
+    "first_extension_seconds": 5.271,
+    "target_elevation": 7.6,
+    "slot0_samples": [
+      {
+        "sample": 1,
+        "position": [
+          -330.3,
+          408.8,
+          130.1
+        ],
+        "velocity": [
+          62.5,
+          -143.8,
+          -10.5
+        ],
+        "timer": 5.17947244644165
+      },
+      {
+        "sample": 2,
+        "position": [
+          -314.9,
+          373.3,
+          127.2
+        ],
+        "velocity": [
+          59.0,
+          -135.8,
+          -12.4
+        ],
+        "timer": 4.925935745239258
+      },
+      {
+        "sample": 3,
+        "position": [
+          -300.5,
+          340.2,
+          123.9
+        ],
+        "velocity": [
+          55.9,
+          -128.8,
+          -14.1
+        ],
+        "timer": 4.6755547523498535
+      },
+      {
+        "sample": 4,
+        "position": [
+          -286.8,
+          308.7,
+          120.2
+        ],
+        "velocity": [
+          53.2,
+          -122.4,
+          -15.8
+        ],
+        "timer": 4.4246110916137695
+      },
+      {
+        "sample": 5,
+        "position": [
+          -273.5,
+          278.2,
+          115.9
+        ],
+        "velocity": [
+          50.6,
+          -116.5,
+          -17.5
+        ],
+        "timer": 4.16909122467041
+      },
+      {
+        "sample": 6,
+        "position": [
+          -260.9,
+          249.2,
+          111.2
+        ],
+        "velocity": [
+          48.3,
+          -111.1,
+          -19.2
+        ],
+        "timer": 3.914295196533203
+      },
+      {
+        "sample": 7,
+        "position": [
+          -249.0,
+          221.8,
+          106.2
+        ],
+        "velocity": [
+          46.2,
+          -106.2,
+          -20.7
+        ],
+        "timer": 3.6613502502441406
+      },
+      {
+        "sample": 8,
+        "position": [
+          -237.5,
+          195.2,
+          100.7
+        ],
+        "velocity": [
+          44.2,
+          -101.7,
+          -22.3
+        ],
+        "timer": 3.405862331390381
+      },
+      {
+        "sample": 9,
+        "position": [
+          -226.6,
+          170.2,
+          94.9
+        ],
+        "velocity": [
+          42.4,
+          -97.6,
+          -23.8
+        ],
+        "timer": 3.155090093612671
+      },
+      {
+        "sample": 10,
+        "position": [
+          -216.1,
+          146.0,
+          88.7
+        ],
+        "velocity": [
+          40.7,
+          -93.8,
+          -25.3
+        ],
+        "timer": 2.901646137237549
+      },
+      {
+        "sample": 11,
+        "position": [
+          -206.0,
+          122.7,
+          82.1
+        ],
+        "velocity": [
+          39.2,
+          -90.2,
+          -26.8
+        ],
+        "timer": 2.6486358642578125
+      },
+      {
+        "sample": 12,
+        "position": [
+          -196.3,
+          100.5,
+          75.2
+        ],
+        "velocity": [
+          37.8,
+          -86.9,
+          -28.3
+        ],
+        "timer": 2.398303985595703
+      },
+      {
+        "sample": 13,
+        "position": [
+          -186.9,
+          78.8,
+          67.8
+        ],
+        "velocity": [
+          36.4,
+          -83.8,
+          -29.7
+        ],
+        "timer": 2.143791675567627
+      },
+      {
+        "sample": 14,
+        "position": [
+          -177.8,
+          57.9,
+          60.1
+        ],
+        "velocity": [
+          35.2,
+          -80.9,
+          -31.1
+        ],
+        "timer": 1.8902647495269775
+      },
+      {
+        "sample": 15,
+        "position": [
+          -169.1,
+          37.8,
+          52.0
+        ],
+        "velocity": [
+          34.0,
+          -78.2,
+          -32.5
+        ],
+        "timer": 1.6372863054275513
+      },
+      {
+        "sample": 16,
+        "position": [
+          -160.7,
+          18.5,
+          43.7
+        ],
+        "velocity": [
+          32.8,
+          -75.6,
+          -33.9
+        ],
+        "timer": 1.386082649230957
+      },
+      {
+        "sample": 17,
+        "position": [
+          -152.3,
+          -0.9,
+          34.7
+        ],
+        "velocity": [
+          31.8,
+          -73.1,
+          -35.3
+        ],
+        "timer": 1.1257861852645874
+      },
+      {
+        "sample": 18,
+        "position": [
+          -144.4,
+          -19.0,
+          25.6
+        ],
+        "velocity": [
+          30.8,
+          -70.8,
+          -36.6
+        ],
+        "timer": 0.8737038969993591
+      },
+      {
+        "sample": 19,
+        "position": [
+          -136.5,
+          -37.1,
+          15.9
+        ],
+        "velocity": [
+          29.8,
+          -68.5,
+          -37.9
+        ],
+        "timer": 0.6130075454711914
+      },
+      {
+        "sample": 20,
+        "position": [
+          -130.4,
+          -51.2,
+          8.0
+        ],
+        "velocity": [
+          29.0,
+          -66.7,
+          -39.0
+        ],
+        "timer": 0.4664517641067505
+      },
+      {
+        "sample": 21,
+        "position": [
+          -130.4,
+          -51.2,
+          8.0
+        ],
+        "velocity": [
+          29.0,
+          -66.7,
+          -39.0
+        ],
+        "timer": 0.21190251410007477
+      }
+    ],
+    "observed_limit": "sampled positions and remaining timers; exact impacts/burst times not captured"
   }
 }

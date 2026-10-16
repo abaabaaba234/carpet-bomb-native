@@ -2,7 +2,7 @@
 -- Native CarpetBomb grant and missing payload reconstruction.
 local previous=rawget(_G,'CarpetBombNative')
 if previous then return previous end
-local S={version='0.5.8-cluster-test',phase='waiting',elapsed=0,owned={},writes=0,allocations={},projectiles={},
+local S={version='0.5.9-cluster-test',phase='waiting',elapsed=0,owned={},writes=0,allocations={},projectiles={},
     recovery={},protection_pending={},cleanup_attempts=0}
 rawset(_G,'CarpetBombNative',S)
 local ffi=require('ffi')
@@ -673,7 +673,7 @@ local function stop(reason)
     if S.phase=='stopped' then return end
     S.phase='stopped';S.stop_reason=reason;S.elapsed=0;cleanup()
     S.plan=nil;S.forward_seen=nil;S.flight_observed=nil;S.cluster_trace=nil
-    S.cluster_cursor=nil;S.cluster_fixed_flights=nil
+    S.cluster_cursor=nil;S.cluster_fixed_flights=nil;S.cluster_pending=nil
     S.initial_records=nil
     if S.repair_draft then
         S.repair_draft.complete=nil;S.repair_draft.eagle_original=nil
@@ -818,6 +818,80 @@ local function cluster_time_to_burst(physics,target_z)
         height=next_height;horizontal=h;vertical=z;seconds=seconds+step
     end
 end
+local function cluster_signature(metadata)
+    return metadata:sub(1,16)..metadata:sub(0x7d,0x88)
+end
+local function release_cluster_at_height(dt)
+    if S.phase~='active' or config.bomb~=286 then S.cluster_pending=nil;return end
+    local pending=S.cluster_pending;if not pending or not next(pending) then S.cluster_height_elapsed=0;return end
+    S.cluster_height_elapsed=(S.cluster_height_elapsed or 0)+((type(dt)=='number' and dt>0 and dt<5) and dt or 1/60)
+    if S.cluster_height_elapsed<0.05 then return end
+    local elapsed=S.cluster_height_elapsed;S.cluster_height_elapsed=0
+    local system=ptr(S.base+ADDRESS.projectile_system)
+    local slots={};for slot in pairs(pending) do slots[#slots+1]=slot end
+    if #slots>128 then error('Cluster height tracking limit exceeded') end
+    table.sort(slots)
+    local released,first=0,nil
+    local function inspect(slot,flags,metadata,physics)
+        local entry=pending[slot]
+        if not entry or system~=entry.system or not flags or not metadata or not physics
+            or math.floor(flags:byte(1)/2)%2~=1 or cluster_signature(metadata)~=entry.signature then pending[slot]=nil;return end
+        local timer=scalar(physics,0x34);local position,velocity=vector(physics,0),vector(physics,12)
+        local since=entry.just_armed and 0 or elapsed;entry.just_armed=nil
+        entry.age=entry.age+since
+        -- Follow the engine's countdown, but relinquish a timer changed by another writer.
+        if not timer or timer<=0 or timer>entry.last_timer+0.2
+            or math.abs(entry.last_timer-timer-since)>0.2 or entry.age>12 or not position or not velocity then
+            pending[slot]=nil;return
+        end
+        entry.last_timer=timer
+        if position[3]>entry.target_z+60 or velocity[3]>0 then return end
+        if timer<=0.35 then pending[slot]=nil;return end
+        local address=system+0x3040+slot*0x70+0x34
+        local before=physics:sub(0x35,0x38);local wanted=pack_float(0.35)
+        local metadata_address=system+0x4d040+slot*0xc8
+        local flags_address=system+0x203c+slot*2
+        local validate=function()
+            local f=read(flags_address,2);local m=read(metadata_address,0xc8)
+            return ptr(S.base+ADDRESS.projectile_system)==system and f and math.floor(f:byte(1)/2)%2==1
+                and m and cluster_signature(m)==entry.signature
+        end
+        if not validate() or read(address,4)~=before then return end
+        if not write(address,wanted) then
+            local recovered=queue_recovery({address=address,validate=validate},before,wanted)
+            stop('Cluster height release write failed; '..(recovered and 'timer restored' or 'restoration pending'));return
+        end
+        pending[slot]=nil;released=released+1
+        first=first or {height=position[3]-entry.target_z,timer=timer}
+    end
+    -- Coalesce adjacent slots so 60 bombs do not require 180 row reads each sample.
+    local i=1
+    while i<=#slots and S.phase=='active' do
+        local start=slots[i];local last=i
+        while last<#slots and slots[last+1]==slots[last]+1 do last=last+1 end
+        local n=last-i+1
+        local flags=system and read_large(system+0x203c+start*2,n*2)
+        local metadata=system and read_large(system+0x4d040+start*0xc8,n*0xc8)
+        local physics=system and read_large(system+0x3040+start*0x70,n*0x70)
+        for j=i,last do
+            local index=j-i
+            inspect(slots[j],flags and flags:sub(index*2+1,index*2+2),
+                metadata and metadata:sub(index*0xc8+1,(index+1)*0xc8),
+                physics and physics:sub(index*0x70+1,(index+1)*0x70))
+            if S.phase~='active' then break end
+        end
+        i=last+1
+    end
+    if released>0 then
+        S.cluster_height_releases=(S.cluster_height_releases or 0)+released
+        if (S.cluster_height_logs or 0)<12 then
+            S.cluster_height_logs=(S.cluster_height_logs or 0)+1
+            log(string.format('Native cluster height release: %d primary bombs; first height above target=%.1fm, remaining timer %.3fs -> 0.350s; trigger 60m above beacon elevation, not terrain',
+                released,first.height,first.timer))
+        end
+        if not next(pending) then log('Native cluster height tracking complete: '..S.cluster_height_releases..' primary timers released in total') end
+    end
+end
 local function adjust_cluster_fuses(dt)
     if S.phase~='active' or config.bomb~=286 or S.cluster_fuse_fault then S.cluster_cursor=nil;return end
     S.cluster_fuse_elapsed=(S.cluster_fuse_elapsed or 0)+((type(dt)=='number' and dt>0 and dt<5) and dt or 1/60)
@@ -828,6 +902,10 @@ local function adjust_cluster_fuses(dt)
     S.cluster_cursor={system=system,counter=counter}
     local advanced=cursor and cursor.system==system and (counter-cursor.counter)%4294967296 or 128
     local fresh=advanced>0
+    -- A visited ring slot may have been recycled, even if source metadata matches.
+    if fresh and S.cluster_pending then
+        for i=math.min(advanced,2048),1,-1 do S.cluster_pending[(counter-i)%2048]=nil end
+    end
     if advanced==0 then
         if (S.cluster_retry or 0)<=0 then return end
         S.cluster_retry=S.cluster_retry-1;advanced=128
@@ -881,6 +959,8 @@ local function adjust_cluster_fuses(dt)
         if not group.ambiguous and #flights>0 and #group.projectiles==20*#flights then
             local plan={};local valid=ptr(S.base+ADDRESS.eagle_manager)==manager
                 and read(manager,EAGLE.manager_size)==header and read(objects,n*8)==index
+            local pending_count=0;for _ in pairs(S.cluster_pending or {}) do pending_count=pending_count+1 end
+            if pending_count+#group.projectiles>128 then valid=false end
             for _,flight in ipairs(flights) do
                 if read(flight.descriptor,16)~=flight.identity or not cluster_source_valid(flight.link) then valid=false end
             end
@@ -892,6 +972,7 @@ local function adjust_cluster_fuses(dt)
                 local metadata_address,metadata=projectile.address,projectile.metadata
                 local flag_address=system+0x203c+projectile.slot*2
                 plan[#plan+1]={address=address+0x34,original=physics:sub(0x35,0x38),wanted=pack_float(seconds),
+                    slot=projectile.slot,signature=cluster_signature(metadata),
                     validate=function()
                         local f=read(flag_address,2)
                         return ptr(S.base+ADDRESS.projectile_system)==system and f and math.floor(f:byte(1)/2)%2==1
@@ -915,9 +996,14 @@ local function adjust_cluster_fuses(dt)
                     end
                 end
                 for _,flight in ipairs(flights) do done[flight.key]=true end
+                S.cluster_pending=S.cluster_pending or {}
+                for _,entry in ipairs(changed) do
+                    S.cluster_pending[entry.slot]={system=system,signature=entry.signature,target_z=target_z,
+                        last_timer=scalar(entry.wanted,0),age=0,just_armed=true}
+                end
                 S.cluster_fuse_changes=(S.cluster_fuse_changes or 0)+#changed
                 S.cluster_retry=0
-                log(string.format('Native cluster fuse adjusted: %d aircraft, %d primary bombs; estimate burst 30m above target elevation; first timer %.3fs -> %.3fs; native 8-bomblet split and damage unchanged',
+                log(string.format('Native cluster fuse adjusted: %d aircraft, %d primary bombs; fallback estimate only, actual-height release at target+60m; first timer %.3fs -> %.3fs; native 8-bomblet split and damage unchanged',
                     #flights,#changed,scalar(changed[1].original,0),scalar(changed[1].wanted,0)))
             end
         elseif not S.cluster_scope_logged then
@@ -1149,6 +1235,8 @@ function update(dt,...)
     if not shifted then S.forward_fault=true;log('Forward adjustment stopped: '..tostring(shift_error)) end
     local fused,fuse_error=pcall(adjust_cluster_fuses,dt)
     if not fused then S.cluster_fuse_fault=true;log('Cluster fuse adjustment stopped: '..tostring(fuse_error)) end
+    local released,release_error=pcall(release_cluster_at_height,dt)
+    if not released then S.cluster_pending=nil;log('Cluster height release stopped: '..tostring(release_error)) end
     local traced,trace_error=pcall(sample_cluster_trace,dt)
     if not traced then S.cluster_trace=nil;S.cluster_trace_fault=true;log('Cluster trace stopped: '..tostring(trace_error)) end
     return old_update(dt,...)
