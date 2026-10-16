@@ -518,7 +518,7 @@ def package():
     with zipfile.ZipFile(stream,'w') as z:
         for name,body in make_files().items():z.writestr(name,body)
     with zipfile.ZipFile(stream) as z:
-        manifest=json.loads(z.read('manifest.json').decode('ascii'));assert len(manifest['Options'])==8
+        manifest=json.loads(z.read('manifest.json').decode('ascii'));assert len(manifest['Options'])==9
         assert '每次使用之间' in manifest['Options'][2]['Name']
         assert '所有携带的飞鹰战备共用' in manifest['Options'][3]['Description']
         assert '200 kg' in manifest['Options'][4]['SubOptions'][1]['Name'] and '500 kg' in manifest['Options'][4]['SubOptions'][2]['Name']
@@ -539,12 +539,12 @@ def package():
                 assert source.startswith(b'\x1bLJ\x02\x02')
                 validate_with_lupa(value,source)
                 counts[axis]=counts.get(axis,0)+1
-        assert counts=={'uses':9,'cooldown':10,'rearm':13,'bomb':6,'bomb_count':1,'forward':5,'direction':2}
-        assert len({murmur64(('mods/carpet_bomb_native/'+a).encode()) for a in counts})==7
+        assert counts=={'uses':9,'cooldown':10,'rearm':13,'bomb':6,'bomb_count':1,'forward':5,'direction':2,'call_delay':9}
+        assert len({murmur64(('mods/carpet_bomb_native/'+a).encode()) for a in counts})==8
         for option in manifest['Options']:
             for item in option.get('SubOptions',[option]):
                 assert all(any(name.startswith(folder+'/') for name in z.namelist()) for folder in item['Include'])
-    print('Validated 46 independent preset modules; 70200 selectable combinations and native grant archive.')
+    print('Validated 55 independent preset modules; 631800 selectable combinations and native grant archive.')
 
 def package_report_gate():
     import build as builder
@@ -596,9 +596,11 @@ for name,fn in [('default carrying, repaired payload, original Eagle rows preser
     ('forward shift guards, other Eagles, firing/outgoing states, invalid vectors and partial-write restoration',forward_shift_guards),
     ('64 aircraft use one pointer-array read, new generations shift once and departed flights are pruned',forward_batch_and_cache_lifetime),
     ('initialization and delayed-loading memory read budgets',performance_counters),
-    ('manager archives and 46 presets with 70200 selectable combinations',package),
+    ('manager archives and 55 presets with 631800 selectable combinations',package),
     ('build rejects failed, old-version, stale-source and changed-test reports',package_report_gate)]:
     fn();passed.append(name);print('PASS',name)
+from delay_checks import run as run_delay_checks
+passed.extend(run_delay_checks(Scenario,BASE,ROOT))
 from menu_checks import run as run_menu_checks
 passed.extend(run_menu_checks(Scenario,SOURCE,ROOT))
 from reliability_checks import run as run_reliability_checks
@@ -620,10 +622,13 @@ result_path.write_text(json.dumps({'version':runtime_version(),'game_build':runt
   'test_group_count':len(passed),
   'landing_diagnosis':{'diagnostic_build':True,'reported_longitudinal_landing_issue_fixed':False,
     'observations':'first 12 native aircraft; first 3 changed unmatched descriptor groups; two read-only cluster windows, 40 samples each, at most 512 recent slots and 6 retained examples per sample',
-    'cluster_invisibility_fixed':False,'cluster_fuse_candidate_implemented':True,
+    'cluster_invisibility_fixed':True,'cluster_fuse_candidate_implemented':True,
     'gameplay_parameters_changed':True,'shared_projectile_definitions_changed':False,
     'primary_bombs_per_aircraft':20,'cluster_bomblets_per_primary':8,
     'live_fix_verification':False,
+    'user_v059_feedback':'User reports cluster timing is now just right; no independent live verification of v0.5.10 delay',
+    'beacon_delay':{'extra_seconds_range':[0,60],'default':0,'native_stratagem_type':103,
+      'field_offset':'0x54','gameplay_verified':False},
     'burst_height_reference':'actual sampled height at/below beacon+60m and descending restores native 0.35s; burst occurs later, no terrain raycast',
     'fallback_timer_reference':'original estimate to beacon+30m, subordinate to actual-height release',
     'height_tracking_limit':128,'height_sample_interval_seconds':0.05,
@@ -633,8 +638,8 @@ result_path.write_text(json.dumps({'version':runtime_version(),'game_build':runt
     'expected_bytes_used_to_seed_mock':False,'fresh_in_process_verification':False},
   'menu_api_verification':{'provider':'external version2 source' if os.environ.get('HD2_MOD_OPTIONS_MENU_SOURCE') else 'API contract fixture',
     'provider_sha256':hashlib.sha256(Path(os.environ['HD2_MOD_OPTIONS_MENU_SOURCE']).read_bytes()).hexdigest() if os.environ.get('HD2_MOD_OPTIONS_MENU_SOURCE') else None,
-    'registered_rows':12,'first_row':'Language','native_ui_hook_executed':False},
-  'preset_combinations':70200,'preset_modules_checked':46,'in_game_loader_verified':False,'default_carry_verified':False,
+    'registered_rows':14,'first_row':'Language','native_ui_hook_executed':False},
+  'preset_combinations':631800,'preset_modules_checked':55,'in_game_loader_verified':False,'default_carry_verified':False,
   'in_game_bombing_verified':False,'in_game_menu_verified':False,'multiplayer_verified':False,'status':'OFFLINE_PASSED',
   'previous_version':{'version':'0.1.0','default_carry_verified':True,'battlefield_test':'CRASHED: missing EagleComponent for native payload; removed'}},indent=2),encoding='utf-8',newline='\n')
 if os.environ.get('HD2_VALIDATE_ONLY')!='1':build()

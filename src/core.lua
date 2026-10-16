@@ -2,7 +2,7 @@
 -- Native CarpetBomb grant and missing payload reconstruction.
 local previous=rawget(_G,'CarpetBombNative')
 if previous then return previous end
-local S={version='0.5.9-cluster-test',phase='waiting',elapsed=0,owned={},writes=0,allocations={},projectiles={},
+local S={version='0.5.10',phase='waiting',elapsed=0,owned={},writes=0,allocations={},projectiles={},
     recovery={},protection_pending={},cleanup_attempts=0}
 rawset(_G,'CarpetBombNative',S)
 local ffi=require('ffi')
@@ -26,6 +26,7 @@ local SCHEMA={
     direction={default=90,choices={[90]=true,[180]=true},manager=true},
     bomb_count={default=20,min=20,max=20,manager=true},
     forward={default=80,min=0,max=300,manager=true},
+    call_delay={default=0,min=0,max=60,manager=true},
 }
 local function valid_value(key,value,allow_sentinel)
     local spec=SCHEMA[key];if not spec then return false end
@@ -45,12 +46,12 @@ for key,spec in pairs(SCHEMA) do
     defaults[key]=spec.manager and key~='bomb_count' and preset(key,spec.default) or spec.default
 end
 log('Manager presets: uses='..defaults.uses..' call_interval='..defaults.cooldown..' rearm='..defaults.rearm
-    ..' projectile='..defaults.bomb..' bombs_per_aircraft='..defaults.bomb_count)
+    ..' extra_call_delay='..defaults.call_delay..'s; projectile='..defaults.bomb..' bombs_per_aircraft='..defaults.bomb_count)
 local config={};for k,v in pairs(defaults) do config[k]=v end
 S.config=config
 local last_text
 local config_values={}
-local config_keys={'language','enabled','uses','cooldown','rearm','bomb','bomb_count','forward','direction'}
+local config_keys={'language','enabled','uses','cooldown','rearm','bomb','bomb_count','forward','direction','call_delay'}
 local function atomic_config(text)
     local temporary=CFG..'.tmp'
     local f,reason=io.open(temporary,'wb')
@@ -75,10 +76,11 @@ local function read_config()
         local initial='# Native CarpetBomb. Save to reload. manager = deployed dropdown.\n'
           ..'# cooldown = interval between uses; rearm = return/reload cooldown for ALL carried Eagles.\n'
           ..'# rearm=-1 keeps the existing game setting.\n'
+          ..'# call_delay=0..60 extra beacon activation seconds; 0 preserves current timing.\n'
           ..'# bomb=170 (Airstrike), 192 (200 kg), 239 (500 kg), 286 (Cluster), 141 (Napalm), 188 (Gas).\n'
           ..'# direction=90 (left/right), 180 (front/back), relative to the throw.\n'
           ..'# bomb_count is fixed at20; forward=0..300 metres along incoming flight direction.\n'
-          ..'language=zh\nenabled=1\nuses=manager\ncooldown=manager\nrearm=manager\nbomb=manager\nbomb_count=manager\nforward=manager\ndirection=manager\n'
+          ..'language=zh\nenabled=1\nuses=manager\ncooldown=manager\nrearm=manager\nbomb=manager\nbomb_count=manager\nforward=manager\ndirection=manager\ncall_delay=manager\n'
         atomic_config(initial);f=io.open(CFG,'rb')
     end
     local text='';if f then text=f:read('*a');f:close() end
@@ -86,7 +88,7 @@ local function read_config()
     if text==last_text then return false end
     local next_config={};for k,v in pairs(defaults) do next_config[k]=v end
     local next_values={language='zh',enabled=1,uses='manager',cooldown='manager',rearm='manager',
-        bomb='manager',bomb_count='manager',forward='manager',direction='manager'}
+        bomb='manager',bomb_count='manager',forward='manager',direction='manager',call_delay='manager'}
     for line in text:gmatch('[^\r\n]+') do
         local key,value=line:gsub('^\239\187\191',''):gsub('#.*$',''):match('^%s*([%w_]+)%s*=%s*(.-)%s*$')
         if key=='language' then
@@ -142,6 +144,8 @@ local MENU_TEXT={
         cluster_bomb='飞鹰集束炸弹',napalm_bomb='飞鹰燃烧弹',gas_bomb='飞鹰毒气弹',
         direction='飞鹰来袭方向',direction_description='相对投掷方向：左右横穿或前后纵向。默认左右；只影响之后新出动的地毯轰炸飞机，其他飞鹰不变。',
         sideways='左右',longitudinal='前后',
+        call_delay_source='落地等待来源',call_delay_source_description='跟随部署预设，或自定义信标激活后的额外等待时间。',
+        call_delay='信标落地额外等待（秒）',call_delay_description='0–60 秒，默认 0；增加投弹前的撤离时间。仅地毯轰炸后续调用生效，已开始的倒计时不变；实际到弹还包括飞行时间，受游戏修正影响。',
         forward_source='目标前移来源',forward_source_description='跟随部署预设，或自定义沿飞鹰进场方向的前移距离。',
         forward='投弹目标前移（米）',forward_description='0–300 米；应用此滑块会切换为自定义。仅影响后续新出动飞机，0 米保留原落点。'},
     en={title='Native CarpetBomb',language_description='Select the language of this mod\'s title, labels and choices. Descriptions always show Chinese and English. Apply, then close and reopen the Esc menu.',
@@ -158,6 +162,8 @@ local MENU_TEXT={
         cluster_bomb='Eagle Cluster Bomb',napalm_bomb='Eagle Napalm',gas_bomb='Eagle Gas',
         direction='Eagle approach direction',direction_description='Relative to the throw: left/right across it or front/back along it. Defaults to left/right. Only future CarpetBomb aircraft change; other Eagles keep their settings.',
         sideways='Left / right',longitudinal='Front / back',
+        call_delay_source='Beacon delay source',call_delay_source_description='Use the deployed preset or a custom extra wait after beacon activation.',
+        call_delay='Extra beacon delay (seconds)',call_delay_description='0–60 seconds; default 0. Adds time to move away before bombing. Future CarpetBomb calls only; running timers stay unchanged. Flight time and game modifiers also affect arrival.',
         forward_source='Forward offset source',forward_source_description='Use the deployed preset or a custom offset along the incoming flight direction.',
         forward='Strike forward offset (metres)',forward_description='0–300 metres. Applying this slider selects Custom. Only future aircraft change; 0 retains the original target.'},
 }
@@ -178,7 +184,8 @@ local function menu_values()
         rearm_mode=config_values.rearm=='manager' and 1 or config.rearm==-1 and 2 or 3,rearm=finite_rearm(),
         bomb=config_values.bomb=='manager' and 1 or ({[170]=2,[192]=3,[239]=4,[286]=5,[141]=6,[188]=7})[config.bomb],
         direction=config_values.direction=='manager' and 1 or config.direction==90 and 2 or 3,
-        forward_source=config_values.forward=='manager' and 1 or 2,forward=config.forward}
+        forward_source=config_values.forward=='manager' and 1 or 2,forward=config.forward,
+        call_delay_source=config_values.call_delay=='manager' and 1 or 2,call_delay=config.call_delay}
 end
 local function menu_checked(ok,reason)
     if ok~=true then error(tostring(reason or 'Menu operation failed'),0)end
@@ -203,7 +210,7 @@ local function menu_change(key,value)
     elseif key=='rearm_mode' then
         if value~=1 and value~=2 and value~=3 then return end
         wanted=value==1 and 'manager' or value==2 and -1 or finite_rearm()
-    elseif key=='cooldown_source' or key=='forward_source' then
+    elseif key=='cooldown_source' or key=='forward_source' or key=='call_delay_source' then
         if value~=1 and value~=2 then return end
         wanted=value==1 and 'manager' or config[axis]
     elseif key=='bomb' then
@@ -238,6 +245,7 @@ local function menu_attach(menu)
         {'bomb','choice',{'manager','airstrike','native_bomb','heavy_bomb','cluster_bomb','napalm_bomb','gas_bomb'}},
         {'direction','choice',{'manager','sideways','longitudinal'}},
         {'forward_source','choice',{'manager','custom'}}, {'forward','slider'},
+        {'call_delay_source','choice',{'manager','custom'}}, {'call_delay','slider'},
     }
     for _,row in ipairs(rows)do
         local key,kind=row[1],row[2]
@@ -256,7 +264,7 @@ local function menu_attach(menu)
         menu_checked(menu.on_change('carpet_bomb_native_'..key,function(value)menu_change(key,value)end))
     end
     menu_api=menu;menu_sync();S.menu_registered=true
-    log('MODS menu registered (12 options; fixed vanilla quantity)')
+    log('MODS menu registered (14 options; fixed vanilla quantity)')
 end
 local function menu_step()
     if menu_blocked then return end
@@ -328,7 +336,7 @@ end
 local BUILD={steam=25480438,timestamp=0x6ab3b43f,image_size=0x4744000}
 local ADDRESS={stratagems=0x37cb600,stratagem_names=0x21d4aa0,projectiles=0x37c7670,
     payload_root=0x346bf98,eagle_manager=0x3326650,projectile_system=0x347cea8,source_system=0x3326c38}
-local STRATAGEM={size=0x190,title=0x10,category=0x3c,uses=0x50,cooldown=0x68,
+local STRATAGEM={size=0x190,title=0x10,category=0x3c,uses=0x50,call_delay=0x54,cooldown=0x68,
     transport_kind=0x70,transport_secondary=0x94,payload=0x98,payload_count=0xa0,
     resource_package=0xa8,additional_stratagem=0xc8,identity_flag=0xcc,transport_flags=0x104}
 local PROJECTILE_LAYOUT={size=272,identity_size=0xa0,mass=0x24,resource=0x80,impact=0x90,expire=0x9c}
@@ -338,6 +346,9 @@ local EAGLE={component_slot=0xf12e78,row_size=152,private_row=11,original_bytes=
     firing=0x70,attacked=0x71,max_count=64}
 local TABLE=ADDRESS.stratagems
 local ANCHORS={
+    -- Base beacon delay reader and native call scheduler, independently captured.
+    {0x87997f,'f30f584754'},
+    {0xb9abe8,'e813edcdff'},
     {0x6ae4a9,'498b84c700b67c03'},
     {0x6ae4b1,'448b80c8000000'},
     {0x6ae4c3,'4b8b84c700b67c03'},
@@ -687,6 +698,7 @@ local function apply()
     local active=config.enabled==1
     local resources=active and selected_package() or nil
     if active and not resources then S.phase='waiting';return end
+    local custom_delay=active and config.call_delay>0
     local custom_rearm=active and config.rearm>=0
     if (custom_rearm or S.rearm_owned) and not same_record(S.rearm) then stop('Eagle rearm record changed');return end
     if active and not repair_payload() then return end
@@ -723,6 +735,15 @@ local function apply()
     if custom_rearm or S.rearm_owned then
         add(S.rearm,STRATAGEM.cooldown,custom_rearm and pack_float(config.rearm) or field(S.rearm.bytes,STRATAGEM.cooldown,4))
     end
+    -- +0x54 is read by the native beacon activation delay path. Add to the
+    -- cached baseline; do not accumulate on repeated Apply or touch flight/fuse time.
+    if custom_delay or S.call_delay_owned then
+        local original=field(S.native.bytes,STRATAGEM.call_delay,4)
+        local value=ffi.new('float[1]');ffi.copy(value,original,4)
+        local baseline=tonumber(value[0])
+        if baseline~=baseline or baseline<0 or baseline>3600 then stop('Invalid beacon delay baseline');return end
+        add(S.native,STRATAGEM.call_delay,custom_delay and pack_float(baseline+config.call_delay) or original)
+    end
     -- Publish automatic carrying last, after the native payload and transport are valid.
     add(S.carrier,STRATAGEM.additional_stratagem,active and pack_u32(103) or field(S.carrier.bytes,STRATAGEM.additional_stratagem,4))
     local previous={};for _,e in ipairs(S.owned) do previous[e.address]=e end
@@ -743,6 +764,7 @@ local function apply()
     end
     S.owned={};S.plan=plan
     for _,e in ipairs(plan) do e.last=e.wanted;if e.last~=e.original then S.owned[#S.owned+1]=e end end
+    S.call_delay_owned=custom_delay
     S.rearm_owned=custom_rearm
     if not custom_rearm then
         -- After restoring the rearm value, relinquish it so other mods can own it.
@@ -751,12 +773,18 @@ local function apply()
         end
         S.plan=watched
     end
+    if not custom_delay then
+        local watched={};for _,e in ipairs(S.plan) do
+            if e.address~=S.native.addr+STRATAGEM.call_delay then watched[#watched+1]=e end
+        end
+        S.plan=watched
+    end
     S.phase=active and 'active' or 'disabled'
-    log(string.format('%s: Resupply (33) additional_stratagem=%d; native CarpetBomb (103), uses=%s, call_interval=%ds, rearm=%s; projectile=%d (%s), bombs_per_aircraft=%d (%.2fx), forward=%dm, direction=%ddeg; %d fields changed',
+    log(string.format('%s: Resupply (33) additional_stratagem=%d; native CarpetBomb (103), uses=%s, call_interval=%ds, rearm=%s; projectile=%d (%s), bombs_per_aircraft=%d (%.2fx), forward=%dm, direction=%ddeg, extra_call_delay=%ds; %d fields changed',
         S.phase,active and 103 or 0,config.uses==-1 and 'unlimited' or tostring(config.uses),config.cooldown,
         custom_rearm and (config.rearm..'s (all carried Eagles)') or 'unchanged',
         active and config.bomb or 170,PROJECTILES[active and config.bomb or 170].label,
-        active and config.bomb_count or 20,(active and config.bomb_count or 20)/20,config.forward,config.direction,#done))
+        active and config.bomb_count or 20,(active and config.bomb_count or 20)/20,config.forward,config.direction,config.call_delay,#done))
 end
 local vector_buffer=ffi.new('float[3]')
 local function vector(bytes,offset)

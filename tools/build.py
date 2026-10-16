@@ -80,6 +80,8 @@ def make_files(report=None):
          '沿飞鹰前进方向移动地毯式轰炸的目标，默认 80 米。0 米保留原落点；用于调整信标两侧的覆盖。仅影响新出动的地毯轰炸飞机。 / Moves the CarpetBomb target along the incoming flight direction; defaults to 80 metres. Zero retains the original target. Adjusts coverage around the beacon and affects only future CarpetBomb aircraft.'),
         ('direction','飞鹰来袭方向 / Eagle Approach',[90,180],
          '相对投掷方向选择左右横穿或前后纵向，默认左右。仅影响新出动的地毯轰炸飞机。 / Relative to the throw: left/right across it or front/back along it. Defaults to left/right. Only future CarpetBomb aircraft change.'),
+        ('call_delay','信标落地额外等待 / Extra Beacon Delay',[0,3,5,8,10,15,20,30,60],
+         '信标激活后额外等待0–60秒，默认0秒保留现有节奏，为撤离留出时间。仅地毯轰炸后续调用；实际到弹还包括飞行时间，受游戏修正影响。 / Adds 0–60 seconds after beacon activation; default 0 preserves current timing. Allows time to move away. Future CarpetBomb calls only; arrival also includes flight time and game modifiers.'),
     ],1):
         choices=[]
         for n in values:
@@ -93,7 +95,7 @@ def make_files(report=None):
             choices.append({'Name':label,'Description':description,'Include':[folder]})
         options.append({'Name':title,'Description':description+' 部署后重启并进入新任务。 Restart after deployment and enter a new mission.','SubOptions':choices})
     manifest={'Version':1,'Guid':'acffed9b-07c3-48f8-a936-19874038111b','Name':'原生地毯轰炸默认携带 / Native CarpetBomb v'+version,
-      'Description':'地毯轰炸默认携带；支持空袭、200 kg、500 kg、集束、燃烧和毒气，以及左右或前后来袭。每架20枚主弹；菜单介绍中英双语。需要Loader v18，菜单另需ModOptionsMenu v2，支持build 25480438。本版仅离线验证。 / Automatically carries CarpetBomb with Airstrike, 200 kg, 500 kg, Cluster, Napalm or Gas bombs, and left/right or front/back approaches. 20 primary bombs per aircraft; bilingual menu descriptions. Requires Loader v18; menu needs ModOptionsMenu v2. Build 25480438. Offline-tested only.', 'Options':options}
+      'Description':'地毯轰炸默认携带；支持空袭、200 kg、500 kg、集束、燃烧和毒气，以及左右或前后来袭和落地额外等待。每架20枚主弹；菜单介绍中英双语。需要Loader v18，菜单另需ModOptionsMenu v2，支持build 25480438。本版仅离线验证。 / Automatically carries CarpetBomb with Airstrike, 200 kg, 500 kg, Cluster, Napalm or Gas bombs, left/right or front/back approaches, and extra beacon delay. 20 primary bombs per aircraft; bilingual menu descriptions. Requires Loader v18; menu needs ModOptionsMenu v2. Build 25480438. Offline-tested only.', 'Options':options}
     if 'diagnostic' in version:
         manifest['Description']='集束诊断版：集束不可见问题尚未修复；新增限量主弹/子弹位置日志，不改变投弹参数。200 kg前后来袭、前移80米及燃烧/毒气已获用户实测可用反馈，诊断新增部分尚未实机验证。 / Cluster diagnostic: invisibility remains unresolved; adds bounded primary/bomblet position logs without changing bombing parameters. User reports 200 kg front/back at +80 m, Napalm and Gas usable; new diagnostics await gameplay verification. '+manifest['Description']
     if 'cluster-test' in version:

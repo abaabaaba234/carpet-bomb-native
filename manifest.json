@@ -1,8 +1,8 @@
 {
   "Version": 1,
   "Guid": "acffed9b-07c3-48f8-a936-19874038111b",
-  "Name": "\u539f\u751f\u5730\u6bef\u8f70\u70b8\u9ed8\u8ba4\u643a\u5e26 / Native CarpetBomb v0.5.9-cluster-test",
-  "Description": "\u96c6\u675f\u4fee\u590d\u6d4b\u8bd5\u7248\uff1a\u4fdd\u7559\u6bcf\u67b620\u679a\u4e3b\u5f39\u548c\u6bcf\u679a8\u679a\u539f\u751f\u5b50\u5f39\u3002\u4ec5\u8ddf\u8e2a\u6765\u6e90\u660e\u786e\u7684\u672c\u6a21\u7ec4\u4e3b\u5f39\uff0c\u4e0b\u964d\u81f3\u4fe1\u6807\u9ad8\u5ea6\u4e0a\u65b960\u7c73\u65f6\u7ed3\u675f\u957f\u5ef6\u65f6\u3001\u6062\u590d\u539f\u751f0.35\u79d2\u8ba1\u65f6\uff0c\u5b9e\u9645\u5206\u88c2\u8fd8\u4f1a\u66f4\u4f4e\uff1b\u4e0d\u662f\u5730\u5f62\u68c0\u6d4b\u3002\u666e\u901a\u98de\u9e70\u53ca\u516c\u5171\u5f39\u4f53\u5b9a\u4e49\u4e0d\u53d8\u3002\u5c1a\u5f85\u5b9e\u673a\u9a8c\u8bc1\uff0c\u4fdd\u7559\u9650\u91cf\u8bca\u65ad\u3002 / Cluster fix candidate: keeps 20 primary bombs per aircraft and 8 native bomblets each. Tracks source-linked native primaries; descending below beacon+60m shortens the extended timer to native 0.35s, so splitting occurs lower. No terrain sensing. Ordinary Eagles and shared projectile definitions stay unchanged. Awaiting gameplay verification; bounded diagnostics retained. \u5730\u6bef\u8f70\u70b8\u9ed8\u8ba4\u643a\u5e26\uff1b\u652f\u6301\u7a7a\u88ad\u3001200 kg\u3001500 kg\u3001\u96c6\u675f\u3001\u71c3\u70e7\u548c\u6bd2\u6c14\uff0c\u4ee5\u53ca\u5de6\u53f3\u6216\u524d\u540e\u6765\u88ad\u3002\u6bcf\u67b620\u679a\u4e3b\u5f39\uff1b\u83dc\u5355\u4ecb\u7ecd\u4e2d\u82f1\u53cc\u8bed\u3002\u9700\u8981Loader v18\uff0c\u83dc\u5355\u53e6\u9700ModOptionsMenu v2\uff0c\u652f\u6301build 25480438\u3002\u672c\u7248\u4ec5\u79bb\u7ebf\u9a8c\u8bc1\u3002 / Automatically carries CarpetBomb with Airstrike, 200 kg, 500 kg, Cluster, Napalm or Gas bombs, and left/right or front/back approaches. 20 primary bombs per aircraft; bilingual menu descriptions. Requires Loader v18; menu needs ModOptionsMenu v2. Build 25480438. Offline-tested only.",
+  "Name": "\u539f\u751f\u5730\u6bef\u8f70\u70b8\u9ed8\u8ba4\u643a\u5e26 / Native CarpetBomb v0.5.10",
+  "Description": "\u5730\u6bef\u8f70\u70b8\u9ed8\u8ba4\u643a\u5e26\uff1b\u652f\u6301\u7a7a\u88ad\u3001200 kg\u3001500 kg\u3001\u96c6\u675f\u3001\u71c3\u70e7\u548c\u6bd2\u6c14\uff0c\u4ee5\u53ca\u5de6\u53f3\u6216\u524d\u540e\u6765\u88ad\u548c\u843d\u5730\u989d\u5916\u7b49\u5f85\u3002\u6bcf\u67b620\u679a\u4e3b\u5f39\uff1b\u83dc\u5355\u4ecb\u7ecd\u4e2d\u82f1\u53cc\u8bed\u3002\u9700\u8981Loader v18\uff0c\u83dc\u5355\u53e6\u9700ModOptionsMenu v2\uff0c\u652f\u6301build 25480438\u3002\u672c\u7248\u4ec5\u79bb\u7ebf\u9a8c\u8bc1\u3002 / Automatically carries CarpetBomb with Airstrike, 200 kg, 500 kg, Cluster, Napalm or Gas bombs, left/right or front/back approaches, and extra beacon delay. 20 primary bombs per aircraft; bilingual menu descriptions. Requires Loader v18; menu needs ModOptionsMenu v2. Build 25480438. Offline-tested only.",
   "Options": [
     {
       "Name": "\u6838\u5fc3 / Core",
@@ -371,6 +371,75 @@
           "Description": "\u76f8\u5bf9\u6295\u63b7\u65b9\u5411\u9009\u62e9\u5de6\u53f3\u6a2a\u7a7f\u6216\u524d\u540e\u7eb5\u5411\uff0c\u9ed8\u8ba4\u5de6\u53f3\u3002\u4ec5\u5f71\u54cd\u65b0\u51fa\u52a8\u7684\u5730\u6bef\u8f70\u70b8\u98de\u673a\u3002 / Relative to the throw: left/right across it or front/back along it. Defaults to left/right. Only future CarpetBomb aircraft change.",
           "Include": [
             "Options/direction/180"
+          ]
+        }
+      ]
+    },
+    {
+      "Name": "\u4fe1\u6807\u843d\u5730\u989d\u5916\u7b49\u5f85 / Extra Beacon Delay",
+      "Description": "\u4fe1\u6807\u6fc0\u6d3b\u540e\u989d\u5916\u7b49\u5f850\u201360\u79d2\uff0c\u9ed8\u8ba40\u79d2\u4fdd\u7559\u73b0\u6709\u8282\u594f\uff0c\u4e3a\u64a4\u79bb\u7559\u51fa\u65f6\u95f4\u3002\u4ec5\u5730\u6bef\u8f70\u70b8\u540e\u7eed\u8c03\u7528\uff1b\u5b9e\u9645\u5230\u5f39\u8fd8\u5305\u62ec\u98de\u884c\u65f6\u95f4\uff0c\u53d7\u6e38\u620f\u4fee\u6b63\u5f71\u54cd\u3002 / Adds 0\u201360 seconds after beacon activation; default 0 preserves current timing. Allows time to move away. Future CarpetBomb calls only; arrival also includes flight time and game modifiers. \u90e8\u7f72\u540e\u91cd\u542f\u5e76\u8fdb\u5165\u65b0\u4efb\u52a1\u3002 Restart after deployment and enter a new mission.",
+      "SubOptions": [
+        {
+          "Name": "0 \u79d2",
+          "Description": "\u4fe1\u6807\u6fc0\u6d3b\u540e\u989d\u5916\u7b49\u5f850\u201360\u79d2\uff0c\u9ed8\u8ba40\u79d2\u4fdd\u7559\u73b0\u6709\u8282\u594f\uff0c\u4e3a\u64a4\u79bb\u7559\u51fa\u65f6\u95f4\u3002\u4ec5\u5730\u6bef\u8f70\u70b8\u540e\u7eed\u8c03\u7528\uff1b\u5b9e\u9645\u5230\u5f39\u8fd8\u5305\u62ec\u98de\u884c\u65f6\u95f4\uff0c\u53d7\u6e38\u620f\u4fee\u6b63\u5f71\u54cd\u3002 / Adds 0\u201360 seconds after beacon activation; default 0 preserves current timing. Allows time to move away. Future CarpetBomb calls only; arrival also includes flight time and game modifiers.",
+          "Include": [
+            "Options/call_delay/0"
+          ]
+        },
+        {
+          "Name": "3 \u79d2",
+          "Description": "\u4fe1\u6807\u6fc0\u6d3b\u540e\u989d\u5916\u7b49\u5f850\u201360\u79d2\uff0c\u9ed8\u8ba40\u79d2\u4fdd\u7559\u73b0\u6709\u8282\u594f\uff0c\u4e3a\u64a4\u79bb\u7559\u51fa\u65f6\u95f4\u3002\u4ec5\u5730\u6bef\u8f70\u70b8\u540e\u7eed\u8c03\u7528\uff1b\u5b9e\u9645\u5230\u5f39\u8fd8\u5305\u62ec\u98de\u884c\u65f6\u95f4\uff0c\u53d7\u6e38\u620f\u4fee\u6b63\u5f71\u54cd\u3002 / Adds 0\u201360 seconds after beacon activation; default 0 preserves current timing. Allows time to move away. Future CarpetBomb calls only; arrival also includes flight time and game modifiers.",
+          "Include": [
+            "Options/call_delay/3"
+          ]
+        },
+        {
+          "Name": "5 \u79d2",
+          "Description": "\u4fe1\u6807\u6fc0\u6d3b\u540e\u989d\u5916\u7b49\u5f850\u201360\u79d2\uff0c\u9ed8\u8ba40\u79d2\u4fdd\u7559\u73b0\u6709\u8282\u594f\uff0c\u4e3a\u64a4\u79bb\u7559\u51fa\u65f6\u95f4\u3002\u4ec5\u5730\u6bef\u8f70\u70b8\u540e\u7eed\u8c03\u7528\uff1b\u5b9e\u9645\u5230\u5f39\u8fd8\u5305\u62ec\u98de\u884c\u65f6\u95f4\uff0c\u53d7\u6e38\u620f\u4fee\u6b63\u5f71\u54cd\u3002 / Adds 0\u201360 seconds after beacon activation; default 0 preserves current timing. Allows time to move away. Future CarpetBomb calls only; arrival also includes flight time and game modifiers.",
+          "Include": [
+            "Options/call_delay/5"
+          ]
+        },
+        {
+          "Name": "8 \u79d2",
+          "Description": "\u4fe1\u6807\u6fc0\u6d3b\u540e\u989d\u5916\u7b49\u5f850\u201360\u79d2\uff0c\u9ed8\u8ba40\u79d2\u4fdd\u7559\u73b0\u6709\u8282\u594f\uff0c\u4e3a\u64a4\u79bb\u7559\u51fa\u65f6\u95f4\u3002\u4ec5\u5730\u6bef\u8f70\u70b8\u540e\u7eed\u8c03\u7528\uff1b\u5b9e\u9645\u5230\u5f39\u8fd8\u5305\u62ec\u98de\u884c\u65f6\u95f4\uff0c\u53d7\u6e38\u620f\u4fee\u6b63\u5f71\u54cd\u3002 / Adds 0\u201360 seconds after beacon activation; default 0 preserves current timing. Allows time to move away. Future CarpetBomb calls only; arrival also includes flight time and game modifiers.",
+          "Include": [
+            "Options/call_delay/8"
+          ]
+        },
+        {
+          "Name": "10 \u79d2",
+          "Description": "\u4fe1\u6807\u6fc0\u6d3b\u540e\u989d\u5916\u7b49\u5f850\u201360\u79d2\uff0c\u9ed8\u8ba40\u79d2\u4fdd\u7559\u73b0\u6709\u8282\u594f\uff0c\u4e3a\u64a4\u79bb\u7559\u51fa\u65f6\u95f4\u3002\u4ec5\u5730\u6bef\u8f70\u70b8\u540e\u7eed\u8c03\u7528\uff1b\u5b9e\u9645\u5230\u5f39\u8fd8\u5305\u62ec\u98de\u884c\u65f6\u95f4\uff0c\u53d7\u6e38\u620f\u4fee\u6b63\u5f71\u54cd\u3002 / Adds 0\u201360 seconds after beacon activation; default 0 preserves current timing. Allows time to move away. Future CarpetBomb calls only; arrival also includes flight time and game modifiers.",
+          "Include": [
+            "Options/call_delay/10"
+          ]
+        },
+        {
+          "Name": "15 \u79d2",
+          "Description": "\u4fe1\u6807\u6fc0\u6d3b\u540e\u989d\u5916\u7b49\u5f850\u201360\u79d2\uff0c\u9ed8\u8ba40\u79d2\u4fdd\u7559\u73b0\u6709\u8282\u594f\uff0c\u4e3a\u64a4\u79bb\u7559\u51fa\u65f6\u95f4\u3002\u4ec5\u5730\u6bef\u8f70\u70b8\u540e\u7eed\u8c03\u7528\uff1b\u5b9e\u9645\u5230\u5f39\u8fd8\u5305\u62ec\u98de\u884c\u65f6\u95f4\uff0c\u53d7\u6e38\u620f\u4fee\u6b63\u5f71\u54cd\u3002 / Adds 0\u201360 seconds after beacon activation; default 0 preserves current timing. Allows time to move away. Future CarpetBomb calls only; arrival also includes flight time and game modifiers.",
+          "Include": [
+            "Options/call_delay/15"
+          ]
+        },
+        {
+          "Name": "20 \u79d2",
+          "Description": "\u4fe1\u6807\u6fc0\u6d3b\u540e\u989d\u5916\u7b49\u5f850\u201360\u79d2\uff0c\u9ed8\u8ba40\u79d2\u4fdd\u7559\u73b0\u6709\u8282\u594f\uff0c\u4e3a\u64a4\u79bb\u7559\u51fa\u65f6\u95f4\u3002\u4ec5\u5730\u6bef\u8f70\u70b8\u540e\u7eed\u8c03\u7528\uff1b\u5b9e\u9645\u5230\u5f39\u8fd8\u5305\u62ec\u98de\u884c\u65f6\u95f4\uff0c\u53d7\u6e38\u620f\u4fee\u6b63\u5f71\u54cd\u3002 / Adds 0\u201360 seconds after beacon activation; default 0 preserves current timing. Allows time to move away. Future CarpetBomb calls only; arrival also includes flight time and game modifiers.",
+          "Include": [
+            "Options/call_delay/20"
+          ]
+        },
+        {
+          "Name": "30 \u79d2",
+          "Description": "\u4fe1\u6807\u6fc0\u6d3b\u540e\u989d\u5916\u7b49\u5f850\u201360\u79d2\uff0c\u9ed8\u8ba40\u79d2\u4fdd\u7559\u73b0\u6709\u8282\u594f\uff0c\u4e3a\u64a4\u79bb\u7559\u51fa\u65f6\u95f4\u3002\u4ec5\u5730\u6bef\u8f70\u70b8\u540e\u7eed\u8c03\u7528\uff1b\u5b9e\u9645\u5230\u5f39\u8fd8\u5305\u62ec\u98de\u884c\u65f6\u95f4\uff0c\u53d7\u6e38\u620f\u4fee\u6b63\u5f71\u54cd\u3002 / Adds 0\u201360 seconds after beacon activation; default 0 preserves current timing. Allows time to move away. Future CarpetBomb calls only; arrival also includes flight time and game modifiers.",
+          "Include": [
+            "Options/call_delay/30"
+          ]
+        },
+        {
+          "Name": "60 \u79d2",
+          "Description": "\u4fe1\u6807\u6fc0\u6d3b\u540e\u989d\u5916\u7b49\u5f850\u201360\u79d2\uff0c\u9ed8\u8ba40\u79d2\u4fdd\u7559\u73b0\u6709\u8282\u594f\uff0c\u4e3a\u64a4\u79bb\u7559\u51fa\u65f6\u95f4\u3002\u4ec5\u5730\u6bef\u8f70\u70b8\u540e\u7eed\u8c03\u7528\uff1b\u5b9e\u9645\u5230\u5f39\u8fd8\u5305\u62ec\u98de\u884c\u65f6\u95f4\uff0c\u53d7\u6e38\u620f\u4fee\u6b63\u5f71\u54cd\u3002 / Adds 0\u201360 seconds after beacon activation; default 0 preserves current timing. Allows time to move away. Future CarpetBomb calls only; arrival also includes flight time and game modifiers.",
+          "Include": [
+            "Options/call_delay/60"
           ]
         }
       ]

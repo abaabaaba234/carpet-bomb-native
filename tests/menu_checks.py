@@ -4,7 +4,7 @@ from pathlib import Path
 
 PREFIX=b'carpet_bomb_native_'
 ORDER=['language','enabled','uses_mode','uses','cooldown_source','cooldown',
-       'rearm_mode','rearm','bomb','direction','forward_source','forward']
+       'rearm_mode','rearm','bomb','direction','forward_source','forward','call_delay_source','call_delay']
 
 def run(Scenario,SOURCE,ROOT):
     provider=Path(os.environ['HD2_MOD_OPTIONS_MENU_SOURCE']) if os.environ.get('HD2_MOD_OPTIONS_MENU_SOURCE') else None
@@ -170,7 +170,7 @@ def run(Scenario,SOURCE,ROOT):
             # Directly exercise validation even if a provider invokes an invalid callback.
             callbacks=m[b'state'][b'callbacks'];before=snapshot(s);saved=file(s)
             for key,value in [('uses',0),('uses',101),('uses',1.5),('cooldown',float('nan')),
-                ('cooldown',1801),('rearm',-1),('rearm',1801),('forward',-1),('forward',301),
+                ('call_delay',-1),('call_delay',61),('call_delay',1.5),('call_delay_source',3),('cooldown',1801),('rearm',-1),('rearm',1801),('forward',-1),('forward',301),
                 ('bomb',0),('bomb',8),('direction',0),('direction',4),('language',3),('enabled',0),('uses_mode',0),('rearm_mode',4)]:
                 callbacks[PREFIX+key.encode()][1](value)
             s.tick();assert snapshot(s)==before and file(s)==saved
@@ -205,6 +205,13 @@ def run(Scenario,SOURCE,ROOT):
         s=Scenario({'direction':180})
         try:
             m=load_menu(s);s.tick()
+            assert get(m,'call_delay')==0 and get(m,'call_delay_source')==1
+            apply(s,m,call_delay=8)
+            assert get(m,'call_delay_source')==2 and s.r(103,0x54,4)==struct.pack('<f',8)
+            apply(s,m,call_delay_source=1)
+            assert s.r(103,0x54,4)==s.originals[103][0x54:0x58]
+            apply(s,m,call_delay_source=1,call_delay=10)
+            assert get(m,'call_delay_source')==2
             assert get(m,'direction')==1 and s.state[b'config'][b'direction']==180
             for choice,bomb in ((5,286),(6,141),(7,188)):
                 apply(s,m,bomb=choice,direction=2)
@@ -218,18 +225,20 @@ def run(Scenario,SOURCE,ROOT):
                 apply(s,m,language=1);m[b'translation'][b'refresh']()
                 assert options[PREFIX+b'direction'][b'choices'][2]=='左右'.encode()
             saved=file(s)
-            assert 'bomb=188' in saved and 'direction=180' in saved
+            assert 'bomb=188' in saved and 'direction=180' in saved and 'call_delay=10' in saved
             apply(s,m,direction=1)
             assert 'direction=manager' in file(s) and s.state[b'config'][b'direction']==180
             # Failed persistence must roll back the two new menu settings too.
             before=snapshot(s);s.replace_failure=True
-            apply(s,m,bomb=5,direction=2)
+            apply(s,m,bomb=5,direction=2,call_delay=60)
             assert snapshot(s)==before
         finally:s.close()
         s=Scenario(cfg=saved)
         try:
             m=load_menu(s);s.tick()
             assert get(m,'bomb')==7 and get(m,'direction')==3
+            assert get(m,'call_delay')==10 and get(m,'call_delay_source')==2
+            assert s.r(103,0x54,4)==struct.pack('<f',10)
             assert s.state[b'config'][b'bomb']==188 and s.state[b'config'][b'direction']==180
         finally:s.close()
 

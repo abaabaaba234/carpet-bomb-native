@@ -23,7 +23,7 @@
     "200kg_forward_writes_observed": true
   },
   "root_cause": "native mode6 ballistic scheduling combined with cluster primary 0.35 s timer causes early, distant splitting",
-  "next_package": "0.5.9-cluster-test",
+  "next_package": "0.5.10",
   "projectile_writes_added": true,
   "multiplayer_verified": false,
   "cluster_diagnostic_test": {
@@ -54,5 +54,18 @@
     "user_report": "primary splitting appears a little too late",
     "observation": "some primary positions remain fixed while timer continues",
     "limitation": "no independent impact/burst timestamps; no terrain raycast"
+  },
+  "cluster_v059_timing_test": {
+    "version": "0.5.9-cluster-test",
+    "evidence_type": "user_report",
+    "user_report": "可以了现在刚好",
+    "cluster_timing_accepted": true,
+    "independent_observation": false,
+    "multiplayer_verified": false
+  },
+  "next_change": {
+    "version": "0.5.10",
+    "feature": "Extra beacon activation delay, 0..60 seconds, default0",
+    "new_delay_gameplay_verified": false
   }
 }

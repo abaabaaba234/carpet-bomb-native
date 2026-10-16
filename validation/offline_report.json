@@ -1,5 +1,5 @@
 {
-  "version": "0.5.9-cluster-test",
+  "version": "0.5.10",
   "game_build": 25480438,
   "tests_passed": [
     "independent captured code windows match runtime anchors and reject the v0.5.4 concatenated-anchor regression",
@@ -25,8 +25,12 @@
     "forward shift guards, other Eagles, firing/outgoing states, invalid vectors and partial-write restoration",
     "64 aircraft use one pointer-array read, new generations shift once and departed flights are pruned",
     "initialization and delayed-loading memory read budgets",
-    "manager archives and 46 presets with 70200 selectable combinations",
+    "manager archives and 55 presets with 631800 selectable combinations",
     "build rejects failed, old-version, stale-source and changed-test reports",
+    "beacon extra delay: six payloads, additive baseline, zero/max, reload, presets and disable restoration",
+    "beacon extra delay: zero leaves other owners alone, restore relinquishes ownership and invalid config is atomic",
+    "beacon extra delay: external ownership, partial write and disable failure restore the native grant transaction",
+    "beacon extra delay: independently captured native base-delay reader and deadline scheduler disassemble correctly",
     "menu contract: bilingual descriptions, order, language migration/refresh, cache authority, pending edits and restart",
     "menu contract: valid ranges, invalid callback rejection, manager restoration and disable restoration",
     "menu contract: sentinel sources and simultaneous language/parameter changes",
@@ -61,27 +65,28 @@
   "validation_context": {
     "menu_provider_sha256": null
   },
-  "source_sha256": "bede67a316dd7f766d1a9ac9341398199dabed2b9b475af72223c45e4324425d",
+  "source_sha256": "b2105fc665a159f7e42e9337e7b050d2549835d72c6b422edb2f8a6133ca0cce",
   "validation_inputs": {
     "requirements-dev.txt": "c355c313ec4744320b1e0d22e7e70465d899a48e8c62293578ddff95d0672c6b",
-    "src/core.lua": "bede67a316dd7f766d1a9ac9341398199dabed2b9b475af72223c45e4324425d",
+    "src/core.lua": "b2105fc665a159f7e42e9337e7b050d2549835d72c6b422edb2f8a6133ca0cce",
     "src/core_v0.1.0_FAILED.lua": "cb3cdf1dd40789d9dedc5e432fc93b3bb928375147b53009020edac8dd7e1909",
     "src/core_v0.2.0_FAILED_FAR_IMPACTS.lua": "369ea0c65bb12449e7c37df7a5bd77b27c828dc22fd6f119e1a50244a81bde3f",
     "tests/cluster_fuse_checks.py": "f4533e0a156c0fa55927eb33969b60ac51179692fc06e01cb48b4461a6206fed",
     "tests/cluster_trace_checks.py": "5dd92ba5aeb563d35ba8f52af2fc203051ff42cb6ca6838e6fe5a95c15f7bd17",
     "tests/code_checks.py": "c9dceb3e4317c9159bd8c9c8c4741ca438a6c17a5cce9a46f4497a8e67c452b4",
+    "tests/delay_checks.py": "3f18e5cf7b0cdb90c0c03d875f5807427ee12a1da765f7197a379a7ffac03790",
     "tests/fixtures/bomb_variants_build25480438.json": "65627b1e5f456140c4f65a2396a18e7df42ee45186d9323f44c4396fe15f6853",
     "tests/fixtures/cluster_ballistics_build25480438.json": "eff397ed4dacd6bb33d69fa3efb3dcc25ed22d89e0d07545f9cc4d133df93e46",
-    "tests/fixtures/code_windows_build25480438.json": "5c4a24ecfda9db9a9a01b598643bc0e53cf628995b4e4fabb56c5d59bcd372f1",
+    "tests/fixtures/code_windows_build25480438.json": "f1d3582110cbf1ddf19493432a1e7195d870199b71c0c607e8034cf3a6465e84",
     "tests/fixtures/payload_tables_build25480438.json": "51b17c0a0b0c4cc888aabefa343355b9f144e09f4a6e8b2443ec1b4eb8880ac6",
     "tests/fixtures/projectiles_build25480438.json": "317c7432fbfab1ec303e9e280377e3eedb0c1527e2446fb8905c2866e6fed379",
     "tests/fixtures/stratagems_build25480438.json": "1d07acc402ab652c303fc12f1255146aa5972c3062cc5cef680ca58c5a52170e",
     "tests/flight_observation_checks.py": "85cdf11b0c48eb2289318b6aedde4a9cc747c6ff9638e52b9514878eb5dee12d",
-    "tests/menu_checks.py": "760d75eacb861af7dc63fbcdff7494199f9685f49b224637bef75d4bd290a74e",
+    "tests/menu_checks.py": "afd842ee0b62fbaf3fd9b8e196c177cd143e33cdfcb54e7e9b2fb0e67c0350f1",
     "tests/reliability_checks.py": "947e6480cee8dad47dbf9be7cfd56c885633fa71e5b451d77d7e3b461c162fb2",
-    "tests/test_runtime.py": "ec277bd19d6cac47302ad4568b0dd00f02841407253ff1954edabc9ae4731733",
+    "tests/test_runtime.py": "5f549f83b7cccbd2a7e380e9d0480508311e4bd037296ee5326701baada92b64",
     "tests/variant_checks.py": "74fc3b3192674b4e193ba6cb46ca00a1647dbe37814655c002c64c977df64494",
-    "tools/build.py": "845d4cfd8c456c247bf28232a4208ae5cea250be74da9728818f9f6e7487438e",
+    "tools/build.py": "3ad8be1ff3f8c25a877b9716d1cde8d14ad9aa33df65b8e5429c15e73dc08494",
     "tools/capture_ballistics.py": "8f114692e15d15f9ec57b44a54aa07d995da7cfb1d46c2b9916e7ec78a5ce3c5",
     "tools/capture_eagles.py": "4388c76f926ffb72b3ab536185c119c22452f7c530d55fe5caa21f8a602838d5",
     "tools/capture_live.py": "e9e8d5b508a7b6caffb9fd842aca54bb9de7b5b8d455c3c622f1d50162d5b618",
@@ -99,31 +104,42 @@
   },
   "performance_counters": {
     "initialization": {
-      "rpm_calls": 294,
-      "bytes": 13176
+      "rpm_calls": 296,
+      "bytes": 13186
     },
     "steady_100_ticks": {
       "rpm_calls": 5400,
       "bytes": 69200
     },
     "delayed_10_ticks": {
-      "rpm_calls": 376,
-      "bytes": 9056,
+      "rpm_calls": 378,
+      "bytes": 9066,
       "allocations": 0
     }
   },
-  "test_group_count": 55,
+  "test_group_count": 59,
   "landing_diagnosis": {
     "diagnostic_build": true,
     "reported_longitudinal_landing_issue_fixed": false,
     "observations": "first 12 native aircraft; first 3 changed unmatched descriptor groups; two read-only cluster windows, 40 samples each, at most 512 recent slots and 6 retained examples per sample",
-    "cluster_invisibility_fixed": false,
+    "cluster_invisibility_fixed": true,
     "cluster_fuse_candidate_implemented": true,
     "gameplay_parameters_changed": true,
     "shared_projectile_definitions_changed": false,
     "primary_bombs_per_aircraft": 20,
     "cluster_bomblets_per_primary": 8,
     "live_fix_verification": false,
+    "user_v059_feedback": "User reports cluster timing is now just right; no independent live verification of v0.5.10 delay",
+    "beacon_delay": {
+      "extra_seconds_range": [
+        0,
+        60
+      ],
+      "default": 0,
+      "native_stratagem_type": 103,
+      "field_offset": "0x54",
+      "gameplay_verified": false
+    },
     "burst_height_reference": "actual sampled height at/below beacon+60m and descending restores native 0.35s; burst occurs later, no terrain raycast",
     "fallback_timer_reference": "original estimate to beacon+30m, subordinate to actual-height release",
     "height_tracking_limit": 128,
@@ -139,12 +155,12 @@
   "menu_api_verification": {
     "provider": "API contract fixture",
     "provider_sha256": null,
-    "registered_rows": 12,
+    "registered_rows": 14,
     "first_row": "Language",
     "native_ui_hook_executed": false
   },
-  "preset_combinations": 70200,
-  "preset_modules_checked": 46,
+  "preset_combinations": 631800,
+  "preset_modules_checked": 55,
   "in_game_loader_verified": false,
   "default_carry_verified": false,
   "in_game_bombing_verified": false,
