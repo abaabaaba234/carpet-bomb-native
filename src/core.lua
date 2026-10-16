@@ -2,7 +2,7 @@
 -- Native CarpetBomb grant and missing payload reconstruction.
 local previous=rawget(_G,'CarpetBombNative')
 if previous then return previous end
-local S={version='0.5.7-diagnostic',phase='waiting',elapsed=0,owned={},writes=0,allocations={},projectiles={},
+local S={version='0.5.8-cluster-test',phase='waiting',elapsed=0,owned={},writes=0,allocations={},projectiles={},
     recovery={},protection_pending={},cleanup_attempts=0}
 rawset(_G,'CarpetBombNative',S)
 local ffi=require('ffi')
@@ -327,7 +327,7 @@ end
 -- Verified layout for Steam build 25480438; all offsets are relative to game.dll.
 local BUILD={steam=25480438,timestamp=0x6ab3b43f,image_size=0x4744000}
 local ADDRESS={stratagems=0x37cb600,stratagem_names=0x21d4aa0,projectiles=0x37c7670,
-    payload_root=0x346bf98,eagle_manager=0x3326650,projectile_system=0x347cea8}
+    payload_root=0x346bf98,eagle_manager=0x3326650,projectile_system=0x347cea8,source_system=0x3326c38}
 local STRATAGEM={size=0x190,title=0x10,category=0x3c,uses=0x50,cooldown=0x68,
     transport_kind=0x70,transport_secondary=0x94,payload=0x98,payload_count=0xa0,
     resource_package=0xa8,additional_stratagem=0xc8,identity_flag=0xcc,transport_flags=0x104}
@@ -358,6 +358,11 @@ local ANCHORS={
     {0x13aa646,'8b8890000000894f7c'},
     {0x13aa653,'8b889c000000898f80000000'},
     {0x8a4d47,'488b0d5a81bd02'},
+    -- Source pointer stored in projectile metadata comes from this entity lookup.
+    {0x9ef16a,'4c8b15c77a9302'},
+    {0x9ef1d7,'498b4238488b04c8'},
+    {0x13aa78b,'498b4620488907'},
+    {0x8a4d16,'e835a41400'},
 }
 local PROJECTILES={
     [170]={mass=100,impact=194,expire=0,label='Airstrike'},
@@ -379,6 +384,11 @@ local function projectile(t)
         or field(bytes,PROJECTILE_LAYOUT.resource,8)~=unhex(expected.resource or '36b33606802fe571')
         or u32(bytes,PROJECTILE_LAYOUT.impact)~=expected.impact or u32(bytes,PROJECTILE_LAYOUT.expire)~=expected.expire then
         error('Projectile identity differs: '..t)
+    end
+    if t==286 then
+        for _,v in ipairs({{0x18,25},{0x20,300},{0x28,0.5},{0x2c,1},{0x34,0.35},{0x38,0},{0x98,0.5}}) do
+            if field(bytes,v[1],4)~=pack_float(v[2]) then error('Cluster ballistic fields differ') end
+        end
     end
     if cached then return cached end
     local result={type=t,addr=address}
@@ -663,6 +673,7 @@ local function stop(reason)
     if S.phase=='stopped' then return end
     S.phase='stopped';S.stop_reason=reason;S.elapsed=0;cleanup()
     S.plan=nil;S.forward_seen=nil;S.flight_observed=nil;S.cluster_trace=nil
+    S.cluster_cursor=nil;S.cluster_fixed_flights=nil
     S.initial_records=nil
     if S.repair_draft then
         S.repair_draft.complete=nil;S.repair_draft.eagle_original=nil
@@ -759,6 +770,161 @@ local function scalar(bytes,offset)
     local value=tonumber(vector_buffer[0])
     if value~=value or math.abs(value)>10000000 then return nil end
     return value
+end
+-- Native mode 6 schedules 20 ordinary ballistic projectiles. Its cluster donor's
+-- 0.35 s timer expires hundreds of metres before that trajectory reaches target.
+-- Extend only a complete, source-linked native batch; never edit projectile 286.
+local function cluster_source(entity)
+    local system=ptr(S.base+ADDRESS.source_system)
+    local header=system and read(system,0x48);if not header then return nil end
+    local capacity=u32(header,0x20);local objects=u64(header,0x18);local owners=u64(header,0x38)
+    if capacity<1 or capacity>65536 or capacity%2~=0 or objects<0x10000 or owners<0x10000 then return nil end
+    -- The captured lookup uses capacity-1 as a mask.
+    local power=1;while power<capacity do power=power*2 end;if power~=capacity then return nil end
+    local hash=ffi.new('uint64_t',entity)*ffi.new('uint64_t',u32(header,0x28))
+    local start=tonumber(hash%ffi.new('uint64_t',capacity))
+    for i=0,math.min(capacity,128)-1 do
+        local slot=objects+((start+i)%capacity)*8;local entry=read(slot,8)
+        if not entry then return nil end
+        local key,index=u32(entry,0),u32(entry,4)
+        if key==entity then
+            if index==0xffffffff or index>=65536 then return nil end
+            local address=owners+index*8;local source=ptr(address)
+            if not source or source<0x10000 then return nil end
+            return {source=source,system=system,header=header,slot=slot,entry=entry,address=address}
+        end
+        if key==u32(header,0x24) then return nil end
+    end
+end
+local function cluster_source_valid(link)
+    return ptr(S.base+ADDRESS.source_system)==link.system and read(link.system,0x48)==link.header
+        and read(link.slot,8)==link.entry and ptr(link.address)==link.source
+end
+local function cluster_time_to_burst(physics,target_z)
+    local p,v=vector(physics,0),vector(physics,12);if not p or not v then return nil end
+    -- Thirty metres above the beacon's elevation leaves room for native bomblets.
+    -- This is a trajectory estimate, not a terrain raycast or impact guarantee.
+    local height=p[3]-target_z-30;if height<=0 then return nil end
+    local horizontal=math.sqrt(v[1]*v[1]+v[2]*v[2]);local vertical=v[3]
+    local drag=(25*0.0005)^2*1.5707963705062866*1.2000000476837158*0.5*1000/100
+    local step=0.004;local seconds=0
+    for _=1,5000 do
+        local speed=math.sqrt(horizontal*horizontal+vertical*vertical)
+        local loss=speed*speed*drag*step
+        local h=horizontal-(speed>0 and horizontal/speed*loss or 0)
+        local z=vertical-(speed>0 and vertical/speed*loss or 0)-9.819999694824219*step
+        local next_height=height+(vertical+z)*0.5*step
+        if next_height<=0 then return seconds+step*height/(height-next_height) end
+        height=next_height;horizontal=h;vertical=z;seconds=seconds+step
+    end
+end
+local function adjust_cluster_fuses(dt)
+    if S.phase~='active' or config.bomb~=286 or S.cluster_fuse_fault then S.cluster_cursor=nil;return end
+    S.cluster_fuse_elapsed=(S.cluster_fuse_elapsed or 0)+((type(dt)=='number' and dt>0 and dt<5) and dt or 1/60)
+    if S.cluster_fuse_elapsed<0.05 then return end;S.cluster_fuse_elapsed=0
+    local system=ptr(S.base+ADDRESS.projectile_system)
+    local counter_bytes=system and read(system+0x30,4);if not counter_bytes then return end
+    local counter=u32(counter_bytes,0);local cursor=S.cluster_cursor
+    S.cluster_cursor={system=system,counter=counter}
+    local advanced=cursor and cursor.system==system and (counter-cursor.counter)%4294967296 or 128
+    local fresh=advanced>0
+    if advanced==0 then
+        if (S.cluster_retry or 0)<=0 then return end
+        S.cluster_retry=S.cluster_retry-1;advanced=128
+    end
+    local groups={}
+    for i=math.min(advanced,512),1,-1 do
+        local slot=(counter-i)%2048;local flags=read(system+0x203c+slot*2,2)
+        if flags and math.floor(flags:byte(1)/2)%2==1 then
+            local address=system+0x4d040+slot*0xc8;local metadata=read(address,0xc8)
+            if metadata and u32(metadata,0x0c)==234 and u32(metadata,0x7c)==0 and u32(metadata,0x80)==417 then
+                local source=u64(metadata,0);local group=groups[source]
+                if not group then group={projectiles={},flights={}};groups[source]=group end
+                group.projectiles[#group.projectiles+1]={slot=slot,metadata=metadata,address=address}
+            end
+        end
+    end
+    if not next(groups) then return end
+    if fresh then S.cluster_retry=6 end
+    for _,constant in ipairs({{0x23c8128,-9.82},{0x23c65a8,0.0005},{0x23c7d3c,1000},
+        {0x23c6f1c,1.5707963705062866},{0x23c6e28,1.2000000476837158}}) do
+        if read(S.base+constant[1],4)~=pack_float(constant[2]) then error('Cluster trajectory constant differs') end
+    end
+    if not projectile_intact(286) or not projectile_intact(131) then return end
+    local manager=ptr(S.base+ADDRESS.eagle_manager);local header=manager and read(manager,EAGLE.manager_size)
+    if not header then return end
+    local n=u32(header,EAGLE.count);if n>64 then error('Cluster aircraft count differs') end
+    local objects,states=u64(header,EAGLE.objects),u64(header,EAGLE.states)
+    local index=n>0 and read(objects,n*8);if not index then return end
+    local old_done=S.cluster_fixed_flights or {};local done={};S.cluster_fixed_flights=done
+    for i=0,n-1 do
+        local descriptor=u64(index,i*8);local identity=read(descriptor,16)
+        local link=identity and cluster_source(u32(identity,8));local group=link and groups[link.source]
+        if group then
+            local key=tostring(descriptor)..':'..u32(identity,8)..':'..u32(identity,12)
+            done[key]=old_done[key]
+            if identity:sub(1,8)~=NATIVE then group.ambiguous=true
+            elseif not old_done[key] then
+                local state=read(states+i*EAGLE.state_size,EAGLE.state_size)
+                local target=state and vector(state,EAGLE.target)
+                if not target then group.ambiguous=true else
+                    group.flights[#group.flights+1]={key=key,descriptor=descriptor,identity=identity,link=link,target=target}
+                end
+            end
+        end
+    end
+    for _,group in pairs(groups) do
+        local flights=group.flights;local target_z=flights[1] and flights[1].target[3]
+        for _,flight in ipairs(flights) do
+            if math.abs(flight.target[3]-target_z)>1 then group.ambiguous=true end
+        end
+        if not group.ambiguous and #flights>0 and #group.projectiles==20*#flights then
+            local plan={};local valid=ptr(S.base+ADDRESS.eagle_manager)==manager
+                and read(manager,EAGLE.manager_size)==header and read(objects,n*8)==index
+            for _,flight in ipairs(flights) do
+                if read(flight.descriptor,16)~=flight.identity or not cluster_source_valid(flight.link) then valid=false end
+            end
+            for _,projectile in ipairs(group.projectiles) do
+                local address=system+0x3040+projectile.slot*0x70
+                local physics=read(address,0x70);local timer=physics and scalar(physics,0x34)
+                local seconds=physics and cluster_time_to_burst(physics,target_z)
+                if not timer or timer<=0 or timer>0.35001 or not seconds or seconds<=timer or seconds>20 then valid=false;break end
+                local metadata_address,metadata=projectile.address,projectile.metadata
+                local flag_address=system+0x203c+projectile.slot*2
+                plan[#plan+1]={address=address+0x34,original=physics:sub(0x35,0x38),wanted=pack_float(seconds),
+                    validate=function()
+                        local f=read(flag_address,2)
+                        return ptr(S.base+ADDRESS.projectile_system)==system and f and math.floor(f:byte(1)/2)%2==1
+                            and read(metadata_address,0xc8)==metadata
+                    end}
+            end
+            -- Fail closed on concurrent progression/reuse before changing any timer.
+            for _,flight in ipairs(flights) do
+                if read(flight.descriptor,16)~=flight.identity or not cluster_source_valid(flight.link) then valid=false end
+            end
+            for _,entry in ipairs(plan) do
+                if not entry.validate() or read(entry.address,4)~=entry.original then valid=false;break end
+            end
+            if valid then
+                local changed={}
+                for _,entry in ipairs(plan) do
+                    changed[#changed+1]=entry
+                    if not entry.validate() or not write(entry.address,entry.wanted) then
+                        local clean=rollback(changed)
+                        stop('Cluster fuse write failed; '..(clean and 'rolled back' or 'restoration pending'));return
+                    end
+                end
+                for _,flight in ipairs(flights) do done[flight.key]=true end
+                S.cluster_fuse_changes=(S.cluster_fuse_changes or 0)+#changed
+                S.cluster_retry=0
+                log(string.format('Native cluster fuse adjusted: %d aircraft, %d primary bombs; estimate burst 30m above target elevation; first timer %.3fs -> %.3fs; native 8-bomblet split and damage unchanged',
+                    #flights,#changed,scalar(changed[1].original,0),scalar(changed[1].wanted,0)))
+            end
+        elseif not S.cluster_scope_logged then
+            S.cluster_scope_logged=true
+            log('Cluster fuse batch skipped: source ownership ambiguous, absent, or not exactly 20 primary bombs per native aircraft')
+        end
+    end
 end
 local function start_cluster_trace()
     if config.bomb~=286 or S.cluster_trace or S.cluster_trace_fault or (S.cluster_trace_count or 0)>=2 then return end
@@ -981,6 +1147,8 @@ function update(dt,...)
     local ok,err=pcall(tick,dt);if not ok then stop(tostring(err)) end
     local shifted,shift_error=pcall(shift_incoming_targets,dt)
     if not shifted then S.forward_fault=true;log('Forward adjustment stopped: '..tostring(shift_error)) end
+    local fused,fuse_error=pcall(adjust_cluster_fuses,dt)
+    if not fused then S.cluster_fuse_fault=true;log('Cluster fuse adjustment stopped: '..tostring(fuse_error)) end
     local traced,trace_error=pcall(sample_cluster_trace,dt)
     if not traced then S.cluster_trace=nil;S.cluster_trace_fault=true;log('Cluster trace stopped: '..tostring(trace_error)) end
     return old_update(dt,...)

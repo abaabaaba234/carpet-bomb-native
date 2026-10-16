@@ -1,0 +1,45 @@
+{
+  "source": "Historical read-only native range constants from research/live/carpet_ballistics.json, plus bounded current v0.5.7-diagnostic log at 2026-10-16 12:24",
+  "game_build": 25480438,
+  "constants": {
+    "gravity": -9.819999694824219,
+    "radius_scale": 0.0005000000237487257,
+    "density": 1000.0,
+    "pi": 1.5707963705062866,
+    "half": 1.2000000476837158
+  },
+  "live_cluster": {
+    "first_observed_distance_m": [
+      856.0,
+      821.4,
+      786.8
+    ],
+    "primary_observations": 60,
+    "secondary_observations": 480,
+    "timer_before_after": [
+      0.3166716694831848,
+      0.05895354598760605
+    ],
+    "first_primary_position": [
+      120.7,
+      -670,
+      133.7
+    ],
+    "first_primary_velocity": [
+      -46.3,
+      152.1,
+      -10.1
+    ],
+    "target": [
+      -79.3,
+      -49,
+      10.5
+    ],
+    "first_secondary_position": [
+      97.8,
+      -596.8,
+      125.7
+    ],
+    "limitation": "Samples, not exact split instant or per-projectile impact records; source IDs alone do not prove native ownership"
+  }
+}

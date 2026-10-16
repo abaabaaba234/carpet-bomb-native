@@ -22,8 +22,26 @@
     ],
     "200kg_forward_writes_observed": true
   },
-  "root_cause": "not established; first flight observations do not locate projectile generation or splitting",
-  "next_package": "0.5.7-diagnostic",
-  "projectile_writes_added": false,
-  "multiplayer_verified": false
+  "root_cause": "native mode6 ballistic scheduling combined with cluster primary 0.35 s timer causes early, distant splitting",
+  "next_package": "0.5.8-cluster-test",
+  "projectile_writes_added": true,
+  "multiplayer_verified": false,
+  "cluster_diagnostic_test": {
+    "version": "0.5.7-diagnostic",
+    "log_time": "2026-10-16 12:24 Asia/Shanghai",
+    "primary_bombs": 60,
+    "bomblets_observed_after_split": 480,
+    "timer_seconds": 0.35,
+    "first_sampled_child_horizontal_distance_from_first_aircraft_target_m": 575.7,
+    "first_sampled_child_above_first_aircraft_target_elevation_m": 115.2,
+    "user_report": "heard audio without visible effects; suspects airborne detonation",
+    "confirmed": "early splitting far from beacon; sampled children are present",
+    "not_established": [
+      "missing effect assets",
+      "exact split instant",
+      "final impact positions"
+    ]
+  },
+  "candidate_scope": "source-linked per-instance primary fuse only; shared projectile definitions unchanged; requires exactly20 per native aircraft",
+  "candidate_gameplay_verified": false
 }

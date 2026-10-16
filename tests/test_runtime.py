@@ -609,6 +609,8 @@ from flight_observation_checks import run as run_flight_observation_checks
 passed.extend(run_flight_observation_checks(Scenario,BASE,eagle_state))
 from cluster_trace_checks import run as run_cluster_trace_checks
 passed.extend(run_cluster_trace_checks(Scenario,BASE,eagle_state))
+from cluster_fuse_checks import run as run_cluster_fuse_checks
+passed.extend(run_cluster_fuse_checks(Scenario,BASE,ROOT,eagle_state))
 result_path=ROOT/'validation/offline_report.json'
 from build import runtime_version,runtime_build,validation_inputs,validation_context,build,validate_report
 result_path.write_text(json.dumps({'version':runtime_version(),'game_build':runtime_build(),'tests_passed':passed,
@@ -618,8 +620,10 @@ result_path.write_text(json.dumps({'version':runtime_version(),'game_build':runt
   'test_group_count':len(passed),
   'landing_diagnosis':{'diagnostic_build':True,'reported_longitudinal_landing_issue_fixed':False,
     'observations':'first 12 native aircraft; first 3 changed unmatched descriptor groups; two read-only cluster windows, 40 samples each, at most 512 recent slots and 6 retained examples per sample',
-    'cluster_invisibility_fixed':False,
-    'gameplay_parameters_changed':False},
+    'cluster_invisibility_fixed':False,'cluster_fuse_candidate_implemented':True,
+    'gameplay_parameters_changed':True,'shared_projectile_definitions_changed':False,
+    'primary_bombs_per_aircraft':20,'cluster_bomblets_per_primary':8,
+    'live_fix_verification':False,'burst_height_reference':'30m above beacon elevation, estimated; no terrain raycast'},
   'code_anchor_verification':{'source':'independent historical read-only code capture windows',
     'capture_sha256':json.loads((ROOT/'tests/fixtures/code_windows_build25480438.json').read_text())['capture_sha256'],
     'expected_bytes_used_to_seed_mock':False,'fresh_in_process_verification':False},
