@@ -2,7 +2,7 @@
 -- Native CarpetBomb grant and missing payload reconstruction.
 local previous=rawget(_G,'CarpetBombNative')
 if previous then return previous end
-local S={version='0.5.10',phase='waiting',elapsed=0,owned={},writes=0,allocations={},projectiles={},
+local S={version='0.6.0',phase='waiting',elapsed=0,owned={},writes=0,allocations={},projectiles={},
     recovery={},protection_pending={},cleanup_attempts=0}
 rawset(_G,'CarpetBombNative',S)
 local ffi=require('ffi')
@@ -134,38 +134,38 @@ local MENU_TEXT={
         enabled='启用',enabled_description='默认携带地毯轰炸。关闭后沿用原版恢复逻辑，停止调整后续飞机。',
         manager='跟随管理器',custom='自定义',limited='有限次数',unlimited='无限',vanilla='保持原版',
         uses_mode='使用次数来源',uses_mode_description='跟随部署预设，或指定有限次数 / 无限。已有次数可能需要新任务更新。',
-        uses='使用次数',uses_description='1–100 次；应用此滑块会切换为有限次数。已有次数可能需要新任务更新。',
+        uses='使用次数',uses_description='1 到 100 次；应用此滑块会切换为有限次数。已有次数可能需要新任务更新。',
         cooldown_source='调用冷却来源',cooldown_source_description='跟随部署预设，或使用自定义调用间隔。',
-        cooldown='调用冷却（秒）',cooldown_description='0–1800 秒；应用此滑块会切换为自定义。已在进行的计时可能需要新任务更新。',
+        cooldown='调用冷却（秒）',cooldown_description='0 到 1800 秒；应用此滑块会切换为自定义。已在进行的计时可能需要新任务更新。',
         rearm_mode='飞鹰装填来源',rearm_mode_description='跟随部署预设、保持原版，或自定义。全部携带的飞鹰战备共用；舰船升级仍由游戏计算。',
-        rearm='飞鹰装填冷却（秒）',rearm_description='0–1800 秒；应用此滑块会切换为自定义。影响全部携带的飞鹰战备。',
+        rearm='飞鹰装填冷却（秒）',rearm_description='0 到 1800 秒；应用此滑块会切换为自定义。影响全部携带的飞鹰战备。',
         bomb='炸弹类型',bomb_description='跟随预设或选择空袭、200 kg、500 kg、集束、燃烧、毒气。更换后重启并进入新任务载入资源。每架20枚主弹，集束另有原生子弹。',
         airstrike='原版飞鹰空袭炸弹',native_bomb='地毯轰炸 200 kg',heavy_bomb='飞鹰 500 kg',
         cluster_bomb='飞鹰集束炸弹',napalm_bomb='飞鹰燃烧弹',gas_bomb='飞鹰毒气弹',
         direction='飞鹰来袭方向',direction_description='相对投掷方向：左右横穿或前后纵向。默认左右；只影响之后新出动的地毯轰炸飞机，其他飞鹰不变。',
         sideways='左右',longitudinal='前后',
         call_delay_source='落地等待来源',call_delay_source_description='跟随部署预设，或自定义信标激活后的额外等待时间。',
-        call_delay='信标落地额外等待（秒）',call_delay_description='0–60 秒，默认 0；增加投弹前的撤离时间。仅地毯轰炸后续调用生效，已开始的倒计时不变；实际到弹还包括飞行时间，受游戏修正影响。',
+        call_delay='信标落地额外等待（秒）',call_delay_description='0 到 60 秒，默认 0；增加投弹前的撤离时间。仅地毯轰炸后续调用生效，已开始的倒计时不变；实际到弹还包括飞行时间，受游戏修正影响。',
         forward_source='目标前移来源',forward_source_description='跟随部署预设，或自定义沿飞鹰进场方向的前移距离。',
-        forward='投弹目标前移（米）',forward_description='0–300 米；应用此滑块会切换为自定义。仅影响后续新出动飞机，0 米保留原落点。'},
+        forward='投弹目标前移（米）',forward_description='0 到 300 米；应用此滑块会切换为自定义。仅影响后续新出动飞机，0 米保留原落点。'},
     en={title='Native CarpetBomb',language_description='Select the language of this mod\'s title, labels and choices. Descriptions always show Chinese and English. Apply, then close and reopen the Esc menu.',
         enabled='Enable',enabled_description='Carry CarpetBomb automatically. Disable restores owned settings and stops adjusting future aircraft.',
         manager='Manager preset',custom='Custom',limited='Limited charges',unlimited='Unlimited',vanilla='Vanilla',
         uses_mode='Charges source',uses_mode_description='Use the deployed preset, limited charges, or unlimited charges. Existing charges may require a new mission.',
-        uses='Charges',uses_description='1–100 charges. Applying this slider selects limited charges. Existing charges may require a new mission.',
+        uses='Charges',uses_description='1-100 charges. Applying this slider selects limited charges. Existing charges may require a new mission.',
         cooldown_source='Call interval source',cooldown_source_description='Use the deployed preset or a custom interval between calls.',
-        cooldown='Call interval (seconds)',cooldown_description='0–1800 seconds. Applying this slider selects Custom. Running timers may require a new mission.',
+        cooldown='Call interval (seconds)',cooldown_description='0-1800 seconds. Applying this slider selects Custom. Running timers may require a new mission.',
         rearm_mode='Eagle rearm source',rearm_mode_description='Use the deployed preset, Vanilla, or Custom. Shared by all carried Eagles; ship upgrades still apply.',
-        rearm='Eagle rearm (seconds)',rearm_description='0–1800 seconds. Applying this slider selects Custom. Affects all carried Eagles.',
+        rearm='Eagle rearm (seconds)',rearm_description='0-1800 seconds. Applying this slider selects Custom. Affects all carried Eagles.',
         bomb='Bomb type',bomb_description='Preset, Airstrike, 200 kg, 500 kg, Cluster, Napalm or Gas. Restart and enter a new mission to load resources. 20 primary bombs per aircraft; Cluster adds native bomblets.',
         airstrike='Airstrike bomb',native_bomb='CarpetBomb 200 kg',heavy_bomb='Eagle 500 kg',
         cluster_bomb='Eagle Cluster Bomb',napalm_bomb='Eagle Napalm',gas_bomb='Eagle Gas',
         direction='Eagle approach direction',direction_description='Relative to the throw: left/right across it or front/back along it. Defaults to left/right. Only future CarpetBomb aircraft change; other Eagles keep their settings.',
         sideways='Left / right',longitudinal='Front / back',
         call_delay_source='Beacon delay source',call_delay_source_description='Use the deployed preset or a custom extra wait after beacon activation.',
-        call_delay='Extra beacon delay (seconds)',call_delay_description='0–60 seconds; default 0. Adds time to move away before bombing. Future CarpetBomb calls only; running timers stay unchanged. Flight time and game modifiers also affect arrival.',
+        call_delay='Extra beacon delay (seconds)',call_delay_description='0-60 seconds; default 0. Adds time to move away before bombing. Future CarpetBomb calls only; running timers stay unchanged. Flight time and game modifiers also affect arrival.',
         forward_source='Forward offset source',forward_source_description='Use the deployed preset or a custom offset along the incoming flight direction.',
-        forward='Strike forward offset (metres)',forward_description='0–300 metres. Applying this slider selects Custom. Only future aircraft change; 0 retains the original target.'},
+        forward='Strike forward offset (metres)',forward_description='0-300 metres. Applying this slider selects Custom. Only future aircraft change; 0 retains the original target.'},
 }
 local menu_api,menu_blocked
 local function menu_text(key)

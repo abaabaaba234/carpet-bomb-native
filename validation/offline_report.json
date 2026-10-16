@@ -1,5 +1,5 @@
 {
-  "version": "0.5.10",
+  "version": "0.6.0",
   "game_build": 25480438,
   "tests_passed": [
     "independent captured code windows match runtime anchors and reject the v0.5.4 concatenated-anchor regression",
@@ -65,10 +65,10 @@
   "validation_context": {
     "menu_provider_sha256": null
   },
-  "source_sha256": "b2105fc665a159f7e42e9337e7b050d2549835d72c6b422edb2f8a6133ca0cce",
+  "source_sha256": "0b3d5855f4bde06c4661568f8087b68ee80e9134c01b5d77bf366c1cb2a2418f",
   "validation_inputs": {
     "requirements-dev.txt": "c355c313ec4744320b1e0d22e7e70465d899a48e8c62293578ddff95d0672c6b",
-    "src/core.lua": "b2105fc665a159f7e42e9337e7b050d2549835d72c6b422edb2f8a6133ca0cce",
+    "src/core.lua": "0b3d5855f4bde06c4661568f8087b68ee80e9134c01b5d77bf366c1cb2a2418f",
     "src/core_v0.1.0_FAILED.lua": "cb3cdf1dd40789d9dedc5e432fc93b3bb928375147b53009020edac8dd7e1909",
     "src/core_v0.2.0_FAILED_FAR_IMPACTS.lua": "369ea0c65bb12449e7c37df7a5bd77b27c828dc22fd6f119e1a50244a81bde3f",
     "tests/cluster_fuse_checks.py": "f4533e0a156c0fa55927eb33969b60ac51179692fc06e01cb48b4461a6206fed",
@@ -84,9 +84,9 @@
     "tests/flight_observation_checks.py": "85cdf11b0c48eb2289318b6aedde4a9cc747c6ff9638e52b9514878eb5dee12d",
     "tests/menu_checks.py": "afd842ee0b62fbaf3fd9b8e196c177cd143e33cdfcb54e7e9b2fb0e67c0350f1",
     "tests/reliability_checks.py": "947e6480cee8dad47dbf9be7cfd56c885633fa71e5b451d77d7e3b461c162fb2",
-    "tests/test_runtime.py": "5f549f83b7cccbd2a7e380e9d0480508311e4bd037296ee5326701baada92b64",
+    "tests/test_runtime.py": "98340fc90e74bbe27847412979512f4c97988f088f21c9d7147c9a5912601382",
     "tests/variant_checks.py": "74fc3b3192674b4e193ba6cb46ca00a1647dbe37814655c002c64c977df64494",
-    "tools/build.py": "3ad8be1ff3f8c25a877b9716d1cde8d14ad9aa33df65b8e5429c15e73dc08494",
+    "tools/build.py": "450789e76bf609db2c81909c9cf4a9b31332de6c5a5090143cd50e48fc548952",
     "tools/capture_ballistics.py": "8f114692e15d15f9ec57b44a54aa07d995da7cfb1d46c2b9916e7ec78a5ce3c5",
     "tools/capture_eagles.py": "4388c76f926ffb72b3ab536185c119c22452f7c530d55fe5caa21f8a602838d5",
     "tools/capture_live.py": "e9e8d5b508a7b6caffb9fd842aca54bb9de7b5b8d455c3c622f1d50162d5b618",
@@ -129,7 +129,8 @@
     "primary_bombs_per_aircraft": 20,
     "cluster_bomblets_per_primary": 8,
     "live_fix_verification": false,
-    "user_v059_feedback": "User reports cluster timing is now just right; no independent live verification of v0.5.10 delay",
+    "user_v059_feedback": "User reports cluster timing is now just right",
+    "user_v0510_feedback": "User confirms functionality works, including extra delay; screenshots show unsupported range punctuation. v0.6.0 changes text and version only.",
     "beacon_delay": {
       "extra_seconds_range": [
         0,

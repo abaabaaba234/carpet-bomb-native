@@ -81,7 +81,7 @@ def make_files(report=None):
         ('direction','飞鹰来袭方向 / Eagle Approach',[90,180],
          '相对投掷方向选择左右横穿或前后纵向，默认左右。仅影响新出动的地毯轰炸飞机。 / Relative to the throw: left/right across it or front/back along it. Defaults to left/right. Only future CarpetBomb aircraft change.'),
         ('call_delay','信标落地额外等待 / Extra Beacon Delay',[0,3,5,8,10,15,20,30,60],
-         '信标激活后额外等待0–60秒，默认0秒保留现有节奏，为撤离留出时间。仅地毯轰炸后续调用；实际到弹还包括飞行时间，受游戏修正影响。 / Adds 0–60 seconds after beacon activation; default 0 preserves current timing. Allows time to move away. Future CarpetBomb calls only; arrival also includes flight time and game modifiers.'),
+         '信标激活后额外等待0到60秒，默认0秒保留现有节奏，为撤离留出时间。仅地毯轰炸后续调用；实际到弹还包括飞行时间，受游戏修正影响。 / Adds 0-60 seconds after beacon activation; default 0 preserves current timing. Allows time to move away. Future CarpetBomb calls only; arrival also includes flight time and game modifiers.'),
     ],1):
         choices=[]
         for n in values:

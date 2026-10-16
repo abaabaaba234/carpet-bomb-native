@@ -23,7 +23,7 @@
     "200kg_forward_writes_observed": true
   },
   "root_cause": "native mode6 ballistic scheduling combined with cluster primary 0.35 s timer causes early, distant splitting",
-  "next_package": "0.5.10",
+  "next_package": "0.6.0",
   "projectile_writes_added": true,
   "multiplayer_verified": false,
   "cluster_diagnostic_test": {
@@ -64,8 +64,23 @@
     "multiplayer_verified": false
   },
   "next_change": {
+    "version": "0.6.0",
+    "feature": "Text-only range punctuation fix and version update",
+    "runtime_logic_changed": false,
+    "in_game_text_rendering_verified": false
+  },
+  "v0510_functionality_test": {
     "version": "0.5.10",
-    "feature": "Extra beacon activation delay, 0..60 seconds, default0",
-    "new_delay_gameplay_verified": false
+    "evidence_type": "user_report_with_menu_screenshots",
+    "user_report": "功能没有问题了就是有些乱码",
+    "functionality_accepted": true,
+    "menu_issue": "Numeric range en dash appears as question mark in Chinese and English descriptions",
+    "screenshots_affected_settings": [
+      "cooldown",
+      "rearm",
+      "forward",
+      "call_delay"
+    ],
+    "multiplayer_verified": false
   }
 }
