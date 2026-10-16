@@ -95,7 +95,7 @@ def make_files(report=None):
     manifest={'Version':1,'Guid':'acffed9b-07c3-48f8-a936-19874038111b','Name':'原生地毯轰炸默认携带 / Native CarpetBomb v'+version,
       'Description':'地毯轰炸默认携带；支持空袭、200 kg、500 kg、集束、燃烧和毒气，以及左右或前后来袭。每架20枚主弹；菜单介绍中英双语。需要Loader v18，菜单另需ModOptionsMenu v2，支持build 25480438。本版仅离线验证。 / Automatically carries CarpetBomb with Airstrike, 200 kg, 500 kg, Cluster, Napalm or Gas bombs, and left/right or front/back approaches. 20 primary bombs per aircraft; bilingual menu descriptions. Requires Loader v18; menu needs ModOptionsMenu v2. Build 25480438. Offline-tested only.', 'Options':options}
     if 'diagnostic' in version:
-        manifest['Description']='诊断版：前后来袭落点问题尚未修复；仅增加限量进场日志，不改变投弹参数。 / Diagnostic build: longitudinal landing issue remains unresolved; adds bounded flight logs without changing bombing parameters. '+manifest['Description']
+        manifest['Description']='集束诊断版：集束不可见问题尚未修复；新增限量主弹/子弹位置日志，不改变投弹参数。200 kg前后来袭、前移80米及燃烧/毒气已获用户实测可用反馈，诊断新增部分尚未实机验证。 / Cluster diagnostic: invisibility remains unresolved; adds bounded primary/bomblet position logs without changing bombing parameters. User reports 200 kg front/back at +80 m, Napalm and Gas usable; new diagnostics await gameplay verification. '+manifest['Description']
     # Arsenal's import can decode text with the Windows ANSI code page.
     # JSON escapes retain the Chinese labels under either text encoding.
     files['manifest.json']=json.dumps(manifest,ensure_ascii=True,indent=2).encode('ascii')

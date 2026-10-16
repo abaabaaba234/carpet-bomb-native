@@ -607,6 +607,8 @@ from variant_checks import run as run_variant_checks
 passed.extend(run_variant_checks(Scenario,BASE,ROOT))
 from flight_observation_checks import run as run_flight_observation_checks
 passed.extend(run_flight_observation_checks(Scenario,BASE,eagle_state))
+from cluster_trace_checks import run as run_cluster_trace_checks
+passed.extend(run_cluster_trace_checks(Scenario,BASE,eagle_state))
 result_path=ROOT/'validation/offline_report.json'
 from build import runtime_version,runtime_build,validation_inputs,validation_context,build,validate_report
 result_path.write_text(json.dumps({'version':runtime_version(),'game_build':runtime_build(),'tests_passed':passed,
@@ -615,7 +617,8 @@ result_path.write_text(json.dumps({'version':runtime_version(),'game_build':runt
   'performance_counters':runtime_metrics,
   'test_group_count':len(passed),
   'landing_diagnosis':{'diagnostic_build':True,'reported_longitudinal_landing_issue_fixed':False,
-    'observations':'first 12 native aircraft; first 3 changed unmatched descriptor groups',
+    'observations':'first 12 native aircraft; first 3 changed unmatched descriptor groups; two read-only cluster windows, 40 samples each, at most 512 recent slots and 6 retained examples per sample',
+    'cluster_invisibility_fixed':False,
     'gameplay_parameters_changed':False},
   'code_anchor_verification':{'source':'independent historical read-only code capture windows',
     'capture_sha256':json.loads((ROOT/'tests/fixtures/code_windows_build25480438.json').read_text())['capture_sha256'],

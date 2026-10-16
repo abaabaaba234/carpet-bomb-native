@@ -1,5 +1,5 @@
 {
-  "version": "0.5.6-diagnostic",
+  "version": "0.5.7-diagnostic",
   "game_build": 25480438,
   "tests_passed": [
     "independent captured code windows match runtime anchors and reject the v0.5.4 concatenated-anchor regression",
@@ -45,29 +45,33 @@
     "approach angle: partial-write rollback, disable failure, external owner and donor guard",
     "selected resource packages: late loading, changed IDs/addresses/packages and cluster secondary guard",
     "current package references: plane/bomb/audio/particles, cluster bomblets, napalm fire and gas status chain",
-    "bounded first-flight diagnostics preserve target handling, report early attack states and prune entity identities"
+    "bounded first-flight diagnostics preserve target handling, report early attack states and prune entity identities",
+    "cluster trace: main/secondary signatures and positions, existing log cap, reused slots and no projectile writes",
+    "cluster trace: 32-bit cursor wrap, 512-slot budget, six retained examples and two 40-sample windows",
+    "cluster trace: missing/replaced systems, diagnostic exceptions, disable and zero cost for other bombs"
   ],
   "validation_context": {
     "menu_provider_sha256": null
   },
-  "source_sha256": "4afe858b203bf47684ebdb063b9237ba75fd917b9126f84ad8cd8e9a61e403ac",
+  "source_sha256": "eed98f3574476107aa707b51a8368b1ea5d84d1b5a64d77eb22949153f7710c5",
   "validation_inputs": {
     "requirements-dev.txt": "c355c313ec4744320b1e0d22e7e70465d899a48e8c62293578ddff95d0672c6b",
-    "src/core.lua": "4afe858b203bf47684ebdb063b9237ba75fd917b9126f84ad8cd8e9a61e403ac",
+    "src/core.lua": "eed98f3574476107aa707b51a8368b1ea5d84d1b5a64d77eb22949153f7710c5",
     "src/core_v0.1.0_FAILED.lua": "cb3cdf1dd40789d9dedc5e432fc93b3bb928375147b53009020edac8dd7e1909",
     "src/core_v0.2.0_FAILED_FAR_IMPACTS.lua": "369ea0c65bb12449e7c37df7a5bd77b27c828dc22fd6f119e1a50244a81bde3f",
+    "tests/cluster_trace_checks.py": "5dd92ba5aeb563d35ba8f52af2fc203051ff42cb6ca6838e6fe5a95c15f7bd17",
     "tests/code_checks.py": "c9dceb3e4317c9159bd8c9c8c4741ca438a6c17a5cce9a46f4497a8e67c452b4",
     "tests/fixtures/bomb_variants_build25480438.json": "65627b1e5f456140c4f65a2396a18e7df42ee45186d9323f44c4396fe15f6853",
-    "tests/fixtures/code_windows_build25480438.json": "76f0b96362f852c40d00267c4f8ab8916df86413caf6ff0abd33478a3a595927",
+    "tests/fixtures/code_windows_build25480438.json": "abbcd5ff578e0dcd47a9cbf6334f4ca1ee65267b64701cb552d2f2a04d2aa9a6",
     "tests/fixtures/payload_tables_build25480438.json": "51b17c0a0b0c4cc888aabefa343355b9f144e09f4a6e8b2443ec1b4eb8880ac6",
     "tests/fixtures/projectiles_build25480438.json": "317c7432fbfab1ec303e9e280377e3eedb0c1527e2446fb8905c2866e6fed379",
     "tests/fixtures/stratagems_build25480438.json": "1d07acc402ab652c303fc12f1255146aa5972c3062cc5cef680ca58c5a52170e",
     "tests/flight_observation_checks.py": "85cdf11b0c48eb2289318b6aedde4a9cc747c6ff9638e52b9514878eb5dee12d",
     "tests/menu_checks.py": "760d75eacb861af7dc63fbcdff7494199f9685f49b224637bef75d4bd290a74e",
     "tests/reliability_checks.py": "947e6480cee8dad47dbf9be7cfd56c885633fa71e5b451d77d7e3b461c162fb2",
-    "tests/test_runtime.py": "b5bb455be32ddcfa01667d9e736b33ada9afc6edabc7d0446bfbf0508ca18bcf",
+    "tests/test_runtime.py": "c8c1988e6437b3efa3bd8c7050c0fd84782363efbcaef06676daef0310780f44",
     "tests/variant_checks.py": "74fc3b3192674b4e193ba6cb46ca00a1647dbe37814655c002c64c977df64494",
-    "tools/build.py": "c907fced077a6e94adc7d6540bc70c2bfc4d148461fe3f445b4b7e2c9e39e8e7",
+    "tools/build.py": "b634a4ecb7cc58d0cd4d8c7aaf8f0a8159e40e04ba3265edec49cbdccca52159",
     "tools/capture_ballistics.py": "8f114692e15d15f9ec57b44a54aa07d995da7cfb1d46c2b9916e7ec78a5ce3c5",
     "tools/capture_eagles.py": "4388c76f926ffb72b3ab536185c119c22452f7c530d55fe5caa21f8a602838d5",
     "tools/capture_live.py": "e9e8d5b508a7b6caffb9fd842aca54bb9de7b5b8d455c3c622f1d50162d5b618",
@@ -85,24 +89,25 @@
   },
   "performance_counters": {
     "initialization": {
-      "rpm_calls": 284,
-      "bytes": 13095
+      "rpm_calls": 290,
+      "bytes": 13149
     },
     "steady_100_ticks": {
       "rpm_calls": 5400,
       "bytes": 69200
     },
     "delayed_10_ticks": {
-      "rpm_calls": 366,
-      "bytes": 8975,
+      "rpm_calls": 372,
+      "bytes": 9029,
       "allocations": 0
     }
   },
-  "test_group_count": 44,
+  "test_group_count": 47,
   "landing_diagnosis": {
     "diagnostic_build": true,
     "reported_longitudinal_landing_issue_fixed": false,
-    "observations": "first 12 native aircraft; first 3 changed unmatched descriptor groups",
+    "observations": "first 12 native aircraft; first 3 changed unmatched descriptor groups; two read-only cluster windows, 40 samples each, at most 512 recent slots and 6 retained examples per sample",
+    "cluster_invisibility_fixed": false,
     "gameplay_parameters_changed": false
   },
   "code_anchor_verification": {

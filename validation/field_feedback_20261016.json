@@ -1,0 +1,29 @@
+{
+  "date": "2026-10-16",
+  "version": "0.5.6-diagnostic",
+  "source": "user feedback and saved same-session CarpetBombNative.log / cfg",
+  "tested_settings": {
+    "direction": 180,
+    "forward": 80
+  },
+  "user_report": {
+    "200kg_coverage": "acceptable at forward80; forward0 covered mostly the incoming side",
+    "napalm": "usable",
+    "gas": "usable",
+    "other_choices": "user reports all tested except cluster usable; individual detailed conditions not captured",
+    "cluster": "no visible cluster bombs with otherwise identical settings"
+  },
+  "log_observations": {
+    "cluster_first_observed_attacked": 1,
+    "cluster_first_observed_distance_m": [
+      842.4,
+      807.7,
+      773.1
+    ],
+    "200kg_forward_writes_observed": true
+  },
+  "root_cause": "not established; first flight observations do not locate projectile generation or splitting",
+  "next_package": "0.5.7-diagnostic",
+  "projectile_writes_added": false,
+  "multiplayer_verified": false
+}

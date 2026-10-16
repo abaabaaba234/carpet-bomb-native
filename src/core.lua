@@ -2,7 +2,7 @@
 -- Native CarpetBomb grant and missing payload reconstruction.
 local previous=rawget(_G,'CarpetBombNative')
 if previous then return previous end
-local S={version='0.5.6-diagnostic',phase='waiting',elapsed=0,owned={},writes=0,allocations={},projectiles={},
+local S={version='0.5.7-diagnostic',phase='waiting',elapsed=0,owned={},writes=0,allocations={},projectiles={},
     recovery={},protection_pending={},cleanup_attempts=0}
 rawset(_G,'CarpetBombNative',S)
 local ffi=require('ffi')
@@ -327,7 +327,7 @@ end
 -- Verified layout for Steam build 25480438; all offsets are relative to game.dll.
 local BUILD={steam=25480438,timestamp=0x6ab3b43f,image_size=0x4744000}
 local ADDRESS={stratagems=0x37cb600,stratagem_names=0x21d4aa0,projectiles=0x37c7670,
-    payload_root=0x346bf98,eagle_manager=0x3326650}
+    payload_root=0x346bf98,eagle_manager=0x3326650,projectile_system=0x347cea8}
 local STRATAGEM={size=0x190,title=0x10,category=0x3c,uses=0x50,cooldown=0x68,
     transport_kind=0x70,transport_secondary=0x94,payload=0x98,payload_count=0xa0,
     resource_package=0xa8,additional_stratagem=0xc8,identity_flag=0xcc,transport_flags=0x104}
@@ -351,6 +351,13 @@ local ANCHORS={
     -- Eagle spawn rotates the throw vector by component +0x1c (degrees).
     {0x89f1a6,'f3440f1045ac'},
     {0x89f1b5,'f3440f5905a274b201'},
+    -- Read-only cluster diagnostics: ring index, active flag, timer and explosion metadata.
+    {0x13a989b,'4181e4ff070000'},
+    {0x13a9958,'42f684663c20000002'},
+    {0x13aa13f,'f3410f118c3774300000'},
+    {0x13aa646,'8b8890000000894f7c'},
+    {0x13aa653,'8b889c000000898f80000000'},
+    {0x8a4d47,'488b0d5a81bd02'},
 }
 local PROJECTILES={
     [170]={mass=100,impact=194,expire=0,label='Airstrike'},
@@ -655,7 +662,7 @@ end
 local function stop(reason)
     if S.phase=='stopped' then return end
     S.phase='stopped';S.stop_reason=reason;S.elapsed=0;cleanup()
-    S.plan=nil;S.forward_seen=nil;S.flight_observed=nil
+    S.plan=nil;S.forward_seen=nil;S.flight_observed=nil;S.cluster_trace=nil
     S.initial_records=nil
     if S.repair_draft then
         S.repair_draft.complete=nil;S.repair_draft.eagle_original=nil
@@ -747,8 +754,84 @@ local function vector(bytes,offset)
     for _,v in ipairs(out) do if v~=v or math.abs(v)>10000000 then return nil end end
     return out
 end
+local function scalar(bytes,offset)
+    ffi.copy(vector_buffer,bytes:sub(offset+1,offset+4),4)
+    local value=tonumber(vector_buffer[0])
+    if value~=value or math.abs(value)>10000000 then return nil end
+    return value
+end
+local function start_cluster_trace()
+    if config.bomb~=286 or S.cluster_trace or S.cluster_trace_fault or (S.cluster_trace_count or 0)>=2 then return end
+    S.cluster_trace_count=(S.cluster_trace_count or 0)+1
+    S.cluster_trace={elapsed=0,samples=0,tracked={}}
+    log('Cluster trace start: window='..S.cluster_trace_count..'; read-only, at most 40 samples, 512 recent ring slots per sample; observations can include other cluster strikes')
+    local row=S.projectiles[286]
+    local bytes=row and ptr(S.base+ADDRESS.projectiles+286*8)==row.addr and read(row.addr,272)
+    if bytes then
+        log(string.format('Cluster projectile settings: speed=%s, field_34=%s, field_38=%s, explosion_delay=%s, impact=%d, expire=%d; field names do not establish timer semantics',
+            tostring(scalar(bytes,0x20)),tostring(scalar(bytes,0x34)),tostring(scalar(bytes,0x38)),
+            tostring(scalar(bytes,0x98)),u32(bytes,0x90),u32(bytes,0x9c)))
+    end
+end
+local function sample_cluster_trace(dt)
+    local trace=S.cluster_trace
+    if not trace then return end
+    if S.phase~='active' or config.bomb~=286 then S.cluster_trace=nil;return end
+    trace.elapsed=trace.elapsed+((type(dt)=='number' and dt>0 and dt<5) and dt or 1/60)
+    if trace.samples>0 and trace.elapsed<0.25 then return end
+    trace.elapsed=0;trace.samples=trace.samples+1
+    local system=ptr(S.base+ADDRESS.projectile_system)
+    if not system then
+        log('Cluster trace: projectile system unavailable; window ended');S.cluster_trace=nil;return
+    end
+    if trace.system and system~=trace.system then
+        log('Cluster trace: projectile system changed; window ended');S.cluster_trace=nil;return
+    end
+    trace.system=system
+    local counter_bytes=read(system+0x30,4)
+    if not counter_bytes then S.cluster_trace=nil;return end
+    local counter=u32(counter_bytes,0)
+    -- A ring cursor can skip busy slots; these are recent candidates, not a spawn count.
+    local advanced=trace.counter and (counter-trace.counter)%4294967296 or 128
+    local count=math.min(advanced,512);local primary,secondary=0,0
+    local examples={};local next_tracked={};local visited={}
+    local function inspect(slot,remembered)
+        if visited[slot] then return end;visited[slot]=true
+        local flags=read(system+0x203c+slot*2,2)
+        if not flags or math.floor(flags:byte(1)/2)%2~=1 then return end
+        local metadata=read(system+0x4d040+slot*0xc8,0xc8)
+        if not metadata then return end
+        local signature=metadata:sub(1,16)..metadata:sub(0x7d,0x88)
+        if remembered and signature~=remembered then return end
+        local damage,impact,expire=u32(metadata,0x0c),u32(metadata,0x7c),u32(metadata,0x80)
+        local kind=damage==234 and impact==0 and expire==417 and 'primary'
+            or damage==32 and impact==162 and expire==0 and 'secondary' or nil
+        if not kind then return end
+        if kind=='primary' then primary=primary+1 else secondary=secondary+1 end
+        local retained=0;for _ in pairs(next_tracked) do retained=retained+1 end
+        if retained>=6 then return end
+        local physics=read(system+0x3040+slot*0x70,0x70)
+        if not physics or ptr(S.base+ADDRESS.projectile_system)~=system
+            or read(system+0x4d040+slot*0xc8,0xc8)~=metadata then return end
+        local position,velocity=vector(physics,0),vector(physics,12)
+        if not position or not velocity then return end
+        next_tracked[slot]=signature
+        examples[#examples+1]=string.format('%s slot=%d source=%d flags=%d pos=(%.1f,%.1f,%.1f) vel=(%.1f,%.1f,%.1f) delay=%s field_34=%s',
+            kind,slot,u32(metadata,8),flags:byte(1)+flags:byte(2)*256,
+            position[1],position[2],position[3],velocity[1],velocity[2],velocity[3],
+            tostring(scalar(physics,0x18)),tostring(scalar(physics,0x34)))
+    end
+    for slot,identity in pairs(trace.tracked) do inspect(slot,identity) end
+    for i=count,1,-1 do inspect((counter-i)%2048) end
+    trace.counter=counter;trace.tracked=next_tracked
+    log(string.format('Cluster trace sample=%d cursor=%u inspected_recent=%d truncated=%s active_primary_observations=%d active_secondary_observations=%d; %s',
+        trace.samples,counter,count,tostring(advanced>512),primary,secondary,table.concat(examples,'; ')))
+    if trace.samples>=40 then log('Cluster trace window complete');S.cluster_trace=nil end
+end
 local function observe_first_flight(key,state,observed)
     observed[key]=true
+    local traced,reason=pcall(start_cluster_trace)
+    if not traced then S.cluster_trace=nil;S.cluster_trace_fault=true;log('Cluster trace stopped: '..tostring(reason)) end
     if (S.flight_observation_count or 0)>=12 then return end
     S.flight_observation_count=(S.flight_observation_count or 0)+1
     local target,current,velocity=vector(state,EAGLE.target),vector(state,EAGLE.position),vector(state,EAGLE.velocity)
@@ -898,6 +981,8 @@ function update(dt,...)
     local ok,err=pcall(tick,dt);if not ok then stop(tostring(err)) end
     local shifted,shift_error=pcall(shift_incoming_targets,dt)
     if not shifted then S.forward_fault=true;log('Forward adjustment stopped: '..tostring(shift_error)) end
+    local traced,trace_error=pcall(sample_cluster_trace,dt)
+    if not traced then S.cluster_trace=nil;S.cluster_trace_fault=true;log('Cluster trace stopped: '..tostring(trace_error)) end
     return old_update(dt,...)
 end
 return S
