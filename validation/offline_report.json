@@ -67,10 +67,8 @@
   },
   "source_sha256": "0b3d5855f4bde06c4661568f8087b68ee80e9134c01b5d77bf366c1cb2a2418f",
   "validation_inputs": {
-    "requirements-dev.txt": "c355c313ec4744320b1e0d22e7e70465d899a48e8c62293578ddff95d0672c6b",
+    "requirements-dev.txt": "0236274b9e53afdfab4b1f38729660cfe1f7b809e37959199ac1cb3d7f0f819f",
     "src/core.lua": "0b3d5855f4bde06c4661568f8087b68ee80e9134c01b5d77bf366c1cb2a2418f",
-    "src/core_v0.1.0_FAILED.lua": "cb3cdf1dd40789d9dedc5e432fc93b3bb928375147b53009020edac8dd7e1909",
-    "src/core_v0.2.0_FAILED_FAR_IMPACTS.lua": "369ea0c65bb12449e7c37df7a5bd77b27c828dc22fd6f119e1a50244a81bde3f",
     "tests/cluster_fuse_checks.py": "f4533e0a156c0fa55927eb33969b60ac51179692fc06e01cb48b4461a6206fed",
     "tests/cluster_trace_checks.py": "5dd92ba5aeb563d35ba8f52af2fc203051ff42cb6ca6838e6fe5a95c15f7bd17",
     "tests/code_checks.py": "c9dceb3e4317c9159bd8c9c8c4741ca438a6c17a5cce9a46f4497a8e67c452b4",
@@ -86,21 +84,8 @@
     "tests/reliability_checks.py": "947e6480cee8dad47dbf9be7cfd56c885633fa71e5b451d77d7e3b461c162fb2",
     "tests/test_runtime.py": "98340fc90e74bbe27847412979512f4c97988f088f21c9d7147c9a5912601382",
     "tests/variant_checks.py": "74fc3b3192674b4e193ba6cb46ca00a1647dbe37814655c002c64c977df64494",
-    "tools/build.py": "450789e76bf609db2c81909c9cf4a9b31332de6c5a5090143cd50e48fc548952",
-    "tools/capture_ballistics.py": "8f114692e15d15f9ec57b44a54aa07d995da7cfb1d46c2b9916e7ec78a5ce3c5",
-    "tools/capture_eagles.py": "4388c76f926ffb72b3ab536185c119c22452f7c530d55fe5caa21f8a602838d5",
-    "tools/capture_live.py": "e9e8d5b508a7b6caffb9fd842aca54bb9de7b5b8d455c3c622f1d50162d5b618",
-    "tools/capture_projectiles.py": "f45f76838bbdd4d3204c266f278b9d8870303863287e82b3fcbd4942926cec3c",
-    "tools/eagle_research.py": "d0929bbfa1ffb7084279b1938b236679faeeb3483b77ef2fb0898ff6ad1b5d23",
-    "tools/inspect_dump.py": "f8b8e93e07ace2459d61e9f937ba0f0b223035ec78b74ea6739cb5dccbe28e69",
-    "tools/install_test.py": "7d0e6f78c278c1c69ae86aee7ef58002f4af7226966013734efbede3459f5476",
-    "tools/isolate_presets.py": "93ebe692ff87d7065a4fda8704a4628c9c97aa8c823d536477dbec3960a6ce5f",
-    "tools/preset_bytecode.py": "cfb376a3566f3d55bf3a0de0a9cf9840e869cc9a6e526c5a4d15c6d96f15a268",
-    "tools/remove_test.py": "365d553a32735b32a475d4d2d771f56b2f397274857f65405efed3ed3ba444e4",
-    "tools/repair_manager.py": "170ab2f78ce54e1ef2429d7611cdc3df1d0e25cb458b38d1bc95cf5f3748511f",
-    "tools/test_height.py": "d70a892c28c5d23e1b519cda1789689707e1ccc4cd48e580052eb3fc07a8fbc4",
-    "tools/test_rearm_config.py": "769a95272cf9b32da8f176b631b65a016c720e9a64d695c0974f3546515e9241",
-    "tools/verify_capture.py": "73ab1884b36cb05f877dfc416077852cea0830589bde9b70fc91ebc65af5752c"
+    "tools/build.py": "2c32fcd855c18398c2970c3adcd802e89627cb65b98e81aba06192a0649e4033",
+    "tools/preset_bytecode.py": "cfb376a3566f3d55bf3a0de0a9cf9840e869cc9a6e526c5a4d15c6d96f15a268"
   },
   "performance_counters": {
     "initialization": {

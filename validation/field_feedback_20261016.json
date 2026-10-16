@@ -82,5 +82,20 @@
       "call_delay"
     ],
     "multiplayer_verified": false
+  },
+  "v060_user_acceptance": {
+    "version": "0.6.0",
+    "date": "2026-10-16",
+    "evidence_type": "user_report",
+    "user_report": "可以了没有问题",
+    "functionality_accepted": true,
+    "menu_text_accepted": true,
+    "independent_multiplayer_test": false
+  },
+  "release": {
+    "version": "0.6.0",
+    "scope": "Repository cleanup, current documentation and packaging; confirmed core.lua unchanged",
+    "gameplay_confirmation": "User-reported, not independently observed",
+    "multiplayer_verified": false
   }
 }
