@@ -94,7 +94,7 @@ def run(Scenario,BASE,ROOT,eagle_state):
                 assert not s.state[b'cluster_fuse_changes'],mode
                 if mode=='row_changed':assert not any(system<=p<system+0x100000 for p,_ in s.mem.writes[len(before):])
                 else:assert s.mem.writes==before,mode
-                assert s.state[b'phase']==(b'stopped' if mode=='row_changed' else b'active')
+                assert s.state[b'phase']==(b'suspended' if mode=='row_changed' else b'active')
             finally:s.close()
 
     def concurrency_and_failure():
@@ -116,7 +116,7 @@ def run(Scenario,BASE,ROOT,eagle_state):
                     s.mem.read=race
                 before=list(s.mem.writes);s.tick()
                 if mode=='partial':
-                    assert s.state[b'phase']==b'stopped' and 'Cluster fuse write failed' in log(s)
+                    assert s.state[b'phase']==b'suspended' and 'Cluster fuse write failed' in log(s)
                     assert all(abs(t-.3)<1e-6 for t in timers(s))
                     assert s.state[b'cleanup_complete'] is True
                 else:
@@ -216,7 +216,7 @@ def run(Scenario,BASE,ROOT,eagle_state):
         try:
             seed(s);s.tick();near_height(s);before=timers(s)
             s.mem.fail_address=system+0x3040+10*0x70+0x34;frame(s)
-            assert s.state[b'phase']==b'stopped' and s.state[b'cleanup_complete'] is True
+            assert s.state[b'phase']==b'suspended' and s.state[b'cleanup_complete'] is True
             assert abs(timers(s)[10]-before[10])<1e-6
             assert all(abs(t-.35)<1e-6 for t in timers(s)[:10])
             assert all(abs(t-before[i])<1e-6 for i,t in enumerate(timers(s)) if i>=10)

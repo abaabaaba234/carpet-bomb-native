@@ -1,11 +1,11 @@
 {
-  "version": "0.6.0",
+  "version": "0.6.1",
   "game_build": 25480438,
   "tests_passed": [
     "independent captured code windows match runtime anchors and reject the v0.5.4 concatenated-anchor regression",
     "default carrying, repaired payload, original Eagle rows preserved and disable restoration",
     "independent charges/cooldown, preserved native identity and configuration validation",
-    "unsupported build, existing carrier link and executable pages refused",
+    "existing carrier link and executable pages refused",
     "partial write rollback",
     "competing writer preservation and restoration",
     "stale carrier identity refused",
@@ -31,17 +31,17 @@
     "beacon extra delay: zero leaves other owners alone, restore relinquishes ownership and invalid config is atomic",
     "beacon extra delay: external ownership, partial write and disable failure restore the native grant transaction",
     "beacon extra delay: independently captured native base-delay reader and deadline scheduler disassemble correctly",
-    "menu contract: bilingual descriptions, order, language migration/refresh, cache authority, pending edits and restart",
-    "menu contract: valid ranges, invalid callback rejection, manager restoration and disable restoration",
-    "menu contract: sentinel sources and simultaneous language/parameter changes",
-    "menu contract: new payload choices and approach direction, bilingual refresh, source restore, save failure and restart",
+    "real menu: bilingual descriptions, order, language migration/refresh, cache authority, pending edits and restart",
+    "real menu: valid ranges, invalid callback rejection, manager restoration and disable restoration",
+    "real menu: sentinel sources and simultaneous language/parameter changes",
+    "real menu: new payload choices and approach direction, bilingual refresh, source restore, save failure and restart",
     "optional menu version/registration/callback/sync failures and config save failure",
-    "stopped runtime rejects all menu callbacks without persisting or reviving writes",
-    "restore retains failures, preserves foreign values and stops after three cleanup rounds",
+    "suspended runtime accepts persisted menu changes without overwriting the conflicting owner",
+    "restore retains foreign values and backs off after three early cleanup rounds",
     "failed transaction rollback retries before restoring original owned fields",
     "cleanup refuses moved records and subsequent competing writers",
     "page protection and unpublished allocation cleanup retry safely",
-    "public disable persists, is idempotent and cannot revive a stopped runtime",
+    "public disable persists during suspension without reviving conflicting writes",
     "atomic config write/flush/close/replace failures preserve original bytes and settings",
     "shared schema rejects invalid presets and malformed config without resetting on missing files",
     "failed flight-target restoration retries only while the same aircraft identity remains",
@@ -60,53 +60,86 @@
     "cluster height: replay v0.5.8 live positions and timers; shorten to native 0.35s before the observed low-altitude delay",
     "cluster height: changed source/timer, ring reuse, missing reads, disable, moved systems and bounded lifetime",
     "cluster height: partial shortening restores failed timer and stops safely",
-    "cluster height: 60 coalesced rows stay within read budget; 128-slot cap enforced"
+    "cluster height: 60 coalesced rows stay within read budget; 128-slot cap enforced",
+    "lifecycle: changed version metadata accepted; wrong architecture, bounds and code rejected",
+    "lifecycle: at most two tables and bounded memory reads per preparation frame; publication last",
+    "lifecycle: ship grant retained with zero aircraft/projectile polling; mission exit drops tracking",
+    "lifecycle: production diagnostics default off without disabling forward adjustment",
+    "lifecycle: transient startup recovers; competing values retained until ownership is safe",
+    "lifecycle: moved stratagem/projectile rows revalidate without dereferencing retired records",
+    "lifecycle: moved component table repairs missing alias and reuses published private Eagle",
+    "lifecycle: replaced payload root rebuilds one bounded generation",
+    "lifecycle: partial menu registration/binding/sync retries without duplicate callbacks",
+    "lifecycle: late loader/update, retryable marker and callback trailing nil results"
   ],
   "validation_context": {
-    "menu_provider_sha256": null
+    "menu_provider_sha256": "36c7ae97bd480613d7f7a994da1d385d8977d8e6d9f7d4a8842e8d8c83594530"
   },
-  "source_sha256": "0b3d5855f4bde06c4661568f8087b68ee80e9134c01b5d77bf366c1cb2a2418f",
+  "source_sha256": "b01edd0e324e3a2cc5b098645013d821feaa715198631bb26925770dbaa1fb4c",
   "validation_inputs": {
     "requirements-dev.txt": "0236274b9e53afdfab4b1f38729660cfe1f7b809e37959199ac1cb3d7f0f819f",
-    "src/core.lua": "0b3d5855f4bde06c4661568f8087b68ee80e9134c01b5d77bf366c1cb2a2418f",
-    "tests/cluster_fuse_checks.py": "f4533e0a156c0fa55927eb33969b60ac51179692fc06e01cb48b4461a6206fed",
-    "tests/cluster_trace_checks.py": "5dd92ba5aeb563d35ba8f52af2fc203051ff42cb6ca6838e6fe5a95c15f7bd17",
+    "src/core.lua": "b01edd0e324e3a2cc5b098645013d821feaa715198631bb26925770dbaa1fb4c",
+    "tests/cluster_fuse_checks.py": "3772f7f403d5cbbd03c3a3a596bf513c3794469b8e7c962dbb0c886c3624db5e",
+    "tests/cluster_trace_checks.py": "537522da0c548db014eb7ee637cf1dae19181cc9a5a369ef5959f1ce98fada22",
     "tests/code_checks.py": "c9dceb3e4317c9159bd8c9c8c4741ca438a6c17a5cce9a46f4497a8e67c452b4",
-    "tests/delay_checks.py": "3f18e5cf7b0cdb90c0c03d875f5807427ee12a1da765f7197a379a7ffac03790",
+    "tests/delay_checks.py": "7c966173fe51b544e59c60f5d03f61f7bc92021e2643e8c8bf02ab4f4baa909c",
     "tests/fixtures/bomb_variants_build25480438.json": "65627b1e5f456140c4f65a2396a18e7df42ee45186d9323f44c4396fe15f6853",
     "tests/fixtures/cluster_ballistics_build25480438.json": "eff397ed4dacd6bb33d69fa3efb3dcc25ed22d89e0d07545f9cc4d133df93e46",
     "tests/fixtures/code_windows_build25480438.json": "f1d3582110cbf1ddf19493432a1e7195d870199b71c0c607e8034cf3a6465e84",
     "tests/fixtures/payload_tables_build25480438.json": "51b17c0a0b0c4cc888aabefa343355b9f144e09f4a6e8b2443ec1b4eb8880ac6",
     "tests/fixtures/projectiles_build25480438.json": "317c7432fbfab1ec303e9e280377e3eedb0c1527e2446fb8905c2866e6fed379",
     "tests/fixtures/stratagems_build25480438.json": "1d07acc402ab652c303fc12f1255146aa5972c3062cc5cef680ca58c5a52170e",
-    "tests/flight_observation_checks.py": "85cdf11b0c48eb2289318b6aedde4a9cc747c6ff9638e52b9514878eb5dee12d",
-    "tests/menu_checks.py": "afd842ee0b62fbaf3fd9b8e196c177cd143e33cdfcb54e7e9b2fb0e67c0350f1",
-    "tests/reliability_checks.py": "947e6480cee8dad47dbf9be7cfd56c885633fa71e5b451d77d7e3b461c162fb2",
-    "tests/test_runtime.py": "98340fc90e74bbe27847412979512f4c97988f088f21c9d7147c9a5912601382",
-    "tests/variant_checks.py": "74fc3b3192674b4e193ba6cb46ca00a1647dbe37814655c002c64c977df64494",
-    "tools/build.py": "2c32fcd855c18398c2970c3adcd802e89627cb65b98e81aba06192a0649e4033",
+    "tests/flight_observation_checks.py": "cc1c1d30e681568afada40ee12491cd14c02afe49b2ac68a4d14f71185fa24d1",
+    "tests/lifecycle_checks.py": "b15b7218e40986a1572cd86bedcc041beb03d23964dc48cdc23a97db9e82df05",
+    "tests/menu_checks.py": "7005221a8ac5aee25ee26bfab6fbc300db28944cc47b6bc24171b40e0ddbeb5d",
+    "tests/reliability_checks.py": "96b6b028e1c11ed4351808851d3ce768f946d6340359471beae5a45831f1406d",
+    "tests/test_runtime.py": "b45bd5606e8b9e20298149dcbd402224c21c41eb1a95dedc5a445b5850325d8c",
+    "tests/variant_checks.py": "a3df5e1a4dc1ff7bfd50c9970bef2c30301db5df5f69f93c2aa9b2d4d6fd9e2b",
+    "tools/build.py": "1287fcc39e6330327cb3a2a95aa4b9f12a15c9d3c4f1ff9ae73fb7a22b978cf5",
     "tools/preset_bytecode.py": "cfb376a3566f3d55bf3a0de0a9cf9840e869cc9a6e526c5a4d15c6d96f15a268"
   },
   "performance_counters": {
     "initialization": {
-      "rpm_calls": 296,
-      "bytes": 13186
+      "rpm_calls": 428,
+      "bytes": 14334
     },
     "steady_100_ticks": {
-      "rpm_calls": 5400,
-      "bytes": 69200
+      "rpm_calls": 5600,
+      "bytes": 70400
     },
     "delayed_10_ticks": {
-      "rpm_calls": 378,
-      "bytes": 9066,
+      "rpm_calls": 510,
+      "bytes": 10018,
       "allocations": 0
+    },
+    "preparation_frames": {
+      "frames": 9,
+      "maximum_rpm_per_frame": 169,
+      "rpm_by_frame": [
+        75,
+        19,
+        25,
+        21,
+        22,
+        27,
+        31,
+        38,
+        169
+      ]
+    },
+    "ship_idle_6_seconds": {
+      "rpm_calls": 106,
+      "bytes": 1160,
+      "eagle_manager_reads": 0,
+      "projectile_system_reads": 0,
+      "config_file_reads": 1
     }
   },
-  "test_group_count": 59,
+  "test_group_count": 69,
   "landing_diagnosis": {
-    "diagnostic_build": true,
+    "diagnostic_build": false,
     "reported_longitudinal_landing_issue_fixed": false,
-    "observations": "first 12 native aircraft; first 3 changed unmatched descriptor groups; two read-only cluster windows, 40 samples each, at most 512 recent slots and 6 retained examples per sample",
+    "observations": "off by default; diagnostics=1 enables bounded first-flight and cluster windows; mission exit ends dynamic tracking",
     "cluster_invisibility_fixed": true,
     "cluster_fuse_candidate_implemented": true,
     "gameplay_parameters_changed": true,
@@ -115,7 +148,7 @@
     "cluster_bomblets_per_primary": 8,
     "live_fix_verification": false,
     "user_v059_feedback": "User reports cluster timing is now just right",
-    "user_v0510_feedback": "User confirms functionality works, including extra delay; screenshots show unsupported range punctuation. v0.6.0 changes text and version only.",
+    "user_v0510_feedback": "Historical feedback for v0.5.10/v0.6.0 only; v0.6.1 lifecycle changes have not been tested in game.",
     "beacon_delay": {
       "extra_seconds_range": [
         0,
@@ -139,14 +172,15 @@
     "fresh_in_process_verification": false
   },
   "menu_api_verification": {
-    "provider": "API contract fixture",
-    "provider_sha256": null,
+    "provider": "external version2 source",
+    "provider_sha256": "36c7ae97bd480613d7f7a994da1d385d8977d8e6d9f7d4a8842e8d8c83594530",
     "registered_rows": 14,
     "first_row": "Language",
     "native_ui_hook_executed": false
   },
   "preset_combinations": 631800,
   "preset_modules_checked": 55,
+  "runtime_compatibility": "version-independent PE architecture/bounds, code anchors and data identity; reference build only",
   "in_game_loader_verified": false,
   "default_carry_verified": false,
   "in_game_bombing_verified": false,

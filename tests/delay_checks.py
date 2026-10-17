@@ -64,7 +64,7 @@ def run(Scenario,BASE,ROOT):
                 elif stage=='after':s.mem.put(address,F(12));s.tick()
                 elif stage=='disable_partial':
                     s.mem.fail_address=address;s.cfg('enabled=0\n')
-                assert s.state[b'phase']==b'stopped'
+                assert s.state[b'phase']==b'suspended'
                 assert s.r(33,0,400)==s.originals[33]
                 assert s.mem.read(address,4)==F(12 if stage in ('before','after') else 0)
             finally:s.close()

@@ -36,18 +36,18 @@ def run(Scenario,BASE,ROOT):
                 if mode=='donor_angle':
                     table=next(t for t in s.tables if t['row']['name']=='EagleComponentData')
                     s.mem.put(table['p']+320+152+28,F(45));s.tick()
-                    assert s.state[b'phase']==b'stopped' and s.r(33,0xc8,4)==U(0)
+                    assert s.state[b'phase']==b'suspended' and s.r(33,0xc8,4)==U(0)
                     continue
                 s.tick();row=private(s)
                 if mode=='partial':
                     s.mem.fail_address=row+28;s.cfg('direction=90\n')
-                    assert s.state[b'phase']==b'stopped' and s.mem.read(row+28,4)==F(90)
+                    assert s.state[b'phase']==b'suspended' and s.mem.read(row+28,4)==F(90)
                 elif mode=='external':
                     s.mem.put(row+28,F(45));s.tick()
-                    assert s.state[b'phase']==b'stopped' and s.mem.read(row+28,4)==F(45)
+                    assert s.state[b'phase']==b'suspended' and s.mem.read(row+28,4)==F(45)
                 else:
                     s.mem.fail_address=row+28;s.cfg('enabled=0\n')
-                    assert s.state[b'phase']==b'stopped' and s.mem.read(row+28,4)==F(90)
+                    assert s.state[b'phase']==b'suspended' and s.mem.read(row+28,4)==F(90)
                 assert s.r(33,0,400)==s.originals[33]
             finally:s.close()
 
@@ -70,7 +70,7 @@ def run(Scenario,BASE,ROOT):
                         if mode=='moved':s.mem.put(slot,Q(0x77770000))
                         else:s.mem.put(s.address[t]+0xa8,Q(1234))
                         s.tick()
-                    assert s.state[b'phase']==b'stopped' and s.r(33,0,400)==s.originals[33]
+                    assert s.state[b'phase']==b'suspended' and s.r(33,0,400)==s.originals[33]
                     assert s.r(t,0xa8,8)==(Q(1234) if mode in ('package','runtime_package') else s.originals[t][0xa8:0xb0])
                 finally:s.close()
         for stage in ('startup','active'):
@@ -78,7 +78,7 @@ def run(Scenario,BASE,ROOT):
             try:
                 if stage=='active':s.tick()
                 address,raw=s.projectiles[131];s.mem.put(address+0x90,U(999));s.tick()
-                assert s.state[b'phase']==b'stopped' and s.r(33,0,400)==s.originals[33]
+                assert s.state[b'phase']==b'suspended' and s.r(33,0,400)==s.originals[33]
             finally:s.close()
 
     def reference_dependency_chain():

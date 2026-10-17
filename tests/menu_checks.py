@@ -243,18 +243,18 @@ def run(Scenario,SOURCE,ROOT):
         finally:s.close()
 
     def menu_failures_and_save_failures():
-        failures=[b'ModOptionsMenu={version=1}',b'ModOptionsMenu={version=2}',
-            b'''ModOptionsMenu={version=2,register_option=function()return false,'registration rejected'end,
+        failures=[b'ModOptionsMenu={api=1,version=1}',b'ModOptionsMenu={api=1,version=2}',
+            b'''ModOptionsMenu={api=1,version=2,register_option=function()return false,'registration rejected'end,
             on_change=function()return true end,get=function()end,set=function()return true end}''',
-            b'''ModOptionsMenu={version=2,register_option=function()return true end,
+            b'''ModOptionsMenu={api=1,version=2,register_option=function()return true end,
             on_change=function()return false,'callback rejected'end,get=function()end,set=function()return true end}''',
-            b'''ModOptionsMenu={version=2,register_option=function()return true end,
+            b'''ModOptionsMenu={api=1,version=2,register_option=function()return true end,
             on_change=function()return true end,get=function()end,set=function()return false,'sync rejected'end}''']
         for source in failures:
             s=Scenario()
             try:
                 s.lua.execute(source);s.tick();assert s.state[b'phase']==b'active'
-                log=s.state[b'status'];s.tick();assert s.state[b'status']==log
+                s.tick();assert s.state[b'menu_registered'] is not True and s.state[b'phase']==b'active'
                 s.cfg('enabled=0\nuses=3\n');assert s.state[b'phase']==b'disabled'
             finally:s.close()
         s=Scenario()
@@ -273,13 +273,15 @@ def run(Scenario,SOURCE,ROOT):
         try:
             m=load_menu(s);s.tick()
             s.mem.put(s.address[103]+0x68,struct.pack('<f',77));s.tick()
-            assert s.state[b'phase']==b'stopped'
+            assert s.state[b'phase']==b'suspended'
             before=snapshot(s);saved=file(s);writes=len(s.mem.writes)
             callbacks=m[b'state'][b'callbacks']
             for key,value in [('enabled',False),('enabled',True),('uses',9),('language',2)]:
                 callbacks[PREFIX+key.encode()][1](value)
             s.tick();s.tick()
-            assert snapshot(s)==before and file(s)==saved and len(s.mem.writes)==writes
+            assert s.state[b'config'][b'uses']==9 and s.state[b'config'][b'language']==b'en'
+            assert file(s)!=saved and len(s.mem.writes)==writes
+            assert s.r(103,0x68,4)==struct.pack('<f',77)
         finally:s.close()
 
     passed=[]
@@ -289,7 +291,7 @@ def run(Scenario,SOURCE,ROOT):
         ('real menu: sentinel sources and simultaneous language/parameter changes',source_modes_and_simultaneous_changes),
         ('real menu: new payload choices and approach direction, bilingual refresh, source restore, save failure and restart',payload_direction_and_restart),
         ('optional menu version/registration/callback/sync failures and config save failure',menu_failures_and_save_failures),
-        ('stopped runtime rejects all menu callbacks without persisting or reviving writes',stopped_callbacks)]:
+        ('suspended runtime accepts persisted menu changes without overwriting the conflicting owner',stopped_callbacks)]:
         name=name if provider is not None else name.replace('real menu:', 'menu contract:')
         fn();passed.append(name);print('PASS',name)
     return passed

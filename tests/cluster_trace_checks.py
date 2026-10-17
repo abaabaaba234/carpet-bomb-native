@@ -27,7 +27,7 @@ def run(Scenario,BASE,eagle_state):
     def start(s):eagle_state(s,attacked=1);s.tick()
 
     def read_only_and_late_selection():
-        s=Scenario({'bomb':286,'forward':80,'direction':180})
+        s=Scenario({'bomb':286,'forward':80,'direction':180},diagnostics=True)
         try:
             s.tick();setup(s,2);a=slot(s,0);b=slot(s,1,'secondary')
             # The original first-flight log cap must not suppress the cluster trace.
@@ -50,7 +50,7 @@ def run(Scenario,BASE,eagle_state):
         finally:s.close()
 
     def ring_bounds_and_lifetime():
-        s=Scenario({'bomb':286,'forward':0})
+        s=Scenario({'bomb':286,'forward':0},diagnostics=True)
         try:
             s.tick();setup(s,0xffffffff);start(s)
             slot(s,2047);slot(s,0,'secondary');s.mem.put(system+0x30,U(1));s.tick()
@@ -74,7 +74,7 @@ def run(Scenario,BASE,eagle_state):
 
     def failure_isolation_and_idle_cost():
         for mode in ('missing','replaced','exception','start_exception','disabled','other_bomb'):
-            s=Scenario({'bomb':192 if mode=='other_bomb' else 286,'forward':0})
+            s=Scenario({'bomb':192 if mode=='other_bomb' else 286,'forward':0},diagnostics=True)
             try:
                 s.tick()
                 if mode!='missing':setup(s)

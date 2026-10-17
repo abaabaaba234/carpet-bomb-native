@@ -15,7 +15,7 @@ def run(Scenario,BASE,eagle_state):
                     failures[0]-=1;s.mem.writes.append((address,data));return False
                 return write(address,data)
             s.mem.write=injected;s.mem.put(s.address[103]+0x68,F(77));s.tick()
-            assert s.state[b'phase']==b'stopped' and len(s.state[b'owned'])==2
+            assert s.state[b'phase']==b'suspended' and len(s.state[b'owned'])==2
             assert s.r(103,0x50,4)==U(3)
             s.tick();assert s.r(103,0x50,4)==U(3)
             s.tick();assert s.r(103,0x50,4)==original
@@ -35,7 +35,7 @@ def run(Scenario,BASE,eagle_state):
                     failures[0]-=1;s.mem.writes.append((address,data));return False
                 return write(address,data)
             s.mem.write=injected;s.mem.fail_address=p;s.cfg('uses=4\n')
-            assert s.state[b'phase']==b'stopped' and len(s.state[b'recovery'])==1
+            assert s.state[b'phase']==b'suspended' and len(s.state[b'recovery'])==1
             assert s.state[b'recovery'][1][b'original']==U(3)
             s.tick()
             assert not len(s.state[b'recovery']) and s.r(103,0x50,4)==s.originals[103][0x50:0x54]
@@ -55,7 +55,8 @@ def run(Scenario,BASE,eagle_state):
                 else:s.mem.put(p,U(999))
                 writes=len(s.mem.writes);s.tick();s.tick()
                 assert not any(address==p for address,_ in s.mem.writes[writes:])
-                assert len(s.state[b'owned'])>0 and s.state[b'cleanup_attempts']==3
+                if mode=='foreign':assert len(s.state[b'owned'])>0 and s.state[b'cleanup_attempts']==3
+                else:assert s.state[b'retired']>0
             finally:s.close()
 
     def protection_and_free_retry():
@@ -67,7 +68,7 @@ def run(Scenario,BASE,eagle_state):
                 if value==2 and failures[0]:failures[0]-=1;return 0
                 return protect(p,n,value)
             s.mem.protect=injected;s.tick()
-            assert s.state[b'phase']==b'stopped' and s.mem.page_protection(table['p'])==4
+            assert s.state[b'phase']==b'suspended' and s.mem.page_protection(table['p'])==4
             assert list(s.state[b'protection_pending'].keys())
             s.tick();assert s.mem.page_protection(table['p'])==2
             assert not list(s.state[b'protection_pending'].keys())
@@ -93,9 +94,9 @@ def run(Scenario,BASE,eagle_state):
             assert len(s.mem.writes)==writes
             s.cfg('enabled=1\n');assert s.state[b'phase']==b'active'
             s.mem.put(s.address[103]+0x68,F(77));s.tick()
-            result=s.state[b'disable']();assert result[0] is False
+            result=s.state[b'disable']();assert result is True
             writes=len(s.mem.writes);s.cfg('enabled=1\nuses=9\n');s.tick();s.tick()
-            assert s.state[b'phase']==b'stopped'
+            assert s.state[b'phase']==b'suspended'
             assert not any(data==U(103) for _,data in s.mem.writes[writes:])
             assert s.r(103,0x68,4)==F(77)
         finally:s.close()
@@ -151,7 +152,7 @@ def run(Scenario,BASE,eagle_state):
                         failures[0]-=1;s.mem.writes.append((address,data));return False
                     return write(address,data)
                 s.mem.write=injected;s.mem.fail_address=p;s.tick()
-                assert s.state[b'phase']==b'stopped' and len(s.state[b'recovery'])==1
+                assert s.state[b'phase']==b'suspended' and len(s.state[b'recovery'])==1
                 if mode=='reused':s.mem.put(descriptor+12,U(12345))
                 writes=len(s.mem.writes);s.tick()
                 if mode=='retry':
@@ -163,11 +164,11 @@ def run(Scenario,BASE,eagle_state):
 
     passed=[]
     for name,fn in [
-        ('restore retains failures, preserves foreign values and stops after three cleanup rounds',restore_retry),
+        ('restore retains foreign values and backs off after three early cleanup rounds',restore_retry),
         ('failed transaction rollback retries before restoring original owned fields',transaction_retry),
         ('cleanup refuses moved records and subsequent competing writers',identity_and_writer_guards),
         ('page protection and unpublished allocation cleanup retry safely',protection_and_free_retry),
-        ('public disable persists, is idempotent and cannot revive a stopped runtime',public_disable_and_stop),
+        ('public disable persists during suspension without reviving conflicting writes',public_disable_and_stop),
         ('atomic config write/flush/close/replace failures preserve original bytes and settings',atomic_configuration),
         ('shared schema rejects invalid presets and malformed config without resetting on missing files',schema_and_missing_file),
         ('failed flight-target restoration retries only while the same aircraft identity remains',flight_restore_retry)]:

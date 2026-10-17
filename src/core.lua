@@ -1,24 +1,37 @@
 -- HD2-Addon: mods/carpet_bomb_native/core
 -- Native CarpetBomb grant and missing payload reconstruction.
 local previous=rawget(_G,'CarpetBombNative')
-if previous then return previous end
-local S={version='0.6.0',phase='waiting',elapsed=0,owned={},writes=0,allocations={},projectiles={},
-    recovery={},protection_pending={},cleanup_attempts=0}
-rawset(_G,'CarpetBombNative',S)
+if previous then
+    if previous.version~='0.6.1' then pcall(print,'[CarpetBombNative] Another version already owns the update chain: '..tostring(previous.version)..'; remove duplicate packages and restart')end
+    return previous
+end
+local S={version='0.6.1',phase='waiting',elapsed=0,clock=0,owned={},writes=0,allocations={},projectiles={},
+    recovery={},protection_pending={},cleanup_attempts=0,payload_history={},private_owned={}}
+local function boot()
 local ffi=require('ffi')
 local ROOT=(os.getenv('LOCALAPPDATA') or '')..'\\CowboyBingus\\Helldivers2\\Logs\\'
 local LOG=ROOT..'CarpetBombNative.log'
 local CFG=ROOT..'CarpetBombNative.cfg'
 local kernel={}
 local first=true
+local recent_logs={}
 local function log(message)
-    S.status=message;pcall(print,'[CarpetBombNative] '..message)
-    local f=io.open(LOG,first and 'w' or 'a')
-    if f then first=false;f:write(os.date('%H:%M:%S ')..message..'\n');f:close() end
+    S.status=message
+    if recent_logs[message] and S.clock-recent_logs[message]<30 then return end
+    local n=0;for key,time in pairs(recent_logs)do
+        if S.clock-time>=30 then recent_logs[key]=nil else n=n+1 end
+    end
+    if n>=64 then return end
+    recent_logs[message]=S.clock;pcall(print,'[CarpetBombNative] '..message)
+    pcall(function()
+        local f=io.open(LOG,first and 'w' or 'a')
+        if f then first=false;pcall(function()f:write(os.date('%H:%M:%S ')..message..'\n')end);pcall(function()f:close()end)end
+    end)
 end
 local SCHEMA={
     language={default='zh',choices={zh=true,en=true}},
     enabled={default=1,min=0,max=1},
+    diagnostics={default=0,min=0,max=1},
     uses={default=2,min=1,max=100,sentinel=-1,manager=true},
     cooldown={default=15,min=0,max=1800,manager=true},
     rearm={default=-1,min=0,max=1800,sentinel=-1,manager=true},
@@ -51,7 +64,7 @@ local config={};for k,v in pairs(defaults) do config[k]=v end
 S.config=config
 local last_text
 local config_values={}
-local config_keys={'language','enabled','uses','cooldown','rearm','bomb','bomb_count','forward','direction','call_delay'}
+local config_keys={'language','enabled','diagnostics','uses','cooldown','rearm','bomb','bomb_count','forward','direction','call_delay'}
 local function atomic_config(text)
     local temporary=CFG..'.tmp'
     local f,reason=io.open(temporary,'wb')
@@ -80,14 +93,14 @@ local function read_config()
           ..'# bomb=170 (Airstrike), 192 (200 kg), 239 (500 kg), 286 (Cluster), 141 (Napalm), 188 (Gas).\n'
           ..'# direction=90 (left/right), 180 (front/back), relative to the throw.\n'
           ..'# bomb_count is fixed at20; forward=0..300 metres along incoming flight direction.\n'
-          ..'language=zh\nenabled=1\nuses=manager\ncooldown=manager\nrearm=manager\nbomb=manager\nbomb_count=manager\nforward=manager\ndirection=manager\ncall_delay=manager\n'
+          ..'language=zh\nenabled=1\ndiagnostics=0\nuses=manager\ncooldown=manager\nrearm=manager\nbomb=manager\nbomb_count=manager\nforward=manager\ndirection=manager\ncall_delay=manager\n'
         atomic_config(initial);f=io.open(CFG,'rb')
     end
     local text='';if f then text=f:read('*a');f:close() end
     if not text then return false end
     if text==last_text then return false end
     local next_config={};for k,v in pairs(defaults) do next_config[k]=v end
-    local next_values={language='zh',enabled=1,uses='manager',cooldown='manager',rearm='manager',
+    local next_values={language='zh',enabled=1,diagnostics=0,uses='manager',cooldown='manager',rearm='manager',
         bomb='manager',bomb_count='manager',forward='manager',direction='manager',call_delay='manager'}
     for line in text:gmatch('[^\r\n]+') do
         local key,value=line:gsub('^\239\187\191',''):gsub('#.*$',''):match('^%s*([%w_]+)%s*=%s*(.-)%s*$')
@@ -167,7 +180,9 @@ local MENU_TEXT={
         forward_source='Forward offset source',forward_source_description='Use the deployed preset or a custom offset along the incoming flight direction.',
         forward='Strike forward offset (metres)',forward_description='0-300 metres. Applying this slider selects Custom. Only future aircraft change; 0 retains the original target.'},
 }
-local menu_api,menu_blocked
+local menu_api,menu_provider
+local menu_registered,menu_bound,menu_specs={},{},{}
+local menu_retry_at,menu_failures=0,0
 local function menu_text(key)
     return function()return MENU_TEXT[config.language=='en' and 'en' or 'zh'][key]end
 end
@@ -197,7 +212,6 @@ local function menu_sync()
     end
 end
 local function menu_change(key,value)
-    if S.phase=='stopped' then return false,S.stop_reason or 'stopped' end
     local axis=key:gsub('_mode$',''):gsub('_source$','')
     local wanted
     if key=='language' then
@@ -228,10 +242,11 @@ local function menu_change(key,value)
     config_values[axis]=wanted;config[axis]=wanted=='manager' and defaults[axis] or wanted
     local saved,reason=save_config()
     if not saved then config_values[axis]=old_value;config[axis]=old_config;return false,reason end
-    if axis~='language' then S.menu_dirty=true;S.elapsed=1 end
+    if axis~='language' then S.menu_dirty=true;S.elapsed=5 end
     return true
 end
 local function menu_attach(menu)
+    if menu.api~=1 then error('Requires ModOptionsMenu API 1',0)end
     if (tonumber(menu.version) or 1)<2 then error('Requires ModOptionsMenu version2',0)end
     for _,method in ipairs{'register_option','on_change','get','set'}do
         if type(menu[method])~='function' then error('Missing menu API '..method,0)end
@@ -249,7 +264,7 @@ local function menu_attach(menu)
     }
     for _,row in ipairs(rows)do
         local key,kind=row[1],row[2]
-        local option={type=kind,mod=menu_title,label=key=='language' and 'Language' or menu_text(key),
+        local option=menu_specs[key] or {type=kind,mod=menu_title,label=key=='language' and 'Language' or menu_text(key),
             default=values[key],description=menu_description(key=='language' and 'language_description' or key..'_description')}
         if kind=='choice' then
             option.choices={}
@@ -257,23 +272,37 @@ local function menu_attach(menu)
                 option.choices[#option.choices+1]=key=='language' and choice or menu_text(choice)
             end
         elseif kind=='slider' then option.min=SCHEMA[key].min;option.max=SCHEMA[key].max;option.step=1 end
-        menu_checked(menu.register_option('carpet_bomb_native_'..key,option))
+        menu_specs[key]=option
+        if not menu_registered[key] then
+            menu_checked(menu.register_option('carpet_bomb_native_'..key,option));menu_registered[key]=true
+        end
     end
     for _,row in ipairs(rows)do
         local key=row[1]
-        menu_checked(menu.on_change('carpet_bomb_native_'..key,function(value)menu_change(key,value)end))
+        if not menu_bound[key]then
+            menu_checked(menu.on_change('carpet_bomb_native_'..key,function(value)return menu_change(key,value)end));menu_bound[key]=true
+        end
     end
     menu_api=menu;menu_sync();S.menu_registered=true
     log('MODS menu registered (14 options; fixed vanilla quantity)')
 end
 local function menu_step()
-    if menu_blocked then return end
+    local current=rawget(_G,'ModOptionsMenu')
+    if current~=menu_provider then
+        menu_provider=current;menu_api=nil;menu_registered={};menu_bound={};menu_specs={}
+        menu_retry_at=0;S.menu_registered=false
+    end
+    if S.clock<menu_retry_at then return end
     local ok,reason=pcall(function()
         if menu_api then menu_sync();return end
         local menu=rawget(_G,'ModOptionsMenu')
         if type(menu)=='table' then menu_attach(menu)end
     end)
-    if not ok then menu_blocked=tostring(reason);log('Optional MODS menu unavailable: '..menu_blocked)end
+    if not ok then
+        menu_api=nil;S.menu_registered=false;S.menu_error=tostring(reason)
+        menu_failures=math.min(menu_failures+1,6);menu_retry_at=S.clock+math.min(30,2^(menu_failures-1))
+        log('Optional MODS menu unavailable; retrying: '..S.menu_error)
+    else S.menu_error=nil;menu_failures=0 end
 end
 do
     local lib=ffi.load('kernel32')
@@ -290,7 +319,7 @@ do
     }) do
         pcall(ffi.cdef,d[2]..' '..d[1]..d[3]..';')
         local ok,fn=pcall(function()return ffi.cast(d[2]..' (*)'..d[3],lib[d[1]])end)
-        if not ok then S.phase='stopped';log('Cannot bind '..d[1]);return S end
+        if not ok then error('Cannot bind '..d[1])end
         kernel[d[1]]=fn
     end
 end
@@ -335,7 +364,7 @@ end
 -- Verified layout for Steam build 25480438; all offsets are relative to game.dll.
 local BUILD={steam=25480438,timestamp=0x6ab3b43f,image_size=0x4744000}
 local ADDRESS={stratagems=0x37cb600,stratagem_names=0x21d4aa0,projectiles=0x37c7670,
-    payload_root=0x346bf98,eagle_manager=0x3326650,projectile_system=0x347cea8,source_system=0x3326c38}
+    payload_root=0x346bf98,eagle_manager=0x3326650,projectile_system=0x347cea8,source_system=0x3326c38,scene=0x3326340}
 local STRATAGEM={size=0x190,title=0x10,category=0x3c,uses=0x50,call_delay=0x54,cooldown=0x68,
     transport_kind=0x70,transport_secondary=0x94,payload=0x98,payload_count=0xa0,
     resource_package=0xa8,additional_stratagem=0xc8,identity_flag=0xcc,transport_flags=0x104}
@@ -413,8 +442,11 @@ local function check_build()
     if not base or base==0 then return nil end
     local dos=read(base,64)
     if not dos or dos:sub(1,2)~='MZ' then error('Module header differs') end
-    local pe=read(base+u32(dos,60),96)
-    if not pe or pe:sub(1,4)~='PE\0\0' or u32(pe,8)~=BUILD.timestamp or u32(pe,80)~=BUILD.image_size then error('Unsupported game build') end
+    local offset=u32(dos,60)
+    if offset<64 or offset>4000 then error('Invalid PE offset')end
+    local pe=read(base+offset,96)
+    if not pe or pe:sub(1,4)~='PE\0\0' or pe:sub(5,6)~='\100\134'
+        or pe:sub(25,26)~='\11\2' or u32(pe,80)<=ADDRESS.stratagems+4096 then error('Unsupported game layout') end
     for _,a in ipairs(ANCHORS) do
         local bytes=unhex(a[2]);if read(base+a[1],#bytes)~=bytes then error(string.format('Code differs at +0x%X',a[1])) end
     end
@@ -445,7 +477,19 @@ local function owned_prefix(current,before,wanted)
     return false
 end
 local function recover_entry(e)
-    if not entry_valid(e) then e.failure='identity changed';return false end
+    if not entry_valid(e) then
+        -- Detached rows/tables and reused entities no longer belong to this transaction.
+        -- Retire without reading or writing the former allocation.
+        local detached=false
+        if e.record then
+            local p=ptr(S.base+TABLE+e.record.type*8)
+            detached=p and p>=0x10000 and p~=e.record.addr or false
+        end
+        if e.root then local root=ptr(S.base+ADDRESS.payload_root);detached=detached or (root and root>=0x10000 and root~=e.root)end
+        if e.table_slot then local p=ptr(e.table_slot);detached=detached or (p and p>=0x10000 and p~=e.table_address)end
+        if detached then e.failure='identity retired';S.retired=(S.retired or 0)+1;return true end
+        e.failure='identity unavailable';return false
+    end
     local now=read(e.address,#e.original)
     if now==e.original then e.failure=nil;return true end
     if now~=e.last then e.failure=now and 'another writer' or 'unreadable';return false end
@@ -530,15 +574,22 @@ local function hash_slot(hash,capacity)
     return tonumber(value%ffi.new('uint64_t',capacity))
 end
 local EMPTY_HASH=string.rep('\0',8)
-local function find_slot(address,hash,capacity,stride)
+local function find_slot(address,hash,capacity,stride,probe)
+    probe=probe or {}
+    if probe.done then return probe.slot,probe.found,probe.entry end
     local start=hash_slot(hash,capacity)
-    for step=0,capacity-1 do
+    local begin=probe.next or 0
+    for step=begin,math.min(capacity-1,begin+63) do
         local slot=(start+step)%capacity;local entry=read(address+slot*stride,stride)
         if not entry then return nil end
         local key=entry:sub(1,8)
-        if key==hash then return slot,true,entry end
-        if key==EMPTY_HASH then return slot,false,entry end
+        if key==hash or key==EMPTY_HASH then
+            probe.done=true;probe.slot=slot;probe.found=key==hash;probe.entry=entry
+            return slot,probe.found,entry
+        end
+        probe.next=step+1
     end
+    if probe.next<capacity then return nil,nil,nil,true end
     error('Component hash table is full')
 end
 local function release_unpublished()
@@ -557,10 +608,11 @@ local function release_unpublished()
 end
 local function repair_payload()
     if S.repair then return true end
+    S.phase='waiting'
     local root=ptr(S.base+ADDRESS.payload_root);if not root or root<0x10000 then return false end
     local draft=S.repair_draft
     if not draft then
-        draft={root=root,plan={},tables={},next_table=1};S.repair_draft=draft
+        draft={root=root,plan={},tables={},next_table=1,probes={}};S.repair_draft=draft
     end
     if root~=draft.root then error('Payload root changed during preparation') end
     for _,t in ipairs(draft.tables) do
@@ -569,21 +621,37 @@ local function repair_payload()
     local plan,tables=draft.plan,draft.tables
     -- Every required alias is prepared and checked before any published data is changed.
     -- Resume at the missing table; resolved hash slots are never searched again.
-    for i=draft.next_table,#DATA do
+    local first_table=draft.next_table
+    for i=first_table,math.min(#DATA,first_table+1) do
         local d=DATA[i]
         local slot=root+d.offset;local p=ptr(slot);local header=p and read(p-28,28)
         if not header then return false end
-        if header:sub(5,8)~='LDLD' or u32(header,0)~=d.hash or u32(header,12)~=d.hash
-            or u32(header,8)~=1 or u32(header,16)~=d.size or u32(header,20)~=1 then error('Payload datalibrary header differs') end
-        local stride=d.rows==0 and 32 or 16
-        local source,found,donor=find_slot(p,DONOR,d.capacity,stride)
-        if source==nil then return false end
-        if not found then error('Donor payload component missing') end
-        local target,exists,original=find_slot(p,NATIVE,d.capacity,stride)
-        if target==nil then return false end
-        if exists then error('Native payload component already exists; refusing to overwrite') end
-        if d.rows>0 and u32(donor,8)>=d.rows then error('Donor component index differs') end
+        local known_eagle
         if d.offset==EAGLE.component_slot then
+            for _,r in ipairs(S.payload_history)do if r.eagle.table==p then known_eagle=r end end
+        end
+        if header:sub(5,8)~='LDLD' or u32(header,0)~=d.hash or u32(header,12)~=d.hash
+            or u32(header,8)~=1 or u32(header,16)~=(known_eagle and d.size+d.row_size or d.size)
+            or u32(header,20)~=1 then error('Payload datalibrary header differs') end
+        local stride=d.rows==0 and 32 or 16
+        local probes=draft.probes[i] or {donor={},native={}};draft.probes[i]=probes
+        local source,found,donor,busy=find_slot(p,DONOR,d.capacity,stride,probes.donor)
+        if source==nil then S.phase=busy and 'preparing' or 'waiting';return false end
+        if not found then error('Donor payload component missing') end
+        local target,exists,original,target_busy=find_slot(p,NATIVE,d.capacity,stride,probes.native)
+        if target==nil then S.phase=target_busy and 'preparing' or 'waiting';return false end
+        local inherited
+        if exists and not known_eagle then
+            for _,r in ipairs(S.payload_history)do for _,e in ipairs(r.plan)do
+                if e.address==p+target*stride and e.wanted==original then inherited=e end
+            end end
+        end
+        if exists and not known_eagle and not inherited then error('Native payload component already exists; refusing to overwrite') end
+        if d.rows>0 and u32(donor,8)>=d.rows then error('Donor component index differs') end
+        if known_eagle then
+            if not exists or u32(original,8)~=EAGLE.private_row then error('Owned Eagle index changed')end
+            draft.eagle={slot=slot,address=slot,original=pack_ptr(p),wanted=pack_ptr(p),table=p,root=root}
+        elseif d.offset==EAGLE.component_slot then
             local bytes=read_large(p,d.size);if not bytes then return false end
             local ri=u32(donor,8)
             local row=bytes:sub(d.capacity*stride+ri*d.row_size+1,d.capacity*stride+(ri+1)*d.row_size)
@@ -602,37 +670,53 @@ local function repair_payload()
             draft.eagle={slot=slot,address=slot,original=pack_ptr(p),root=root}
         else
             if d.rows==0 and (u64(donor,16)~=22 or u32(donor,24)~=3547464239) then error('Eagle entity component list differs') end
-            plan[#plan+1]={address=p+target*stride,original=original,wanted=NATIVE..donor:sub(9),
+            plan[#plan+1]={address=p+target*stride,original=inherited and inherited.original or original,wanted=NATIVE..donor:sub(9),inherited=inherited~=nil,
                 root=root,table_slot=slot,table_address=p}
         end
-        tables[#tables+1]={slot=slot,original=p}
+        tables[#tables+1]={slot=slot,original=p,donor_address=p+source*stride,donor=donor}
         draft.next_table=i+1
     end
-    if read_large(u64(draft.eagle.original,0),#draft.eagle_original)~=draft.eagle_original then
+    if draft.next_table<=#DATA then S.phase='preparing';return false end
+    if draft.eagle_original and read_large(u64(draft.eagle.original,0),#draft.eagle_original)~=draft.eagle_original then
         error('Eagle donor table changed during preparation')
     end
     -- Allocate only after every table is available. Waiting cannot accumulate copies.
-    local allocation=tonumber(ffi.cast('uintptr_t',kernel.VirtualAlloc(nil,#draft.complete,0x3000,4)))
+    local allocation
+    if not draft.eagle.table then
+    if #S.allocations>=4 then error('Payload generation limit reached; restart required')end
+    allocation=tonumber(ffi.cast('uintptr_t',kernel.VirtualAlloc(nil,#draft.complete,0x3000,4)))
     if not allocation or allocation<0x10000 then error('Payload allocation failed') end
     draft.allocation=allocation;S.allocations[#S.allocations+1]=allocation
     for o=0,#draft.complete-1,512 do
         if not write(allocation+o,draft.complete:sub(o+1,o+512)) then error('Private payload copy failed') end
     end
-    local eagle=draft.eagle;eagle.wanted=pack_ptr(allocation+28);eagle.table=allocation+28
+    draft.eagle.wanted=pack_ptr(allocation+28);draft.eagle.table=allocation+28
+    end
+    local eagle=draft.eagle
     plan[#plan+1]=eagle
-    for _,e in ipairs(plan) do if read(e.address,#e.original)~=e.original or not writable(e.address,#e.wanted) then error('Payload alias conflict or non-writable data') end end
+    for _,e in ipairs(plan) do
+        e.before=read(e.address,#e.original)
+        if (e.before~=e.original and not (e.inherited and e.before==e.wanted))
+            or not writable(e.address,#e.wanted) then error('Payload alias conflict or non-writable data') end
+    end
     if ptr(S.base+ADDRESS.payload_root)~=root then error('Payload root changed before publication') end
-    for _,t in ipairs(tables) do if ptr(t.slot)~=t.original then error('Payload table changed before publication') end end
+    for _,t in ipairs(tables) do
+        if ptr(t.slot)~=t.original or read(t.donor_address,#t.donor)~=t.donor then error('Payload table changed before publication') end
+    end
     local done={}
     for _,e in ipairs(plan) do
+        if e.before~=e.wanted then
         done[#done+1]=e
         if e==eagle then draft.publication_attempted=true end
         if not write(e.address,e.wanted) then
             local clean=rollback(done)
             error('Payload publication failed; '..(clean and 'rolled back' or 'rollback pending'))
         end
+        end
     end
     S.repair={root=root,plan=plan,tables=tables,eagle=eagle}
+    S.payload_history[#S.payload_history+1]=S.repair
+    if #S.payload_history>4 then table.remove(S.payload_history,1)end
     S.repair_draft=nil
     log('Missing native payload reconstructed: 17 component/entity aliases; private Eagle payload 6, approach height 120 m; vanilla Eagles preserved')
     return true
@@ -656,8 +740,9 @@ local function restore()
     S.owned=pending;return #pending==0
 end
 local function cleanup()
-    if S.cleanup_attempts>=3 then return end
+    if S.clock<(S.cleanup_at or 0)then return end
     S.cleanup_attempts=S.cleanup_attempts+1
+    S.cleanup_at=S.clock+(S.cleanup_attempts<3 and 1 or 30)
     local pending={}
     for _,e in ipairs(S.recovery) do if not recover_entry(e) then pending[#pending+1]=e end end
     S.recovery=pending
@@ -681,8 +766,10 @@ local function cleanup()
     if S.repair_draft and not S.repair_draft.allocation then S.repair_draft=nil end
 end
 local function stop(reason)
-    if S.phase=='stopped' then return end
-    S.phase='stopped';S.stop_reason=reason;S.elapsed=0;cleanup()
+    if S.phase=='suspended' then return end
+    S.phase='suspended';S.stop_reason=reason;S.elapsed=0
+    S.failures=math.min((S.failures or 0)+1,6)
+    S.retry_at=S.clock+math.min(30,2^(S.failures-1));cleanup()
     S.plan=nil;S.forward_seen=nil;S.flight_observed=nil;S.cluster_trace=nil
     S.cluster_cursor=nil;S.cluster_fixed_flights=nil;S.cluster_pending=nil
     S.initial_records=nil
@@ -690,10 +777,10 @@ local function stop(reason)
         S.repair_draft.complete=nil;S.repair_draft.eagle_original=nil
         if not S.repair_draft.allocation then S.repair_draft=nil end
     end
-    log('STOPPED: '..reason..(S.cleanup_complete and '; cleanup complete' or '; cleanup pending='..S.cleanup_pending))
+    log('SUSPENDED: '..reason..(S.cleanup_complete and '; cleanup complete' or '; cleanup pending='..S.cleanup_pending))
 end
 local function apply()
-    if S.phase=='stopped' then return end
+    if S.phase=='suspended' then return end
     if not same_record(S.carrier) or not same_record(S.native) then stop('Stratagem table changed');return end
     local active=config.enabled==1
     local resources=active and selected_package() or nil
@@ -723,10 +810,10 @@ local function apply()
         or field(S.native.bytes,STRATAGEM.resource_package,8)
     add(S.native,STRATAGEM.resource_package,package)
     if S.repair then
-        plan[#plan+1]={record=S.native,address=S.repair.eagle.table+EAGLE.original_bytes+EAGLE.approach_angle,
+        plan[#plan+1]={address=S.repair.eagle.table+EAGLE.original_bytes+EAGLE.approach_angle,
             original=pack_float(90),wanted=pack_float(active and config.direction or 90),
             root=S.repair.root,table_slot=S.repair.eagle.slot,table_address=S.repair.eagle.table}
-        plan[#plan+1]={record=S.native,address=S.repair.eagle.table+EAGLE.original_bytes+EAGLE.projectile,
+        plan[#plan+1]={address=S.repair.eagle.table+EAGLE.original_bytes+EAGLE.projectile,
             original=pack_u32(170),wanted=pack_u32(active and config.bomb or 170),
             root=S.repair.root,table_slot=S.repair.eagle.slot,table_address=S.repair.eagle.table}
     end
@@ -748,7 +835,7 @@ local function apply()
     add(S.carrier,STRATAGEM.additional_stratagem,active and pack_u32(103) or field(S.carrier.bytes,STRATAGEM.additional_stratagem,4))
     local previous={};for _,e in ipairs(S.owned) do previous[e.address]=e end
     for _,e in ipairs(plan) do
-        local old=previous[e.address];e.before=read(e.address,#e.wanted)
+        local old=previous[e.address] or (e.table_slot and S.private_owned[e.address]);e.before=read(e.address,#e.wanted)
         if not e.before or (e.before~=e.original and (not old or e.before~=old.last))
             or (e.before~=e.wanted and not writable(e.address,#e.wanted)) then stop('Field conflict or non-writable data');return end
     end
@@ -763,7 +850,11 @@ local function apply()
         end
     end
     S.owned={};S.plan=plan
-    for _,e in ipairs(plan) do e.last=e.wanted;if e.last~=e.original then S.owned[#S.owned+1]=e end end
+    for _,e in ipairs(plan) do
+        e.last=e.wanted
+        if e.table_slot then S.private_owned[e.address]=e end
+        if e.last~=e.original then S.owned[#S.owned+1]=e end
+    end
     S.call_delay_owned=custom_delay
     S.rearm_owned=custom_rearm
     if not custom_rearm then
@@ -780,6 +871,7 @@ local function apply()
         S.plan=watched
     end
     S.phase=active and 'active' or 'disabled'
+    S.elapsed=0
     log(string.format('%s: Resupply (33) additional_stratagem=%d; native CarpetBomb (103), uses=%s, call_interval=%ds, rearm=%s; projectile=%d (%s), bombs_per_aircraft=%d (%.2fx), forward=%dm, direction=%ddeg, extra_call_delay=%ds; %d fields changed',
         S.phase,active and 103 or 0,config.uses==-1 and 'unlimited' or tostring(config.uses),config.cooldown,
         custom_rearm and (config.rearm..'s (all carried Eagles)') or 'unchanged',
@@ -1041,7 +1133,7 @@ local function adjust_cluster_fuses(dt)
     end
 end
 local function start_cluster_trace()
-    if config.bomb~=286 or S.cluster_trace or S.cluster_trace_fault or (S.cluster_trace_count or 0)>=2 then return end
+    if config.diagnostics~=1 or config.bomb~=286 or S.cluster_trace or S.cluster_trace_fault or (S.cluster_trace_count or 0)>=2 then return end
     S.cluster_trace_count=(S.cluster_trace_count or 0)+1
     S.cluster_trace={elapsed=0,samples=0,tracked={}}
     log('Cluster trace start: window='..S.cluster_trace_count..'; read-only, at most 40 samples, 512 recent ring slots per sample; observations can include other cluster strikes')
@@ -1110,6 +1202,7 @@ local function sample_cluster_trace(dt)
 end
 local function observe_first_flight(key,state,observed)
     observed[key]=true
+    if config.diagnostics~=1 then return end
     local traced,reason=pcall(start_cluster_trace)
     if not traced then S.cluster_trace=nil;S.cluster_trace_fault=true;log('Cluster trace stopped: '..tostring(reason)) end
     if (S.flight_observation_count or 0)>=12 then return end
@@ -1137,7 +1230,7 @@ local function shift_incoming_targets(dt)
     local previous=S.forward_seen or {};local present={}
     local observed_before=S.flight_observed or {};local observed={}
     local native_count=0
-    local resources=(S.flight_observation_count or 0)==0 and (S.unmatched_flight_logs or 0)<3 and {} or nil
+    local resources=config.diagnostics==1 and (S.flight_observation_count or 0)==0 and (S.unmatched_flight_logs or 0)<3 and {} or nil
     for i=0,n-1 do
         local descriptor=u64(object_index,i*8);local identity=read(descriptor,16)
         if resources and identity then
@@ -1222,19 +1315,43 @@ local function initialize()
     S.carrier=carrier;S.native=native;S.donor=donor;S.rearm=rearm;S.heavy=heavy
     S.initial_records=nil;apply()
 end
-local function tick(dt)
-    S.elapsed=S.elapsed+((type(dt)=='number' and dt>0 and dt<5) and dt or 1/60)
-    if S.elapsed<1 then return end;S.elapsed=0
-    if S.phase=='stopped' then
-        if not S.cleanup_complete and S.cleanup_attempts<3 then
-            cleanup()
-            log('STOPPED cleanup: pending='..S.cleanup_pending..'; attempt='..S.cleanup_attempts..'/3')
-        end
-        return
+local function reset_context()
+    if S.repair and not repair_intact()then S.repair=nil end
+    S.base=nil;S.carrier=nil;S.native=nil;S.donor=nil;S.rearm=nil;S.heavy=nil
+    S.initial_records=nil;S.projectiles={};S.plan=nil;S.repair_draft=nil
+    S.rearm_owned=false;S.call_delay_owned=false;S.cleanup_attempts=0;S.cleanup_at=0
+    S.phase='waiting';S.cleanup_complete=nil
+end
+local function mission_context(dt)
+    S.scene_elapsed=(S.scene_elapsed or 0.25)+dt
+    if not S.base or S.scene_elapsed<0.25 then return end
+    S.scene_elapsed=0
+    local scene=ptr(S.base+ADDRESS.scene)
+    local state=scene and read(scene+0xac21c,4)
+    local active=state and u32(state,0)==4 or false
+    if S.in_mission and not active then
+        S.forward_seen=nil;S.flight_observed=nil;S.cluster_trace=nil
+        S.cluster_cursor=nil;S.cluster_pending=nil;S.cluster_fixed_flights=nil;S.cluster_retry=0
+        S.forward_fault=nil;S.cluster_fuse_fault=nil;S.cluster_trace_fault=nil
     end
+    if active~=S.in_mission then S.elapsed=5 end
+    S.in_mission=active
+end
+local function tick(dt)
+    S.elapsed=S.elapsed+dt
+    -- Preparation may resume next frame, but never prepares more than two tables.
+    if S.phase=='preparing' and not S.menu_dirty then apply();return end
+    local interval=(S.carrier and not S.in_mission) and 5 or 1
+    if S.elapsed<interval and not S.menu_dirty then return end;S.elapsed=0
     local changed=read_config()
     menu_step()
     if S.menu_dirty then changed=true;S.menu_dirty=false end
+    if S.phase=='suspended' then
+        if not S.cleanup_complete then cleanup();return end
+        if not S.cleanup_complete or S.clock<(S.retry_at or 0)then return end
+        reset_context();log('Retrying native context after cleanup')
+    end
+    if not S.carrier and config.enabled~=1 then S.phase='disabled';return end
     if not S.carrier then initialize();return end
     if changed or S.phase=='waiting' then apply();return end
     if not same_record(S.carrier) or not same_record(S.native) then stop('Record identity changed');return end
@@ -1250,23 +1367,65 @@ local function tick(dt)
     end
 end
 S.disable=function()
-    if S.phase=='stopped' then return false,S.stop_reason or 'stopped' end
     -- Use the same validation/persistence/scheduled apply path as the menu.
     return menu_change('enabled',false)
 end
-read_config();menu_step();log('Loaded v'..S.version..'; native grant experiment, Bingus Shared Loader v18 / API 1')
+read_config();menu_step();log('Loaded v'..S.version..'; enabled='..config.enabled..'; diagnostics='..config.diagnostics..'; Loader API 1')
 local old_update=rawget(_G,'update')
-if type(old_update)~='function' then S.phase='stopped';log('Global update callback unavailable');return S end
+assert(type(old_update)=='function','Global update callback unavailable')
 function update(dt,...)
-    local ok,err=pcall(tick,dt);if not ok then stop(tostring(err)) end
+    local step=(type(dt)=='number' and dt==dt and dt>0 and dt<5) and dt or 1/60
+    S.clock=S.clock+step
+    local context_ok,context_error=pcall(mission_context,step)
+    if not context_ok then S.in_mission=false;stop('Scene check failed: '..tostring(context_error))end
+    local ok,err=pcall(tick,step);if not ok then stop(tostring(err)) end
+    if S.phase~='active' or not S.in_mission or config.bomb~=286 then
+        S.cluster_pending=nil;S.cluster_cursor=nil;S.cluster_trace=nil
+    elseif config.diagnostics~=1 then S.cluster_trace=nil end
+    if S.in_mission and S.phase=='active' then
+    if S.forward_fault and S.clock>=(S.forward_retry_at or 0)then S.forward_fault=nil end
+    if S.cluster_fuse_fault and S.clock>=(S.cluster_fuse_retry_at or 0)then S.cluster_fuse_fault=nil end
     local shifted,shift_error=pcall(shift_incoming_targets,dt)
-    if not shifted then S.forward_fault=true;log('Forward adjustment stopped: '..tostring(shift_error)) end
+    if not shifted then S.forward_fault=true;S.forward_retry_at=S.clock+30;log('Forward adjustment paused: '..tostring(shift_error)) end
     local fused,fuse_error=pcall(adjust_cluster_fuses,dt)
-    if not fused then S.cluster_fuse_fault=true;log('Cluster fuse adjustment stopped: '..tostring(fuse_error)) end
-    local released,release_error=pcall(release_cluster_at_height,dt)
-    if not released then S.cluster_pending=nil;log('Cluster height release stopped: '..tostring(release_error)) end
+    if not fused then S.cluster_fuse_fault=true;S.cluster_fuse_retry_at=S.clock+30;log('Cluster fuse adjustment paused: '..tostring(fuse_error)) end
+    if S.clock>=(S.cluster_release_retry_at or 0)then
+        local released,release_error=pcall(release_cluster_at_height,dt)
+        if not released then S.cluster_pending=nil;S.cluster_release_retry_at=S.clock+30;log('Cluster height release paused: '..tostring(release_error)) end
+    end
     local traced,trace_error=pcall(sample_cluster_trace,dt)
     if not traced then S.cluster_trace=nil;S.cluster_trace_fault=true;log('Cluster trace stopped: '..tostring(trace_error)) end
+    end
     return old_update(dt,...)
 end
+return S
+end
+-- Loader availability is an API contract, separate from a game-version label.
+local function ready()
+    local loader=rawget(_G,'CowboyBingusModLoader')
+    return type(loader)=='table' and loader.api==1 and type(loader.open_log)=='function'
+end
+local old=rawget(_G,'update')
+if type(old)~='function'then S.status='Waiting for game update; addon can be retried';return S end
+local frames,next_attempt,last_error=120,0,nil
+local function attempt()
+    if not ready()then return false end
+    local okay,result=pcall(boot)
+    if okay then return true end
+    S.phase='waiting';S.status=tostring(result)
+    if S.status~=last_error then pcall(print,'[CarpetBombNative] Initialization deferred: '..S.status);last_error=S.status end
+    next_attempt=S.clock+5;return false
+end
+if attempt()then rawset(_G,'CarpetBombNative',S);return S end
+local function waiting_update(dt,...)
+    S.clock=S.clock+((type(dt)=='number' and dt==dt and dt>0 and dt<5)and dt or 1/60)
+    frames=frames+1
+    if frames>=120 and S.clock>=next_attempt then
+        frames=0;rawset(_G,'update',old)
+        if attempt()then return update(dt,...)end
+        rawset(_G,'update',waiting_update)
+    end
+    return old(dt,...)
+end
+rawset(_G,'CarpetBombNative',S);rawset(_G,'update',waiting_update)
 return S

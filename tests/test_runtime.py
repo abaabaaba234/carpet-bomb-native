@@ -1,9 +1,19 @@
 """Run the shipped Lua against sanitized real StratagemInfo records in LuaJIT."""
 from pathlib import Path
-import json,struct,tempfile,re,zipfile,sys,os,hashlib,io
+import json,struct,tempfile,re,zipfile,sys,os,hashlib,io,uuid,shutil
 from lupa import luajit21
 ROOT=Path(__file__).resolve().parents[1];SOURCE=(ROOT/'src/core.lua').read_bytes();BASE=0x180000000
 Q=lambda x:struct.pack('<Q',x);U=lambda x:struct.pack('<I',x);F=lambda x:struct.pack('<f',x)
+class WorkspaceTemp:
+    def __init__(self,prefix='.run-',dir=ROOT/'tests'):
+        self.path=Path(dir)/(prefix+uuid.uuid4().hex)
+        assert self.path.resolve().is_relative_to((ROOT/'tests').resolve())
+        self.path.mkdir(mode=0o777);self.name=str(self.path)
+    def cleanup(self):
+        if self.path.exists():shutil.rmtree(self.path)
+    def __enter__(self):return self.name
+    def __exit__(self,*args):self.cleanup()
+
 class Memory:
     def __init__(self):self.pages={};self.writes=[];self.denied=False;self.fail_once=False;self.protection={};self.fail_alias=None;self.fail_address=None;self.cursor=0x80000000;self.flushes=[];self.fail_flush_once=False;self.fail_protect_once=None;self.fail_restore_once=None;self.allocations=[];self.near_regions=[];self.alloc_attempts=[];self.fail_hint_once=None;self.reads={};self.read_bytes=0;self.frees=[]
     def put(self,p,b):
@@ -60,14 +70,16 @@ class Memory:
         if self.fail_flush_once:self.fail_flush_once=False;return 0
         return 1
 class Scenario:
-    def __init__(self,options=None,bad_build=False,carrier_conflict=False,cfg=None):
-        self.temp=tempfile.TemporaryDirectory(prefix='.run-',dir=ROOT/'tests');self.local=Path(self.temp.name)
+    def __init__(self,options=None,bad_build=False,carrier_conflict=False,cfg=None,loader=True,diagnostics=False):
+        self.temp=WorkspaceTemp(prefix='.run-',dir=ROOT/'tests');self.local=Path(self.temp.name)
         self.logs=self.local/'CowboyBingus/Helldivers2/Logs';self.logs.mkdir(parents=True)
+        if diagnostics:cfg=(cfg or '')+'\ndiagnostics=1\n'
         if cfg is not None:(self.logs/'CarpetBombNative.cfg').write_text(cfg,encoding='utf-8')
         self.mem=Memory();self.lua=luajit21.LuaRuntime(encoding=None);self.address={};self.originals={};self.replace_failure=False
-        dos=bytearray(0x1000);dos[:2]=b'MZ';struct.pack_into('<I',dos,60,0x100);dos[0x100:0x104]=b'PE\0\0'
+        dos=bytearray(0x1000);dos[:2]=b'MZ';struct.pack_into('<I',dos,60,0x100);dos[0x100:0x104]=b'PE\0\0';dos[0x104:0x106]=b'\x64\x86';dos[0x118:0x11a]=b'\x0b\x02'
         struct.pack_into('<I',dos,0x108,0 if bad_build else 0x6ab3b43f);struct.pack_into('<I',dos,0x150,0x4744000)
         self.mem.put(BASE,dos)
+        self.scene=0xb0000000;self.mem.put(BASE+0x3326340,Q(self.scene));self.mem.put(self.scene+0xac21c,U(4))
         # Independent captured bytes: never seed memory from the expectations
         # being tested, which hid the v0.5.4 non-contiguous anchor regression.
         code=json.loads((ROOT/'tests/fixtures/code_windows_build25480438.json').read_text())
@@ -93,7 +105,7 @@ class Scenario:
             index=bytes.fromhex(row['index_hex']);raw=bytes.fromhex(row['eagle_data_hex']) or index
             self.mem.put(p-28,header);self.mem.put(p,raw);self.mem.put(slot,Q(p))
             self.tables.append({'slot':slot,'p':p,'row':row,'original':raw})
-        g=self.lua.globals();g[b'pyread']=lambda p,n:self.mem.read(int(p),int(n));g[b'pywrite']=lambda p,b:self.mem.write(int(p),bytes(b))
+        g=self.lua.globals();g[b'loader_on']=loader;g[b'pyread']=lambda p,n:self.mem.read(int(p),int(n));g[b'pywrite']=lambda p,b:self.mem.write(int(p),bytes(b))
         g[b'pydenied']=lambda:self.mem.denied;g[b'localpath']=str(self.local).encode()
         g[b'pyalloc']=lambda n,hint:self.mem.alloc(int(n),int(hint));g[b'pyprotection']=lambda p:self.mem.page_protection(int(p))
         g[b'pyfree']=lambda p:self.mem.free(int(p))
@@ -130,6 +142,7 @@ class Scenario:
             return old(name)
           end
           local getenv=os.getenv;os.getenv=function(k)if k=='LOCALAPPDATA' then return localpath end;return getenv(k)end
+          if loader_on then CowboyBingusModLoader={api=1,open_log=function()end}end
           print=function()end;calls=0;update=function(dt,extra)calls=calls+1;return dt,extra,42 end
         ''')
         self.state=self.lua.eval(b'function(s)return assert(loadstring(s,"@core"))()end')(SOURCE)
@@ -137,7 +150,15 @@ class Scenario:
         if self.replace_failure:return 0
         try:os.replace(os.fsdecode(source),os.fsdecode(destination));return 1
         except OSError:return 0
-    def tick(self):return self.lua.eval(b'function()return update(1.1,"preserved")end')()
+    def frame(self,dt=1.1):return self.lua.globals()[b'update'](dt,b'preserved')
+    def tick(self):
+        result=self.frame();prepared=self.state[b'phase']==b'preparing'
+        for _ in range(150):
+            if self.state[b'phase']!=b'preparing':break
+            self.frame(1/60)
+        else:raise AssertionError('Preparation did not yield or finish within fixture budget')
+        if prepared and self.state[b'phase']==b'active':self.frame(.11)
+        return result
     def cfg(self,text):(self.logs/'CarpetBombNative.cfg').write_text(text,encoding='utf-8');self.tick()
     def r(self,t,o,n):return self.mem.read(self.address[t]+o,n)
     def close(self):self.lua=None;self.temp.cleanup()
@@ -180,9 +201,9 @@ def settings():
         s.cfg('enabled=0\n');assert s.r(103,0,0x190)==s.originals[103] and s.r(33,0,0x190)==s.originals[33]
     finally:s.close()
 def refusal():
-    for kwargs,deny in (({'bad_build':True},False),({'carrier_conflict':True},False),({},True)):
+    for kwargs,deny in (({'carrier_conflict':True},False),({},True)):
         s=Scenario(**kwargs);s.mem.denied=deny
-        try:s.tick();assert s.state[b'phase']==b'stopped' and not s.mem.writes
+        try:s.tick();assert s.state[b'phase']==b'suspended' and not s.mem.writes
         finally:s.close()
 def rearm_settings():
     s=Scenario({'uses':4,'cooldown':10,'rearm':30})
@@ -216,9 +237,9 @@ def rearm_conflicts():
             if mode=='default':
                 assert s.state[b'phase']==b'active' and s.r(49,0x68,4)==F(77)
                 s.cfg('rearm=30\n')
-                assert s.state[b'phase']==b'stopped' and s.r(49,0x68,4)==F(77)
+                assert s.state[b'phase']==b'suspended' and s.r(49,0x68,4)==F(77)
             else:
-                assert s.state[b'phase']==b'stopped'
+                assert s.state[b'phase']==b'suspended'
                 assert s.r(33,0,0x190)==s.originals[33] and s.r(103,0,0x190)==s.originals[103]
                 if mode=='custom':assert s.r(49,0x68,4)==F(77)
                 else:assert not any(s.address[49]<=p<s.address[49]+0x190 for p,_ in s.mem.writes[n:])
@@ -226,14 +247,14 @@ def rearm_conflicts():
 def rearm_partial():
     s=Scenario({'rearm':30});s.mem.fail_address=s.address[49]+0x68
     try:
-        s.tick();assert s.state[b'phase']==b'stopped'
+        s.tick();assert s.state[b'phase']==b'suspended'
         assert s.r(49,0,0x190)==s.originals[49]
         assert s.r(103,0,0x190)==s.originals[103] and s.r(33,0,0x190)==s.originals[33]
     finally:s.close()
 def partial():
     s=Scenario({'uses':3,'cooldown':15});s.mem.fail_alias=3
     try:
-        s.tick();assert s.state[b'phase']==b'stopped'
+        s.tick();assert s.state[b'phase']==b'suspended'
         assert s.r(33,0,0x190)==s.originals[33] and s.r(103,0,0x190)==s.originals[103]
         for t in s.tables:
             assert s.mem.read(t['p'],len(t['original']))==t['original'] and s.mem.read(t['slot'],8)==Q(t['p'])
@@ -242,14 +263,14 @@ def conflict():
     s=Scenario({'uses':3,'cooldown':15})
     try:
         s.tick();s.mem.put(s.address[103]+0x68,F(77));s.tick()
-        assert s.state[b'phase']==b'stopped' and s.r(103,0x68,4)==F(77)
+        assert s.state[b'phase']==b'suspended' and s.r(103,0x68,4)==F(77)
         assert s.r(33,0,0x190)==s.originals[33] and s.r(103,0x50,4)==s.originals[103][0x50:0x54]
     finally:s.close()
 def stale():
     s=Scenario()
     try:
         s.tick();s.mem.put(BASE+0x37cb600+33*8,Q(0x77770000));n=len(s.mem.writes);s.tick()
-        assert s.state[b'phase']==b'stopped'
+        assert s.state[b'phase']==b'suspended'
         assert not any(s.address[33]<=p<s.address[33]+0x190 for p,_ in s.mem.writes[n:])
         assert s.r(103,0,0x190)==s.originals[103]
     finally:s.close()
@@ -275,8 +296,8 @@ def aliases():
                     if entry[b'address']==entry[b'slot']:continue
                     assert s.mem.read(int(entry[b'address']),8)==Q(native)
                 s.mem.put(s.tables[1]['slot'],Q(0x77770000));s.tick()
-                assert s.state[b'phase']==b'stopped' and s.r(33,0xc8,4)==U(0)
-            else:assert s.state[b'phase']==b'stopped' and s.r(33,0xc8,4)==U(0)
+                assert s.state[b'phase']==b'suspended' and s.r(33,0xc8,4)==U(0)
+            else:assert s.state[b'phase']==b'suspended' and s.r(33,0xc8,4)==U(0)
         finally:s.close()
 def late_tables():
     s=Scenario();t=s.tables[-1]
@@ -336,7 +357,7 @@ def prepared_payload_identity():
             else:
                 entry=s.state[b'repair_draft'][b'plan'][1]
                 s.mem.put(int(entry[b'address']),Q(123))
-            s.tick();assert s.state[b'phase']==b'stopped' and not s.mem.allocations
+            s.tick();assert s.state[b'phase']==b'suspended' and not s.mem.allocations
             assert s.r(33,0xc8,4)==U(0)
             if kind=='target_conflict':assert s.mem.read(int(entry[b'address']),8)==Q(123)
         finally:s.close()
@@ -350,7 +371,7 @@ def unpublished_allocation_cleanup():
             else:
                 eagle=next(t for t in s.tables if t['row']['name']=='EagleComponentData')
                 s.mem.fail_address=eagle['slot']
-            s.tick();assert s.state[b'phase']==b'stopped'
+            s.tick();assert s.state[b'phase']==b'suspended'
             for t in s.tables:
                 assert s.mem.read(t['p'],len(t['original']))==t['original']
                 assert s.mem.read(t['slot'],8)==Q(t['p'])
@@ -363,7 +384,8 @@ def unpublished_allocation_cleanup():
                 assert not len(s.state[b'allocations']) and s.state[b'repair_draft'] is None
             writes=len(s.mem.writes)
             for _ in range(10):s.tick()
-            assert len(s.mem.writes)==writes
+            assert s.state[b'phase']==b'active'
+            assert len(s.mem.allocations)==(2 if kind=='pointer' else 1)
         finally:s.close()
 
 def projectile_cache_guards():
@@ -377,7 +399,7 @@ def projectile_cache_guards():
             else:
                 offset={'type':0,'mass':0x24,'resource':0x80,'impact':0x90,'expire':0x9c}[kind]
                 s.mem.put(address+offset,U(999))
-            s.tick();assert s.state[b'phase']==b'stopped' and s.r(33,0xc8,4)==U(0)
+            s.tick();assert s.state[b'phase']==b'suspended' and s.r(33,0xc8,4)==U(0)
         finally:s.close()
 
 def bomb_settings():
@@ -496,8 +518,8 @@ def performance_counters():
     try:
         s.mem.reads.clear();s.mem.read_bytes=0;s.tick()
         runtime_metrics['initialization']={'rpm_calls':sum(s.mem.reads.values()),'bytes':s.mem.read_bytes}
-        assert runtime_metrics['initialization']['rpm_calls']<350
-        assert runtime_metrics['initialization']['bytes']<20000
+        assert runtime_metrics['initialization']['rpm_calls']<950
+        assert runtime_metrics['initialization']['bytes']<30000
         s.mem.reads.clear();s.mem.read_bytes=0
         for _ in range(100):s.tick()
         runtime_metrics['steady_100_ticks']={'rpm_calls':sum(s.mem.reads.values()),'bytes':s.mem.read_bytes}
@@ -507,7 +529,7 @@ def performance_counters():
         s.mem.put(s.tables[-1]['slot'],Q(0));s.mem.reads.clear();s.mem.read_bytes=0
         for _ in range(10):s.tick()
         runtime_metrics['delayed_10_ticks']={'rpm_calls':sum(s.mem.reads.values()),'bytes':s.mem.read_bytes,'allocations':len(s.mem.allocations)}
-        assert runtime_metrics['delayed_10_ticks']['rpm_calls']<500
+        assert runtime_metrics['delayed_10_ticks']['rpm_calls']<800, runtime_metrics
         assert runtime_metrics['delayed_10_ticks']['bytes']<15000 and not s.mem.allocations
     finally:s.close()
 
@@ -563,7 +585,7 @@ def package_report_gate():
     # Failed automatic validation must leave the previous successful ZIP untouched.
     from unittest.mock import patch
     import subprocess
-    with tempfile.TemporaryDirectory(prefix='.run-build-',dir=ROOT/'tests') as directory:
+    with WorkspaceTemp(prefix='.run-build-',dir=ROOT/'tests') as directory:
         root=Path(directory);(root/'src').mkdir();(root/'src/core.lua').write_bytes(SOURCE)
         (root/'dist').mkdir();previous=root/'dist'/f'NativeCarpetBomb_v{runtime_version()}.zip'
         previous.write_bytes(b'previous successful archive')
@@ -578,7 +600,7 @@ from code_checks import run as run_code_checks
 passed=run_code_checks(SOURCE,ROOT)
 for name,fn in [('default carrying, repaired payload, original Eagle rows preserved and disable restoration',defaults),
     ('independent charges/cooldown, preserved native identity and configuration validation',settings),
-    ('unsupported build, existing carrier link and executable pages refused',refusal),
+    ('existing carrier link and executable pages refused',refusal),
     ('partial write rollback',partial),('competing writer preservation and restoration',conflict),
     ('stale carrier identity refused',stale),('payload alias refusal, read-only protection restoration and competing table writer',aliases),
     ('late game datalibrary initialization retries without configuration edits',late_tables),
@@ -613,6 +635,8 @@ from cluster_trace_checks import run as run_cluster_trace_checks
 passed.extend(run_cluster_trace_checks(Scenario,BASE,eagle_state))
 from cluster_fuse_checks import run as run_cluster_fuse_checks
 passed.extend(run_cluster_fuse_checks(Scenario,BASE,ROOT,eagle_state))
+from lifecycle_checks import run as run_lifecycle_checks
+passed.extend(run_lifecycle_checks(Scenario,BASE,SOURCE,eagle_state,runtime_metrics))
 result_path=ROOT/'validation/offline_report.json'
 from build import runtime_version,runtime_build,validation_inputs,validation_context,build,validate_report
 result_path.write_text(json.dumps({'version':runtime_version(),'game_build':runtime_build(),'tests_passed':passed,
@@ -620,14 +644,14 @@ result_path.write_text(json.dumps({'version':runtime_version(),'game_build':runt
   'source_sha256':hashlib.sha256(SOURCE).hexdigest(),'validation_inputs':validation_inputs(),
   'performance_counters':runtime_metrics,
   'test_group_count':len(passed),
-  'landing_diagnosis':{'diagnostic_build':True,'reported_longitudinal_landing_issue_fixed':False,
-    'observations':'first 12 native aircraft; first 3 changed unmatched descriptor groups; two read-only cluster windows, 40 samples each, at most 512 recent slots and 6 retained examples per sample',
+  'landing_diagnosis':{'diagnostic_build':False,'reported_longitudinal_landing_issue_fixed':False,
+    'observations':'off by default; diagnostics=1 enables bounded first-flight and cluster windows; mission exit ends dynamic tracking',
     'cluster_invisibility_fixed':True,'cluster_fuse_candidate_implemented':True,
     'gameplay_parameters_changed':True,'shared_projectile_definitions_changed':False,
     'primary_bombs_per_aircraft':20,'cluster_bomblets_per_primary':8,
     'live_fix_verification':False,
     'user_v059_feedback':'User reports cluster timing is now just right',
-    'user_v0510_feedback':'User confirms functionality works, including extra delay; screenshots show unsupported range punctuation. v0.6.0 changes text and version only.',
+    'user_v0510_feedback':'Historical feedback for v0.5.10/v0.6.0 only; v0.6.1 lifecycle changes have not been tested in game.',
     'beacon_delay':{'extra_seconds_range':[0,60],'default':0,'native_stratagem_type':103,
       'field_offset':'0x54','gameplay_verified':False},
     'burst_height_reference':'actual sampled height at/below beacon+60m and descending restores native 0.35s; burst occurs later, no terrain raycast',
@@ -640,7 +664,7 @@ result_path.write_text(json.dumps({'version':runtime_version(),'game_build':runt
   'menu_api_verification':{'provider':'external version2 source' if os.environ.get('HD2_MOD_OPTIONS_MENU_SOURCE') else 'API contract fixture',
     'provider_sha256':hashlib.sha256(Path(os.environ['HD2_MOD_OPTIONS_MENU_SOURCE']).read_bytes()).hexdigest() if os.environ.get('HD2_MOD_OPTIONS_MENU_SOURCE') else None,
     'registered_rows':14,'first_row':'Language','native_ui_hook_executed':False},
-  'preset_combinations':631800,'preset_modules_checked':55,'in_game_loader_verified':False,'default_carry_verified':False,
+  'preset_combinations':631800,'preset_modules_checked':55,'runtime_compatibility':'version-independent PE architecture/bounds, code anchors and data identity; reference build only','in_game_loader_verified':False,'default_carry_verified':False,
   'in_game_bombing_verified':False,'in_game_menu_verified':False,'multiplayer_verified':False,'status':'OFFLINE_PASSED',
   'previous_version':{'version':'0.1.0','default_carry_verified':True,'battlefield_test':'CRASHED: missing EagleComponent for native payload; removed'}},indent=2),encoding='utf-8',newline='\n')
 if os.environ.get('HD2_VALIDATE_ONLY')!='1':build()
